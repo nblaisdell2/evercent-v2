@@ -10,7 +10,7 @@ export default async function handler(
   let runIDsToLock = await getAPIData(Queries.QUERY_RUNS_TO_LOCK, {}, false);
 
   let results = {
-    data: runIDsToLock
+    data: runIDsToLock[0]
   }
 
   res.status(200).json(results)
