@@ -1,0 +1,27 @@
+{
+    "QUERY_USER_ID": "spEV_GetUserID",
+    "QUERY_USER": "spEV_GetUser",
+    "QUERY_YNAB_CONN_DETAILS": "spEV_YNAB_GetConnectionDetails",
+    "QUERY_CATEGORIES": "spEV_GetAllCategories",
+    "QUERY_CATEGORY": "spEV_GetAllCategories",
+    "QUERY_REGULAR_EXPENSES": "spEV_GetRegularExpenses",
+    "QUERY_NEXT_UPCOMING_EXPENSE": "spEV_GetUpcomingExpenses",
+    "QUERY_UPCOMING_EXPENSES": "spEV_GetUpcomingExpenses",
+    "QUERY_NEXT_AUTO_RUN": "spEV_GetAutoRunsUpcoming",
+    "QUERY_AUTO_RUNS": "spEV_GetAutoRunsUpcoming",
+    "QUERY_PAST_AUTO_RUNS": "spEV_GetAutoRunsPast",
+    "QUERY_RUNS_TO_LOCK": "spEV_GetAutoRunIDsToLock",
+
+    "MUTATION_SAVE_YNAB_TOKENS": "spEV_YNAB_SaveAccessTokens",
+    "MUTATION_UPDATE_USER_DETAILS": "spEV_UpdateUserDetails",
+    "MUTATION_UPDATE_BUDGET_ID": "spEV_UpdateUserDefaultBudgetID",
+    "MUTATION_UPDATE_MONTHS_AHEAD_TARGET": "spEV_UpdateUserMonthsAheadTarget",
+    "MUTATION_UPDATE_CATEGORIES": "spEV_UpdateCategoryDetails",
+    "MUTATION_TOGGLE_CATEGORY_INCLUSION": "spEV_UpdateCategoryInclusion",
+    "MUTATION_UPDATE_CATEGORY_MONTHS_DIVISOR": "spEV_UpdateCategoryExpenseMonthsDivisor",
+    "MUTATION_SAVE_AUTOMATION_RESULTS": "spEV_SaveAutomationResults",
+    "MUTATION_CANCEL_AUTOMATION_RUNS": "spEV_CancelAutomationRuns",
+    "MUTATION_LOAD_LOCKED_AUTO_RUN_RESULTS": "spEV_LockAutoRuns",
+    "MUTATION_ADD_PAST_AUTO_RUN_RESULTS": "spEV_AddPastAutomationResults",
+    "MUTATION_CLEANUP_AUTOMATION_RUN": "spEV_CleanupAutomationRun"
+}
