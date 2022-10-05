@@ -1,16 +1,70 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import { setDate } from 'date-fns';
+import type { NextApiRequest, NextApiResponse } from "next";
+import { setDate } from "date-fns";
 
-import { getAPIData, saveNewYNABTokens, parseDate } from '../../utils/utils';
-import { GetBudgetMonths } from '../../utils/ynab';
-import Queries from '../api/resolvers/resolverMapping.json';
+import { getAPIData, saveNewYNABTokens, parseDate } from "../../utils/utils";
+import { GetBudgetMonths } from "../../utils/ynab";
+import Queries from "../api/resolvers/resolverMapping.json";
 
-async function GetBudgetMonthDetails(category) {
+type RunDetails = {
+  RunID: string;
+  UserID: string;
+  BudgetID: string;
+  PayFrequency: string;
+  NextPaydate: string;
+  AccessToken: string;
+  RefreshToken: string;
+  ExpirationDate: string;
+};
+
+type CategoryLocked = {
+  RunID: string;
+  CategoryID: string;
+  CategoryAmount: number;
+  ExtraAmount: number;
+  IsRegularExpense: boolean;
+  IncludeOnChart: boolean;
+  IsMonthly: boolean;
+  NextDueDate: string;
+  RepeatFreqNum: number;
+  RepeatFreqType: string;
+  ExpenseMonthsDivisor: number;
+  MultipleTransactions: boolean;
+};
+
+type AmountDetails = {
+  categoryAmount: number;
+  categoryExtraAmount: number;
+  categoryAdjustedAmount: number;
+  categoryAdjAmountPerPaycheck: number;
+};
+
+type ExcludedMonth = {
+  RunID: string;
+  CategoryID: string;
+  PostingMonth: string;
+};
+
+type YNABMonth = {
+  month: string;
+  categories: YNABMonthCategory[];
+};
+
+type YNABMonthCategory = {
+  categoryGroupID: string;
+  categoryGroupName: string;
+  categoryID: string;
+  name: string;
+  budgeted: number;
+  activity: number;
+  available: number;
+};
+
+async function GetBudgetMonthDetails(runDetails: RunDetails) {
   let mthDetails = await GetBudgetMonths({
-    budgetID: category.BudgetID,
-    accessToken: category.AccessToken,
-    refreshToken: category.RefreshToken,
-    expirationDate: category.ExpirationDate,
+    budgetID: runDetails.BudgetID,
+    accessToken: runDetails.AccessToken,
+    refreshToken: runDetails.RefreshToken,
+    expirationDate: runDetails.ExpirationDate,
   });
 
   // If we got any token details, that means that we reached the YNAB API
@@ -18,13 +72,17 @@ async function GetBudgetMonthDetails(category) {
   // If that's the case, we should update our token details in the database
   let newTokenDetails = mthDetails.connDetails;
   if (newTokenDetails) {
-    saveNewYNABTokens(category.UserID, newTokenDetails);
+    saveNewYNABTokens(runDetails.UserID, newTokenDetails);
   }
 
   return mthDetails.data;
 }
 
-async function GetAmountDetails(category, mthDetails, payFreq) {
+async function GetAmountDetails(
+  category: CategoryLocked,
+  mthDetails: YNABMonth[],
+  payFreq: string
+) {
   // console.log('category', category);
 
   if (!category.IncludeOnChart) {
@@ -32,8 +90,8 @@ async function GetAmountDetails(category, mthDetails, payFreq) {
       categoryAmount: category.CategoryAmount,
       categoryExtraAmount: category.ExtraAmount,
       categoryAdjustedAmount: 0,
-      categoryAdjAmountPerPaycheck: 0
-    }
+      categoryAdjAmountPerPaycheck: 0,
+    };
   }
 
   let amt = category.CategoryAmount;
@@ -44,11 +102,20 @@ async function GetAmountDetails(category, mthDetails, payFreq) {
       dtDueDate = setDate(dtDueDate, 1);
 
       let strMonth = dtDueDate.toISOString().substring(0, 10);
-      let ynabCategory = mthDetails.find(x => x.month == strMonth).categories.find(x => x.categoryID.toUpperCase() == category.CategoryID);
+      let ynabCategory = mthDetails
+        .find((x: YNABMonth) => x.month == strMonth)
+        ?.categories.find(
+          (x: YNABMonthCategory) =>
+            x.categoryID.toUpperCase() == category.CategoryID
+        );
 
       // console.log("ynabCategory", ynabCategory);
       if (ynabCategory && ynabCategory.available >= category.CategoryAmount) {
-        amt = await GetAmountByRepeatType(amt, category.RepeatFreqNum, category.RepeatFreqType);
+        amt = await GetAmountByRepeatType(
+          amt,
+          category.RepeatFreqNum,
+          category.RepeatFreqType
+        );
       } else {
         amt /= category.ExpenseMonthsDivisor;
       }
@@ -61,15 +128,21 @@ async function GetAmountDetails(category, mthDetails, payFreq) {
     categoryAmount: category.CategoryAmount,
     categoryExtraAmount: category.ExtraAmount,
     categoryAdjustedAmount: amt,
-    categoryAdjAmountPerPaycheck: await GetAmountByFrequency(amt, payFreq)
-  }
+    categoryAdjAmountPerPaycheck: await GetAmountByFrequency(amt, payFreq),
+  };
 }
 
-async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPaydate) {
+async function GetAutoMonthDetails(
+  category: CategoryLocked,
+  amountDetails: AmountDetails,
+  mthDetails: YNABMonth[],
+  nextPaydate: string
+) {
   let monthAmounts = [];
 
   let totalAmtToPost = amountDetails.categoryAdjAmountPerPaycheck;
-  let totalDesiredAmt = amountDetails.categoryAdjustedAmount - amountDetails.categoryExtraAmount;
+  let totalDesiredAmt =
+    amountDetails.categoryAdjustedAmount - amountDetails.categoryExtraAmount;
 
   // Make sure the first month starts at the user's next paydate
   if (nextPaydate) {
@@ -80,7 +153,7 @@ async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPayd
     let startIdx = 0;
     for (let i = 0; i < mthDetails.length; i++) {
       if (mthDetails[i].month == strNextPaydate) {
-        console.log('Exiting...');
+        console.log("Exiting...");
         startIdx = i;
         break;
       }
@@ -93,9 +166,12 @@ async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPayd
   for (let i = 0; i < mthDetails.length; i++) {
     if (totalAmtToPost <= 0) break;
 
-    let ynabCategory = mthDetails[i].categories.find(x => x.categoryID.toUpperCase() == category.CategoryID);
+    let ynabCategory = mthDetails[i].categories.find(
+      (x: YNABMonthCategory) =>
+        x.categoryID.toUpperCase() == category.CategoryID
+    ) as YNABMonthCategory;
     if (!foundStartMonth) {
-      let foundTransactions = ynabCategory.activity !== 0;
+      let foundTransactions = ynabCategory?.activity !== 0;
       if (i == 0 && !category.MultipleTransactions && foundTransactions) {
         continue; // already paid that month, move onto the next
       }
@@ -106,9 +182,10 @@ async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPayd
     }
 
     if (foundStartMonth) {
-      let amtCurrBudgeted = ynabCategory.budgeted;
+      let amtCurrBudgeted = ynabCategory?.budgeted;
 
-      let amtToPost = totalDesiredAmt - (category.IsRegularExpense ? amtCurrBudgeted : 0);
+      let amtToPost =
+        totalDesiredAmt - (category.IsRegularExpense ? amtCurrBudgeted : 0);
       if (amtToPost > totalAmtToPost) {
         // does this ever happen?
         amtToPost = totalAmtToPost;
@@ -116,11 +193,15 @@ async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPayd
 
       monthAmounts.push({
         month: mthDetails[i].month,
-        amountToPost: amtToPost
+        amountToPost: amtToPost,
       });
 
       if (mthDetails[i].month == category.NextDueDate) {
-        totalDesiredAmt = await GetAmountByRepeatType(amountDetails.categoryAmount, category.RepeatFreqNum, category.RepeatFreqType);
+        totalDesiredAmt = await GetAmountByRepeatType(
+          amountDetails.categoryAmount,
+          category.RepeatFreqNum,
+          category.RepeatFreqType
+        );
       }
 
       totalAmtToPost -= amtToPost;
@@ -130,7 +211,7 @@ async function GetAutoMonthDetails(category, amountDetails, mthDetails, nextPayd
   return monthAmounts;
 }
 
-async function GetAmountByFrequency(amt, payFreq) {
+async function GetAmountByFrequency(amt: number, payFreq: string) {
   let newAmt = amt;
   switch (payFreq) {
     case "Weekly":
@@ -146,8 +227,12 @@ async function GetAmountByFrequency(amt, payFreq) {
   return newAmt;
 }
 
-async function GetAmountByRepeatType(amt, repeatNum, repeatType) {
-  return (amt / (repeatNum * (repeatType == "Months" ? 1 : 12)));
+async function GetAmountByRepeatType(
+  amt: number,
+  repeatNum: number,
+  repeatType: string
+) {
+  return amt / (repeatNum * (repeatType == "Months" ? 1 : 12));
 }
 
 export default async function handler(
@@ -178,21 +263,35 @@ export default async function handler(
       // Then, find the user's category details from the database (for this particular RunID)
       // and loop through each of those
       let runID = data[0][i].RunID;
-      let categories = data[1].filter((x) => x.RunID == runID);
+      let categories = data[1].filter((x: CategoryLocked) => x.RunID == runID);
       for (let j = 0; j < categories.length; j++) {
         // Find the adjusted amounts for this category
         // This will use the user's entered details, including Regular Expense details
-        let amountDetails = await GetAmountDetails(categories[j], mthDetails, data[0][i].PayFrequency);
+        let amountDetails = await GetAmountDetails(
+          categories[j],
+          mthDetails,
+          data[0][i].PayFrequency
+        );
         // console.log('amountDetails', amountDetails);
 
         // This will determine how much will be applied to each month in the user's budget
         // for this category, based on the adjusted amounts calculated above
-        let monthAmounts = await GetAutoMonthDetails(categories[j], amountDetails, mthDetails, data[0][i].NextPaydate);
+        let monthAmounts = await GetAutoMonthDetails(
+          categories[j],
+          amountDetails,
+          mthDetails,
+          data[0][i].NextPaydate
+        );
         // console.log('monthAmounts', monthAmounts);
 
         for (let k = 0; k < monthAmounts.length; k++) {
           let isIncluded = true;
-          let foundMonth = data[2].find(x => x.RunID == runID && x.CategoryID == categories[j].CategoryID && x.PostingMonth == monthAmounts[k].month);
+          let foundMonth = data[2].find(
+            (x: ExcludedMonth) =>
+              x.RunID == runID &&
+              x.CategoryID == categories[j].CategoryID &&
+              x.PostingMonth == monthAmounts[k].month
+          );
           if (foundMonth) {
             isIncluded = false;
           }
@@ -206,7 +305,8 @@ export default async function handler(
             categoryAmount: amountDetails.categoryAmount,
             categoryExtraAmount: amountDetails.categoryExtraAmount,
             categoryAdjustedAmount: amountDetails.categoryAdjustedAmount,
-            categoryAdjAmountPerPaycheck: amountDetails.categoryAdjAmountPerPaycheck,
+            categoryAdjAmountPerPaycheck:
+              amountDetails.categoryAdjAmountPerPaycheck,
           });
         }
       }
@@ -215,15 +315,19 @@ export default async function handler(
     // 3. Format the "results" object into the appropriate input object and run the query
     //    to update the locked tables in the database
     let params = {
-      saveLockedResultsInput: { results: [...results] }
-    }
-    await getAPIData(Queries.MUTATION_LOAD_LOCKED_AUTO_RUN_RESULTS, params, true);
+      saveLockedResultsInput: { results: [...results] },
+    };
+    await getAPIData(
+      Queries.MUTATION_LOAD_LOCKED_AUTO_RUN_RESULTS,
+      params,
+      true
+    );
 
     // Lastly, just send a message to let the process know everything ran successfully
     res.status(200).json({ status: "Successfully locked auto runs" });
   } catch (err) {
     // If there was an error during this entire function, print that to the user instead
-    console.log('Error', err);
+    console.log("Error", err);
     res.status(500).json({ status: "Error", errorMessage: err });
   }
 }

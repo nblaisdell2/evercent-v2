@@ -4,18 +4,56 @@ import { getAPIData, parseDate, saveNewYNABTokens } from "../../utils/utils";
 import { GetBudgetMonths, PostCategoryMonth } from "../../utils/ynab";
 import Queries from "../api/resolvers/resolverMapping.json";
 
-async function GetBudgetMonthDetails(category) {
+type RunDetails = {
+  RunID: string;
+  UserID: string;
+  BudgetID: string;
+  AccessToken: string;
+  RefreshToken: string;
+  ExpirationDate: string;
+};
+
+type CategoryMonth = {
+  RunID: string;
+  CategoryID: string;
+  PostingMonth: string;
+  AmountToPost: number;
+  IsIncluded: boolean;
+  CategoryAmount: number;
+  CategoryExtraAmount: number;
+  CategoryAdjustedAmount: number;
+  CategoryAdjAmountPerPaycheck: number;
+  IsMonthly: boolean;
+  NextDueDate: string;
+};
+
+type YNABMonth = {
+  month: string;
+  categories: YNABMonthCategory[];
+};
+
+type YNABMonthCategory = {
+  categoryGroupID: string;
+  categoryGroupName: string;
+  categoryID: string;
+  name: string;
+  budgeted: number;
+  activity: number;
+  available: number;
+};
+
+async function GetBudgetMonthDetails(runDetails: RunDetails) {
   let mthDetails = await GetBudgetMonths({
-    budgetID: category.BudgetID,
-    accessToken: category.AccessToken,
-    refreshToken: category.RefreshToken,
-    expirationDate: category.ExpirationDate,
+    budgetID: runDetails.BudgetID,
+    accessToken: runDetails.AccessToken,
+    refreshToken: runDetails.RefreshToken,
+    expirationDate: runDetails.ExpirationDate,
   });
 
   // If we got any token details, that means that we reached the YNAB API
   // threshold limit, OR our access token has reached its expiration date
   // If that's the case, we should update our token details in the database
-  saveNewYNABTokens(category.UserID, mthDetails.connDetails);
+  saveNewYNABTokens(runDetails.UserID, mthDetails.connDetails);
 
   return mthDetails.data;
 }
@@ -35,17 +73,22 @@ export default async function handler(
 
     for (let i = 0; i < data[0].length; i++) {
       let mthDetails = await GetBudgetMonthDetails(data[0][i]);
+      console.log("test", mthDetails[0].categories[0]);
 
-      let categoryMonths = data[1].filter((x) => x.RunID == data[0][i].RunID);
+      let categoryMonths = data[1].filter(
+        (x: CategoryMonth) => x.RunID == data[0][i].RunID
+      );
       console.log("catMonths", categoryMonths);
 
       for (let j = 0; j < categoryMonths.length; j++) {
         let ynabCategory = mthDetails
           .find(
-            (x) => x.month == categoryMonths[j].PostingMonth.substring(0, 10)
+            (x: YNABMonth) =>
+              x.month == categoryMonths[j].PostingMonth.substring(0, 10)
           )
           .categories.find(
-            (x) => x.categoryID.toUpperCase() == categoryMonths[j].CategoryID
+            (x: YNABMonthCategory) =>
+              x.categoryID.toUpperCase() == categoryMonths[j].CategoryID
           );
 
         let oldAmountBudgeted = ynabCategory.budgeted;
