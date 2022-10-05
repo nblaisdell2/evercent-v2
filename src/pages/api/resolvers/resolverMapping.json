@@ -11,6 +11,7 @@
     "QUERY_AUTO_RUNS": "spEV_GetAutoRunsUpcoming",
     "QUERY_PAST_AUTO_RUNS": "spEV_GetAutoRunsPast",
     "QUERY_RUNS_TO_LOCK": "spEV_GetAutoRunIDsToLock",
+    "QUERY_AUTO_RUNS_LOCKED": "spEV_GetAutomationRunDetailsLocked",
 
     "MUTATION_SAVE_YNAB_TOKENS": "spEV_YNAB_SaveAccessTokens",
     "MUTATION_UPDATE_USER_DETAILS": "spEV_UpdateUserDetails",

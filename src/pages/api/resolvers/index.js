@@ -1,4 +1,3 @@
-import Axios from "axios";
 import Queries from "../resolvers/resolverMapping.json";
 import {
   GetBudgets,
@@ -7,24 +6,7 @@ import {
   GetNewAccessToken,
   PostCategoryMonth,
 } from "../../../utils/ynab";
-import { getAPIData } from "../../../utils/utils";
-
-const INPUTS_TO_STRING = [
-  "updateCategoriesInput",
-  "saveAutomationInput",
-  "saveLockedResultsInput",
-  "savePastResultsInput",
-];
-
-async function saveNewYNABTokens(userID, newTokenDetails) {
-  if (newTokenDetails) {
-    await getAPIData(
-      Queries.MUTATION_SAVE_YNAB_TOKENS,
-      { userID: userID, ...newTokenDetails },
-      true
-    );
-  }
-}
+import { getAPIData, saveNewYNABTokens } from "../../../utils/utils";
 
 function createCategory(categoryData) {
   return {
