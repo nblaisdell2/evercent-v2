@@ -166,7 +166,9 @@ export default async function handler(
       );
     }
 
-    res.status(200).json({ name: "Budget Automation finished successfully!" });
+    res
+      .status(200)
+      .json({ status: "Budget Automation finished successfully!" });
   } catch (err) {
     // If there was an error during this entire function, print that to the user instead
     console.log("Error", err);
