@@ -67,7 +67,9 @@ export default async function handler(
 
     // If there are no results to run/lock within the next hour, exit here
     if (data[0].length == 0) {
-      res.status(200).json({ status: "No auto runs to lock. Exiting..." });
+      res
+        .status(200)
+        .json({ status: "No locked auto runs to automate. Exiting..." });
       return;
     }
 
