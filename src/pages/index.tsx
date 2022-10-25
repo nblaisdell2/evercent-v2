@@ -1,33 +1,47 @@
 import type { NextPage } from "next";
+import Header from "./components/Header";
+import UserHeader from "./components/UserHeader";
 import { useUser } from "@auth0/nextjs-auth0";
+import { useQuery } from "@apollo/client";
+import { GET_USER_ID } from "../graphql/queries";
 
 const Home: NextPage = () => {
-  // const { loading, error, data } = useQuery(GET_USER_ID, {
-  //   variables: {
-  //     userEmail: "nblaisdell2@gmail.com"
-  //   }
-  // });
+  const { user, isLoading, error } = useUser();
+  const userEmail: string = user ? (user.email as string) : "";
 
-  // console.log(error);
+  const {
+    loading,
+    error: errorID,
+    data,
+    refetch,
+  } = useQuery(GET_USER_ID, {
+    variables: { userEmail },
+  });
 
-  // if (loading) return <p>Loading...</p>;
-  // if (error) return <p>Error :(</p>;
+  const refetchUser = async () => {
+    await refetch({ userEmail });
+  };
 
-  // console.log(data);
+  if (loading) return <p>Loading...</p>;
+  if (error || errorID) {
+    return <p>Error :(</p>;
+  }
 
-  // const { user, error, isLoading } = useUser();
+  console.log("UserID", data.userID);
 
-  // if (isLoading) return <div>Loading...</div>;
-  // if (error) return <div>{error.message}</div>;
-
-  // console.log("user", user);
+  console.log("=== RE-RENDERING index.tsx ===");
 
   return (
-    <div>
-      Hello
-      {/* <a href="/api/auth/login">Login</a> */}
-      {/* <a href="/api/auth/logout">Logout</a> */}
-    </div>
+    <>
+      <Header />
+      {userEmail && (
+        <UserHeader
+          userID={data.userID.id}
+          budgetID={data.userID.defaultBudgetID}
+          refetchUser={refetchUser}
+        />
+      )}
+    </>
   );
 };
 

@@ -11,6 +11,7 @@
   "dependencies": {
     "@apollo/client": "^3.6.9",
     "@auth0/nextjs-auth0": "^1.9.1",
+    "@heroicons/react": "^2.0.12",
     "apollo-server-micro": "^3.10.2",
     "axios": "^0.27.2",
     "date-fns": "^2.29.3",

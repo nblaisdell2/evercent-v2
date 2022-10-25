@@ -16,6 +16,24 @@ export const SAVE_YNAB_TOKENS = gql`
   }
 `;
 
+export const REFRESH_YNAB_TOKENS = gql`
+  mutation RefreshYNABTokens(
+    $userID: ID!
+    $refreshToken: String!
+    $expirationDate: String!
+  ) {
+    refreshYNABTokens(
+      userID: $userID
+      refreshToken: $refreshToken
+      expirationDate: $expirationDate
+    ) {
+      accessToken
+      refreshToken
+      expirationDate
+    }
+  }
+`;
+
 export const POST_AMOUNT_TO_BUDGET = gql`
   mutation PostAmountToBudget(
     $userID: ID!

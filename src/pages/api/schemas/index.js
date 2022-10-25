@@ -4,6 +4,11 @@ export const typeDefs = gql`
   # ===========
   #   TYPES
   # ===========
+  type UserID {
+    id: ID!
+    defaultBudgetID: ID
+  }
+
   type User {
     id: ID!
     email: String!
@@ -194,10 +199,15 @@ export const typeDefs = gql`
   #  QUERIES
   # ===========
   type Query {
-    userID(userEmail: String!): ID!
+    userID(userEmail: String!): UserID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
     getNewAccessToken(authCode: String!): YNABConnection
+    getDefaultBudgetID(
+      userID: ID!
+      accessToken: String!
+      refreshToken: String!
+    ): ID!
     budgets(userID: ID!, accessToken: String!, refreshToken: String!): [Budget!]
     budgetName(
       userID: ID!
@@ -238,6 +248,11 @@ export const typeDefs = gql`
       refreshToken: String!
       expirationDate: String!
     ): String
+    refreshYNABTokens(
+      userID: ID!
+      refreshToken: String!
+      expirationDate: String!
+    ): YNABConnection
     postAmountToBudget(
       userID: ID!
       accessToken: String!
@@ -275,13 +290,5 @@ export const typeDefs = gql`
       saveAutomationInput: SaveAutomationInput!
     ): String
     cancelAutomationRuns(userBudgetInput: UserBudgetInput!): String
-    loadLockedAutoRunDetails(
-      saveLockedResultsInput: SaveLockedResultsInput!
-    ): String
-    addPastAutoRunResults(
-      runID: ID!
-      savePastResultsInput: SavePastResultsInput!
-    ): String
-    cleanupAutomationRun(userBudgetInput: UserBudgetInput!): String
   }
 `;

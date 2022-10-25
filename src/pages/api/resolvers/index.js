@@ -4,6 +4,8 @@ import {
   GetBudgetName,
   GetBudgetMonths,
   GetNewAccessToken,
+  GetNewAccessTokenRefresh,
+  GetDefaultBudgetID,
   PostCategoryMonth,
 } from "../../../utils/ynab";
 import { getAPIData, saveNewYNABTokens } from "../../../utils/utils";
@@ -134,8 +136,10 @@ export const resolvers = {
       const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
       const userData = queryData[0][0];
 
-      const userID = userData.UserID;
-      return userID;
+      return {
+        id: userData?.UserID,
+        defaultBudgetID: userData?.DefaultBudgetID,
+      };
     },
     user: async (_, args) => {
       const queryData = await getAPIData(Queries.QUERY_USER, args, false);
@@ -161,14 +165,30 @@ export const resolvers = {
       const details = queryData[0][0];
 
       return {
-        accessToken: details.AccessToken,
-        refreshToken: details.RefreshToken,
-        expirationDate: details.ExpirationDate,
+        accessToken: details?.AccessToken || "",
+        refreshToken: details?.RefreshToken || "",
+        expirationDate: details?.ExpirationDate || new Date().toISOString(),
       };
     },
     getNewAccessToken: async (_, args) => {
       const tokenDetails = await GetNewAccessToken(args);
+      saveNewYNABTokens(args.userID, tokenDetails);
+
       return tokenDetails;
+    },
+    getDefaultBudgetID: async (_, args) => {
+      const budgetID = await GetDefaultBudgetID(args);
+      console.log("BudgetID", budgetID);
+
+      saveNewYNABTokens(args.userID, budgetID.connDetails);
+
+      await getAPIData(
+        Queries.MUTATION_UPDATE_BUDGET_ID,
+        { ...args, budgetID },
+        true
+      );
+
+      return budgetID.data;
     },
     budgets: async (_, args) => {
       const budgetData = await GetBudgets(args);
@@ -275,6 +295,12 @@ export const resolvers = {
       );
       return !result ? "There was an error." : "Query Successful";
     },
+    refreshYNABTokens: async (_, args) => {
+      const result = await GetNewAccessTokenRefresh(args);
+      saveNewYNABTokens(args.userID, result.connDetails);
+
+      return result.data;
+    },
     postAmountToBudget: async (_, args) => {
       const result = await PostCategoryMonth(args);
       saveNewYNABTokens(args.userID, result.connDetails);
@@ -345,29 +371,29 @@ export const resolvers = {
       );
       return !result ? "There was an error." : "Query Successful";
     },
-    loadLockedAutoRunDetails: async (_, args) => {
-      const result = await getAPIData(
-        Queries.MUTATION_LOAD_LOCKED_AUTO_RUN_RESULTS,
-        args,
-        true
-      );
-      return !result ? "There was an error." : "Query Successful";
-    },
-    addPastAutoRunResults: async (_, args) => {
-      const result = await getAPIData(
-        Queries.MUTATION_ADD_PAST_AUTO_RUN_RESULTS,
-        args,
-        true
-      );
-      return !result ? "There was an error." : "Query Successful";
-    },
-    cleanupAutomationRun: async (_, args) => {
-      const result = await getAPIData(
-        Queries.MUTATION_CLEANUP_AUTOMATION_RUN,
-        args,
-        true
-      );
-      return !result ? "There was an error." : "Query Successful";
-    },
+    // loadLockedAutoRunDetails: async (_, args) => {
+    //   const result = await getAPIData(
+    //     Queries.MUTATION_LOAD_LOCKED_AUTO_RUN_RESULTS,
+    //     args,
+    //     true
+    //   );
+    //   return !result ? "There was an error." : "Query Successful";
+    // },
+    // addPastAutoRunResults: async (_, args) => {
+    //   const result = await getAPIData(
+    //     Queries.MUTATION_ADD_PAST_AUTO_RUN_RESULTS,
+    //     args,
+    //     true
+    //   );
+    //   return !result ? "There was an error." : "Query Successful";
+    // },
+    // cleanupAutomationRun: async (_, args) => {
+    //   const result = await getAPIData(
+    //     Queries.MUTATION_CLEANUP_AUTOMATION_RUN,
+    //     args,
+    //     true
+    //   );
+    //   return !result ? "There was an error." : "Query Successful";
+    // },
   },
 };

@@ -1,8 +1,11 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const GET_USER_ID = gql`
   query GetUserID($userEmail: String!) {
-    userID(userEmail: $userEmail)
+    userID(userEmail: $userEmail) {
+      id
+      defaultBudgetID
+    }
   }
 `;
 
@@ -68,9 +71,31 @@ export const GET_NEW_ACCESS_TOKEN = gql`
   }
 `;
 
+export const GET_DEFAULT_BUDGET_ID = gql`
+  query GetDefaultBudgetID(
+    $userID: ID!
+    $accessToken: String!
+    $refreshToken: String!
+  ) {
+    getDefaultBudgetID(
+      userID: $userID
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+    )
+  }
+`;
+
 export const GET_BUDGETS = gql`
-  query GetBudgets($userID: ID!, $accessToken: String!, $refreshToken: String!) {
-    budgets(userID: $userID, accessToken: $accessToken, refreshToken: $refreshToken) {
+  query GetBudgets(
+    $userID: ID!
+    $accessToken: String!
+    $refreshToken: String!
+  ) {
+    budgets(
+      userID: $userID
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+    ) {
       id
       name
     }
@@ -78,16 +103,34 @@ export const GET_BUDGETS = gql`
 `;
 
 export const GET_BUDGET_NAME = gql`
-  query GetBudgetName($userID: ID!, $accessToken: String!, $refreshToken: String!, $budgetID: ID!) {
-    budgetName(userID: $userID, accessToken: $accessToken, refreshToken: $refreshToken, budgetID: $budgetID) {
-      name
-    }
+  query GetBudgetName(
+    $userID: ID!
+    $accessToken: String!
+    $refreshToken: String!
+    $budgetID: ID!
+  ) {
+    budgetName(
+      userID: $userID
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+      budgetID: $budgetID
+    )
   }
 `;
 
 export const GET_BUDGET_MONTHS = gql`
-  query GetBudgetMonths($userID: ID!, $accessToken: String!, $refreshToken: String!, $budgetID: ID!) {
-    budgetMonths(userID: $userID, accessToken: $accessToken, refreshToken: $refreshToken, budgetID: $budgetID) {
+  query GetBudgetMonths(
+    $userID: ID!
+    $accessToken: String!
+    $refreshToken: String!
+    $budgetID: ID!
+  ) {
+    budgetMonths(
+      userID: $userID
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+      budgetID: $budgetID
+    ) {
       month
       categories {
         categoryGroupID

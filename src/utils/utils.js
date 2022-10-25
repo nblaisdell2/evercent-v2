@@ -62,5 +62,6 @@ export async function saveNewYNABTokens(userID, newTokenDetails) {
 }
 
 export function parseDate(isoDateString) {
+  if (!isoDateString) return new Date();
   return new Date(isoDateString.replace("T", " ") + "Z");
 }

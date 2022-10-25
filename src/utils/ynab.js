@@ -47,25 +47,13 @@ async function GetResponseWithTokenDetails(data, response) {
   };
 }
 
-async function GetNewAccessTokenRefresh({ refreshToken, expirationDate }) {
-  console.log("did I get the refresh token?", refreshToken);
-  console.log("did I get the expiration Date?", expirationDate);
-
-  return await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    grant_type: "refresh_token",
-    refresh_token: refreshToken,
-  }).then(async (response) => await FormatAccessTokenDetails(response.data));
-}
-
 async function SendYNABRequest(method, uri, params, postData) {
   console.log("Inside 'SendYNABRequest'");
 
-  // console.log("  method", method);
-  // console.log("  uri", uri);
-  // console.log("  params", params);
-  // console.log("  postData", postData);
+  console.log("  method", method);
+  console.log("  uri", uri);
+  console.log("  params", params);
+  console.log("  postData", postData);
   let details = {};
 
   // First, check to see if the user's access token has already expired,
@@ -77,8 +65,11 @@ async function SendYNABRequest(method, uri, params, postData) {
   // have to persist those new token details somewhere, for future requests.
   if (
     Object.keys(params).includes("expirationDate") &&
-    Object.keys(params).includes("refreshToken")
+    Object.keys(params).includes("refreshToken") &&
+    !Object.keys(params).includes("grant_type")
   ) {
+    console.log("checking expiration date");
+
     let now = new Date();
     let dtExpirationDateEarly = addMinutes(
       parseDate(params.expirationDate),
@@ -92,10 +83,13 @@ async function SendYNABRequest(method, uri, params, postData) {
       params.accessToken = newTokenDetails.accessToken;
     }
   }
+  console.log("here too");
 
   // Append the access token to the headers object of the request, if provided
   const foundAccessToken = Object.keys(params).includes("accessToken");
   if (foundAccessToken) {
+    console.log("adding headers");
+
     params = {
       ...params,
       headers: {
@@ -104,7 +98,18 @@ async function SendYNABRequest(method, uri, params, postData) {
     };
   }
 
-  // console.log("  new params", params);
+  // const foundAuthCode = Object.keys(params).includes("code");
+  // if (foundAuthCode) {
+  //   console.log("found auth code: " + params.code);
+  //   if (params.headers) {
+  //     params.headers["Access-Control-Allow-Origin"] = "*";
+  //   } else {
+  //     params.headers = {
+  //       "Access-Control-Allow-Origin": "*",
+  //     };
+  //   }
+  // }
+  console.log("  new params", params);
 
   // Run the request and get the response
   let responsePromise;
@@ -159,6 +164,12 @@ export function GetURL_YNABAuthorizationPage() {
   );
 }
 
+export function GetURL_YNABBudget(budgetID) {
+  return (
+    "https://app.youneedabudget.com/" + budgetID?.toLowerCase() + "/budget"
+  );
+}
+
 export async function GetNewAccessToken({ authCode }) {
   return await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
     client_id: CLIENT_ID,
@@ -167,6 +178,42 @@ export async function GetNewAccessToken({ authCode }) {
     grant_type: "authorization_code",
     code: authCode,
   }).then(async (response) => await FormatAccessTokenDetails(response.data));
+}
+
+export async function GetNewAccessTokenRefresh({
+  refreshToken,
+  expirationDate,
+}) {
+  console.log("did I get the refresh token?", refreshToken);
+  console.log("did I get the expiration Date?", expirationDate);
+
+  let response = await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
+    client_id: CLIENT_ID,
+    client_secret: CLIENT_SECRET,
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+  let formatted = await FormatAccessTokenDetails(response.data);
+
+  return {
+    data: formatted,
+    connDetails: formatted,
+  };
+}
+
+export async function GetDefaultBudgetID(params) {
+  console.log("getting default budget id");
+  let response = await SendYNABRequest(
+    get,
+    API_BASE_URL + "/budgets/default",
+    params
+  );
+  console.log("ynab repsnose", response);
+
+  let budgetData = response.data.data.budget;
+
+  let defaultBudgetID = budgetData.id;
+  return GetResponseWithTokenDetails(defaultBudgetID, response);
 }
 
 export async function GetBudgets(params) {
