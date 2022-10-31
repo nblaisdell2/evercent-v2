@@ -120,6 +120,7 @@ function YNABConnection({
       });
 
       await refetchYNABConnDetails();
+      await refetchUser();
     }
   };
 
