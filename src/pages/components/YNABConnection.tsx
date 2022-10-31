@@ -135,10 +135,10 @@ function YNABConnection({
   }, [router.query?.code]);
 
   useInterval(() => {
-    // setDelay(null);
+    setDelay(null);
     refreshYNABTokens(new Date());
-    // setDelay(10000);
-  }, 10000);
+    setDelay(10000);
+  }, delay);
 
   const budgetIDFound = !!budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
