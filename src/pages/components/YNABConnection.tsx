@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import { useInterval } from "../hooks/useInterval";
+import useInterval from "../hooks/useInterval";
 
 import {
   ArrowTopRightOnSquareIcon,
