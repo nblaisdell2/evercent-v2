@@ -50,6 +50,8 @@ function YNABConnection({
 
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
 
+  const [delay, setDelay] = useState<number | null>(10000);
+
   const {
     loading: loadingName,
     error: errorName,
@@ -143,8 +145,10 @@ function YNABConnection({
   useInterval(async () => {
     console.log("useInterval inside YNABConnection");
     const newTime = new Date();
+    setDelay(null);
     await refreshYNABTokens(newTime);
-  }, 10000);
+    setDelay(10000);
+  }, delay);
 
   const budgetIDFound = !!budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
