@@ -2035,7 +2035,7 @@
   "resolved" "https://registry.npmjs.org/micro-cors/-/micro-cors-0.1.1.tgz"
   "version" "0.1.1"
 
-"micro@^9.3.4":
+"micro@^9.3.4", "micro@^9.4.1":
   "integrity" "sha512-Lpjcbp6Y9GJIfewxDfTmu9eW0rt0MGo+Gs1d3yJLFa7mhErtKkCngGhDbA/O1gqUjEwsHh+jWPg8BJ0Bx4AgFA=="
   "resolved" "https://registry.npmjs.org/micro/-/micro-9.4.1.tgz"
   "version" "9.4.1"
