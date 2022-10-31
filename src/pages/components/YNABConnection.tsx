@@ -98,8 +98,8 @@ function YNABConnection({
     delete router.query.code;
     router.push(router);
 
-    await refetchYNABConnDetails();
     await refetchUser();
+    await refetchYNABConnDetails();
   };
 
   const refreshYNABTokens = async (newTime: Date) => {
@@ -119,8 +119,8 @@ function YNABConnection({
         },
       });
 
-      await refetchYNABConnDetails();
       await refetchUser();
+      await refetchYNABConnDetails();
     }
   };
 
@@ -193,7 +193,6 @@ function YNABConnection({
             <div>AccToken: {accessToken}</div>
             <div>RefToken: {refreshToken}</div>
             <div>ExpDate: {expirationDate}</div>
-            <div>RightNow: {new Date().toISOString()}</div>
           </div>
         </>
       ) : (
