@@ -125,19 +125,17 @@ function YNABConnection({
   };
 
   useEffect(() => {
-    refreshYNABTokens(new Date());
-  }, []);
-
-  useEffect(() => {
     if (router.query?.code) {
       saveNewYNABTokens(router.query.code as string);
     }
   }, [router.query?.code]);
 
-  useInterval(() => {
-    // setDelay(null);
+  useEffect(() => {
     refreshYNABTokens(new Date());
-    // setDelay(10000);
+  }, []);
+
+  useInterval(() => {
+    refreshYNABTokens(new Date());
   }, 10000);
 
   const budgetIDFound = !!budgetID;
