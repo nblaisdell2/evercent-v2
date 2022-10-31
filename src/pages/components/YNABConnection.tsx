@@ -65,88 +65,93 @@ function YNABConnection({
     },
   });
 
-  const saveNewYNABTokens = async (authCode: string) => {
-    console.log("GETTING NEW TOKENS");
-    let response = await getNewTokens({
-      variables: { userID, authCode },
-    });
-    if (error) {
-      console.log(error);
-    }
-    console.log(response);
-    let tokenDetails = response.data.getNewAccessToken;
-    // let tokenDetailInput = { userID, ...tokenDetails };
-    // await saveTokens({ variables: tokenDetailInput });
+  const saveNewYNABTokens = useCallback(
+    async (authCode: string) => {
+      console.log("GETTING NEW TOKENS");
+      let response = await getNewTokens({
+        variables: { userID, authCode },
+      });
+      console.log(response);
+      let tokenDetails = response.data.getNewAccessToken;
+      // let tokenDetailInput = { userID, ...tokenDetails };
+      // await saveTokens({ variables: tokenDetailInput });
 
-    // Get Budget Details from YNAB (BudgetID/BudgetName)
-    // and save the "DefaultBudgetID" to the database
-    await getYNABBudgetID({
-      variables: {
-        userID: userID,
-        accessToken: tokenDetails.accessToken,
-        refreshToken: tokenDetails.refreshToken,
-      },
-    });
-
-    // await updateBudgetID({
-    //   variables: {
-    //     userID: userID,
-    //     newBudgetID: newBudgetID.data.getDefaultBudgetID,
-    //   },
-    // });
-
-    delete router.query.code;
-    router.push(router);
-
-    await refetchYNABConnDetails();
-    await refetchUser();
-  };
-
-  const refreshYNABTokens = async (newTime: Date) => {
-    console.log("  refreshYNABTokens");
-    console.log({
-      refreshToken,
-      expirationDate,
-    });
-    if (newTime > parseDate(expirationDate) && refreshToken) {
-      console.log("Refreshing Tokens");
-
-      await refreshTokens({
+      // Get Budget Details from YNAB (BudgetID/BudgetName)
+      // and save the "DefaultBudgetID" to the database
+      await getYNABBudgetID({
         variables: {
           userID: userID,
-          refreshToken: refreshToken,
-          expirationDate: expirationDate,
+          accessToken: tokenDetails.accessToken,
+          refreshToken: tokenDetails.refreshToken,
         },
       });
 
+      // await updateBudgetID({
+      //   variables: {
+      //     userID: userID,
+      //     newBudgetID: newBudgetID.data.getDefaultBudgetID,
+      //   },
+      // });
+
+      delete router.query.code;
+      router.push(router);
+
       await refetchYNABConnDetails();
-    }
-  };
+      await refetchUser();
+    },
+    [
+      getNewTokens,
+      getYNABBudgetID,
+      refetchUser,
+      refetchYNABConnDetails,
+      router,
+      userID,
+    ]
+  );
 
-  useEffect(() => {
-    async function test() {
-      console.log("First Load");
-      await refreshYNABTokens(new Date());
-    }
-    test();
-  }, []);
+  const refreshYNABTokens = useCallback(
+    async (newTime: Date) => {
+      console.log("  refreshYNABTokens");
+      console.log({
+        refreshToken,
+        expirationDate,
+      });
+      if (newTime > parseDate(expirationDate) && refreshToken) {
+        console.log("Refreshing Tokens");
 
-  useEffect(() => {
-    async function test2() {
-      console.log("Checking for Auth Code");
+        await refreshTokens({
+          variables: {
+            userID: userID,
+            refreshToken: refreshToken,
+            expirationDate: expirationDate,
+          },
+        });
 
-      if (router.query?.code) {
-        await saveNewYNABTokens(router.query.code as string);
+        await refetchYNABConnDetails();
       }
+    },
+    [
+      refreshTokens,
+      refreshToken,
+      expirationDate,
+      userID,
+      refetchYNABConnDetails,
+    ]
+  );
+
+  useEffect(() => {
+    refreshYNABTokens(new Date());
+  }, [refreshYNABTokens]);
+
+  useEffect(() => {
+    if (router.query?.code) {
+      saveNewYNABTokens(router.query.code as string);
     }
-    test2();
-  }, [router.query?.code]);
+  }, [saveNewYNABTokens, router.query?.code]);
 
   useInterval(async () => {
-    console.log("useInterval inside YNABConnection");
-    const newTime = new Date();
     setDelay(null);
-    await refreshYNABTokens(newTime);
+    await refreshYNABTokens(new Date());
     setDelay(10000);
   }, delay);
 
