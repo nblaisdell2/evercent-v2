@@ -65,89 +65,73 @@ function YNABConnection({
     },
   });
 
-  const saveNewYNABTokens = useCallback(
-    async (authCode: string) => {
-      console.log("GETTING NEW TOKENS");
-      let response = await getNewTokens({
-        variables: { userID, authCode },
-      });
-      console.log(response);
-      let tokenDetails = response.data.getNewAccessToken;
-      // let tokenDetailInput = { userID, ...tokenDetails };
-      // await saveTokens({ variables: tokenDetailInput });
+  const saveNewYNABTokens = async (authCode: string) => {
+    console.log("GETTING NEW TOKENS");
+    let response = await getNewTokens({
+      variables: { userID, authCode },
+    });
+    if (error) {
+      console.log(error);
+    }
+    console.log(response);
+    let tokenDetails = response.data.getNewAccessToken;
+    // let tokenDetailInput = { userID, ...tokenDetails };
+    // await saveTokens({ variables: tokenDetailInput });
 
-      // Get Budget Details from YNAB (BudgetID/BudgetName)
-      // and save the "DefaultBudgetID" to the database
-      await getYNABBudgetID({
+    // Get Budget Details from YNAB (BudgetID/BudgetName)
+    // and save the "DefaultBudgetID" to the database
+    await getYNABBudgetID({
+      variables: {
+        userID: userID,
+        accessToken: tokenDetails.accessToken,
+        refreshToken: tokenDetails.refreshToken,
+      },
+    });
+
+    // await updateBudgetID({
+    //   variables: {
+    //     userID: userID,
+    //     newBudgetID: newBudgetID.data.getDefaultBudgetID,
+    //   },
+    // });
+
+    delete router.query.code;
+    router.push(router);
+
+    await refetchYNABConnDetails();
+    await refetchUser();
+  };
+
+  const refreshYNABTokens = async (newTime: Date) => {
+    console.log("  refreshYNABTokens");
+    console.log({
+      refreshToken,
+      expirationDate,
+    });
+    if (newTime > parseDate(expirationDate) && refreshToken) {
+      console.log("Refreshing Tokens");
+
+      await refreshTokens({
         variables: {
           userID: userID,
-          accessToken: tokenDetails.accessToken,
-          refreshToken: tokenDetails.refreshToken,
+          refreshToken: refreshToken,
+          expirationDate: expirationDate,
         },
       });
 
-      // await updateBudgetID({
-      //   variables: {
-      //     userID: userID,
-      //     newBudgetID: newBudgetID.data.getDefaultBudgetID,
-      //   },
-      // });
-
-      delete router.query.code;
-      router.push(router);
-
       await refetchYNABConnDetails();
-      await refetchUser();
-    },
-    [
-      getNewTokens,
-      getYNABBudgetID,
-      refetchUser,
-      refetchYNABConnDetails,
-      router,
-      userID,
-    ]
-  );
-
-  const refreshYNABTokens = useCallback(
-    async (newTime: Date) => {
-      console.log("  refreshYNABTokens");
-      console.log({
-        refreshToken,
-        expirationDate,
-      });
-      if (newTime > parseDate(expirationDate) && refreshToken) {
-        console.log("Refreshing Tokens");
-
-        await refreshTokens({
-          variables: {
-            userID: userID,
-            refreshToken: refreshToken,
-            expirationDate: expirationDate,
-          },
-        });
-
-        await refetchYNABConnDetails();
-      }
-    },
-    [
-      refreshTokens,
-      refreshToken,
-      expirationDate,
-      userID,
-      refetchYNABConnDetails,
-    ]
-  );
+    }
+  };
 
   useEffect(() => {
     refreshYNABTokens(new Date());
-  }, [refreshYNABTokens]);
+  }, []);
 
   useEffect(() => {
     if (router.query?.code) {
       saveNewYNABTokens(router.query.code as string);
     }
-  }, [saveNewYNABTokens, router.query?.code]);
+  }, [router.query?.code]);
 
   useInterval(async () => {
     setDelay(null);
