@@ -134,9 +134,9 @@ function YNABConnection({
     }
   }, [router.query?.code]);
 
-  useInterval(async () => {
+  useInterval(() => {
     // setDelay(null);
-    await refreshYNABTokens(new Date());
+    refreshYNABTokens(new Date());
     // setDelay(10000);
   }, 10000);
 
