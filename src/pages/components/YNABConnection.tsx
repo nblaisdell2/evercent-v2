@@ -24,16 +24,6 @@ import {
 } from "../../graphql/mutations";
 import { parseDate } from "../../utils/utils";
 
-interface YNABConnParams {
-  userID: string;
-  budgetID: string;
-  accessToken: string;
-  refreshToken: string;
-  expirationDate: string;
-  refetchYNABConnDetails: () => Promise<void>;
-  refetchUser: () => Promise<void>;
-}
-
 function YNABConnection({
   userID,
   budgetID,
@@ -42,7 +32,15 @@ function YNABConnection({
   expirationDate,
   refetchYNABConnDetails,
   refetchUser,
-}: YNABConnParams) {
+}: {
+  userID: string;
+  budgetID: string;
+  accessToken: string;
+  refreshToken: string;
+  expirationDate: string;
+  refetchYNABConnDetails: () => Promise<void>;
+  refetchUser: () => Promise<void>;
+}) {
   const router = useRouter();
 
   const [getNewTokens] = useLazyQuery(GET_NEW_ACCESS_TOKEN);

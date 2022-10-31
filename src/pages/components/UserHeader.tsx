@@ -4,13 +4,15 @@ import { GET_YNAB_CONN_DETAILS } from "../../graphql/queries";
 import UserDetails from "./UserDetails";
 import YNABConnection from "../components/YNABConnection";
 
-interface UserID {
+function UserHeader({
+  userID,
+  budgetID,
+  refetchUser,
+}: {
   userID: string;
   budgetID: string;
   refetchUser: () => Promise<void>;
-}
-
-function UserHeader({ userID, budgetID, refetchUser }: UserID) {
+}) {
   const {
     loading: loadingDetails,
     error: errorDetails,

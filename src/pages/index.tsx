@@ -27,9 +27,8 @@ const Home: NextPage = () => {
     return <p>Error :(</p>;
   }
 
-  console.log("UserID", data.userID);
-
   console.log("=== RE-RENDERING index.tsx ===");
+  console.log("UserID", data.userID);
 
   return (
     <>

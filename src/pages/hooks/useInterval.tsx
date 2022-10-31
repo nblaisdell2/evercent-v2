@@ -5,6 +5,7 @@ export function useInterval(callback: () => void, delay: number | null) {
 
   // Remember the latest callback if it changes.
   useEffect(() => {
+    console.log("useInterval - new callback found, overwriting...");
     savedCallback.current = callback;
   }, [callback]);
 
@@ -16,8 +17,12 @@ export function useInterval(callback: () => void, delay: number | null) {
       return;
     }
 
+    console.log("useInterval - Setting up Interval...");
     const id = setInterval(() => savedCallback.current(), delay);
 
-    return () => clearInterval(id);
+    return () => {
+      console.log("useInterval - Clearing Interval...");
+      clearInterval(id);
+    };
   }, [delay]);
 }

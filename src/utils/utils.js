@@ -9,9 +9,9 @@ const INPUTS_TO_STRING = [
 ];
 
 export async function getAPIData(storedProcName, params, isMutation) {
-  console.log("GET API DATA");
-  console.log("storedProcName", storedProcName);
-  console.log("params", params);
+  // console.log("GET API DATA");
+  // console.log("storedProcName", storedProcName);
+  // console.log("params", params);
 
   const baseURL = process.env.DB_API_HOST;
 
@@ -34,7 +34,7 @@ export async function getAPIData(storedProcName, params, isMutation) {
     }
   }
 
-  console.log("URL (GET): " + baseURL + "foo");
+  // console.log("URL (GET): " + baseURL + "foo");
   console.log("apiParams", apiParams);
 
   return await Axios({
