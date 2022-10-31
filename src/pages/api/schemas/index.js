@@ -202,7 +202,7 @@ export const typeDefs = gql`
     userID(userEmail: String!): UserID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
-    getNewAccessToken(authCode: String!): YNABConnection
+    getNewAccessToken(userID: ID!, authCode: String!): YNABConnection
     getDefaultBudgetID(
       userID: ID!
       accessToken: String!

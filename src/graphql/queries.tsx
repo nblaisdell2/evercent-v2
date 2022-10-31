@@ -62,8 +62,8 @@ export const GET_YNAB_CONN_DETAILS = gql`
 `;
 
 export const GET_NEW_ACCESS_TOKEN = gql`
-  query GetNewAccessToken($authCode: String!) {
-    getNewAccessToken(authCode: $authCode) {
+  query GetNewAccessToken($userID: ID!, $authCode: String!) {
+    getNewAccessToken(userID: $userID, authCode: $authCode) {
       accessToken
       refreshToken
       expirationDate

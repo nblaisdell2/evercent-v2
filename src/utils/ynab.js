@@ -170,7 +170,7 @@ export function GetURL_YNABBudget(budgetID) {
   );
 }
 
-export async function GetNewAccessToken({ authCode }) {
+export async function GetNewAccessToken({ userID, authCode }) {
   return await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
     client_id: CLIENT_ID,
     client_secret: CLIENT_SECRET,

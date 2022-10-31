@@ -171,6 +171,7 @@ export const resolvers = {
       };
     },
     getNewAccessToken: async (_, args) => {
+      console.log("resolvers - new access tokens");
       const tokenDetails = await GetNewAccessToken(args);
       saveNewYNABTokens(args.userID, tokenDetails);
 
@@ -184,7 +185,7 @@ export const resolvers = {
 
       await getAPIData(
         Queries.MUTATION_UPDATE_BUDGET_ID,
-        { ...args, budgetID },
+        { userID: args.userID, budgetID: budgetID.data },
         true
       );
 

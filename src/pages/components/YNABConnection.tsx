@@ -43,7 +43,7 @@ function YNABConnection({
 }) {
   const router = useRouter();
 
-  const [getNewTokens] = useLazyQuery(GET_NEW_ACCESS_TOKEN);
+  const [getNewTokens, { error }] = useLazyQuery(GET_NEW_ACCESS_TOKEN);
   // const [saveTokens] = useMutation(SAVE_YNAB_TOKENS);
   const [getYNABBudgetID] = useLazyQuery(GET_DEFAULT_BUDGET_ID);
   // const [updateBudgetID] = useMutation(UPDATE_DEFAULT_BUDGET_ID);
@@ -66,8 +66,12 @@ function YNABConnection({
   const saveNewYNABTokens = async (authCode: string) => {
     console.log("GETTING NEW TOKENS");
     let response = await getNewTokens({
-      variables: { authCode },
+      variables: { userID, authCode },
     });
+    if (error) {
+      console.log(error);
+    }
+    console.log(response);
     let tokenDetails = response.data.getNewAccessToken;
     // let tokenDetailInput = { userID, ...tokenDetails };
     // await saveTokens({ variables: tokenDetailInput });
