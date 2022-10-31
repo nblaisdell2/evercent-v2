@@ -50,10 +50,10 @@ async function GetResponseWithTokenDetails(data, response) {
 async function SendYNABRequest(method, uri, params, postData) {
   console.log("Inside 'SendYNABRequest'");
 
-  console.log("  method", method);
+  // console.log("  method", method);
   console.log("  uri", uri);
-  console.log("  params", params);
-  console.log("  postData", postData);
+  // console.log("  params", params);
+  // console.log("  postData", postData);
   let details = {};
 
   // First, check to see if the user's access token has already expired,
@@ -83,13 +83,10 @@ async function SendYNABRequest(method, uri, params, postData) {
       params.accessToken = newTokenDetails.accessToken;
     }
   }
-  console.log("here too");
 
   // Append the access token to the headers object of the request, if provided
   const foundAccessToken = Object.keys(params).includes("accessToken");
   if (foundAccessToken) {
-    console.log("adding headers");
-
     params = {
       ...params,
       headers: {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/router";
-import useInterval from "../hooks/useInterval";
+import { useInterval } from "usehooks-ts";
 
 import {
   ArrowTopRightOnSquareIcon,
@@ -122,22 +122,29 @@ function YNABConnection({
   };
 
   useEffect(() => {
-    console.log("First Load");
-    refreshYNABTokens(new Date());
+    async function test() {
+      console.log("First Load");
+      await refreshYNABTokens(new Date());
+    }
+    test();
   }, []);
 
   useEffect(() => {
-    console.log("Checking for Auth Code");
+    async function test2() {
+      console.log("Checking for Auth Code");
 
-    if (router.query?.code) {
-      saveNewYNABTokens(router.query.code as string);
+      if (router.query?.code) {
+        await saveNewYNABTokens(router.query.code as string);
+      }
     }
+    test2();
   }, [router.query?.code]);
 
-  useInterval(() => {
+  useInterval(async () => {
+    console.log("useInterval inside YNABConnection");
     const newTime = new Date();
-    refreshYNABTokens(newTime);
-  }, 60000);
+    await refreshYNABTokens(newTime);
+  }, 10000);
 
   const budgetIDFound = !!budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
