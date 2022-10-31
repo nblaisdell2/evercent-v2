@@ -50,7 +50,7 @@ function YNABConnection({
 
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
 
-  const [delay, setDelay] = useState<number | null>(10000);
+  // const [delay, setDelay] = useState<number | null>(10000);
 
   const {
     loading: loadingName,
@@ -135,10 +135,10 @@ function YNABConnection({
   }, [router.query?.code]);
 
   useInterval(() => {
-    setDelay(null);
+    // setDelay(null);
     refreshYNABTokens(new Date());
-    setDelay(10000);
-  }, delay);
+    // setDelay(10000);
+  }, 10000);
 
   const budgetIDFound = !!budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
