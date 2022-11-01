@@ -8,10 +8,12 @@ function UserHeader({
   userID,
   budgetID,
   refetchUser,
+  showModal,
 }: {
   userID: string;
   budgetID: string;
   refetchUser: () => Promise<void>;
+  showModal: (modalContentID: number, modalContent: JSX.Element) => void;
 }) {
   const {
     loading: loadingDetails,
@@ -25,15 +27,12 @@ function UserHeader({
   });
 
   const refetchYNABConnDetails = async () => {
-    console.log("Refetching ynab connection details from database");
     await refetch({ userID });
   };
 
   if (loadingDetails) {
     return <div>Still Loading...</div>;
   }
-
-  console.log("=== RE-RENDERING UserHeader.tsx ===");
 
   return (
     <div className="bg-[#F6F9FA] flex justify-between px-10 py-1">
@@ -45,6 +44,7 @@ function UserHeader({
         expirationDate={dataDetails?.ynabConnDetails.expirationDate}
         refetchYNABConnDetails={refetchYNABConnDetails}
         refetchUser={refetchUser}
+        showModal={showModal}
       />
       <UserDetails />
     </div>

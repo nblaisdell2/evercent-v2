@@ -8,6 +8,18 @@ const INPUTS_TO_STRING = [
   "savePastResultsInput",
 ];
 
+export const ModalType = {
+  CHANGE_BUDGET: 0,
+  USER_DETAILS: 1,
+  RESET_REGULAR_EXPENSES: 2,
+  CANCEL_AUTOMATION: 3,
+  ALL_CATEGORIES_LIST: 4,
+  BUDGET_HELPER: 5,
+  BUDGET_AUTOMATION: 6,
+  REGULAR_EXPENSES: 7,
+  UPCOMING_EXPENSES: 8,
+};
+
 export async function getAPIData(storedProcName, params, isMutation) {
   // console.log("GET API DATA");
   // console.log("storedProcName", storedProcName);

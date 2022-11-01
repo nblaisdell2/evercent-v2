@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useInterval } from "usehooks-ts";
 
@@ -17,12 +17,10 @@ import {
   GET_DEFAULT_BUDGET_ID,
   GET_BUDGET_NAME,
 } from "../../graphql/queries";
-import {
-  REFRESH_YNAB_TOKENS,
-  // SAVE_YNAB_TOKENS,
-  // UPDATE_DEFAULT_BUDGET_ID,
-} from "../../graphql/mutations";
-import { parseDate } from "../../utils/utils";
+import { REFRESH_YNAB_TOKENS } from "../../graphql/mutations";
+import { parseDate, ModalType } from "../../utils/utils";
+import Label from "../elements/Label";
+import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 
 function YNABConnection({
   userID,
@@ -32,6 +30,7 @@ function YNABConnection({
   expirationDate,
   refetchYNABConnDetails,
   refetchUser,
+  showModal,
 }: {
   userID: string;
   budgetID: string;
@@ -40,17 +39,13 @@ function YNABConnection({
   expirationDate: string;
   refetchYNABConnDetails: () => Promise<void>;
   refetchUser: () => Promise<void>;
+  showModal: (modalContentID: number, modalContent: JSX.Element) => void;
 }) {
   const router = useRouter();
 
-  const [getNewTokens, { error }] = useLazyQuery(GET_NEW_ACCESS_TOKEN);
-  // const [saveTokens] = useMutation(SAVE_YNAB_TOKENS);
+  const [getNewTokens] = useLazyQuery(GET_NEW_ACCESS_TOKEN);
   const [getYNABBudgetID] = useLazyQuery(GET_DEFAULT_BUDGET_ID);
-  // const [updateBudgetID] = useMutation(UPDATE_DEFAULT_BUDGET_ID);
-
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
-
-  // const [delay, setDelay] = useState<number | null>(10000);
 
   const {
     loading: loadingName,
@@ -66,17 +61,11 @@ function YNABConnection({
   });
 
   const saveNewYNABTokens = async (authCode: string) => {
-    console.log("GETTING NEW TOKENS");
     let response = await getNewTokens({
       variables: { userID, authCode },
     });
-    if (error) {
-      console.log(error);
-    }
     console.log(response);
     let tokenDetails = response.data.getNewAccessToken;
-    // let tokenDetailInput = { userID, ...tokenDetails };
-    // await saveTokens({ variables: tokenDetailInput });
 
     // Get Budget Details from YNAB (BudgetID/BudgetName)
     // and save the "DefaultBudgetID" to the database
@@ -88,13 +77,6 @@ function YNABConnection({
       },
     });
 
-    // await updateBudgetID({
-    //   variables: {
-    //     userID: userID,
-    //     newBudgetID: newBudgetID.data.getDefaultBudgetID,
-    //   },
-    // });
-
     delete router.query.code;
     router.push(router);
 
@@ -103,11 +85,6 @@ function YNABConnection({
   };
 
   const refreshYNABTokens = async (newTime: Date) => {
-    console.log("  refreshYNABTokens");
-    console.log({
-      refreshToken,
-      expirationDate,
-    });
     if (newTime > parseDate(expirationDate) && refreshToken) {
       console.log("Refreshing Tokens");
 
@@ -136,7 +113,7 @@ function YNABConnection({
 
   useInterval(() => {
     refreshYNABTokens(new Date());
-  }, 10000);
+  }, 60000);
 
   const budgetIDFound = !!budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
@@ -146,14 +123,10 @@ function YNABConnection({
     return <div>Still Loading...</div>;
   }
 
-  console.log("=== RE-RENDERING YNABConnection.tsx ===");
-
   return (
     <div className="flex">
       <div className="text-center mr-4">
-        <div className="font-raleway text-black font-bold underline">
-          API Connection
-        </div>
+        <Label label={"API Connection"} />
         <div
           className={`${
             !budgetIDFound ? "bg-[#E48E0C]" : "bg-green-600"
@@ -166,12 +139,23 @@ function YNABConnection({
       {budgetIDFound ? (
         <>
           <div className="text-center ml-4">
-            <div className="font-raleway text-black font-bold underline">
-              Current Budget
-            </div>
-            <div className="flex space-x-1">
+            <Label label={"Current Budget"} />
+            <div className="flex justify-center space-x-1">
               <div className=" font-bold">{budgetName?.budgetName}</div>
-              <PencilSquareIcon className="h-6 w-6 stroke-2 hover:cursor-pointer" />
+              <PencilSquareIcon
+                className="h-6 w-6 stroke-2 hover:cursor-pointer"
+                onClick={() =>
+                  showModal(
+                    ModalType.CHANGE_BUDGET,
+                    <ChangeBudgetModal
+                      currBudgetID={budgetID}
+                      accessToken={accessToken}
+                      refreshToken={refreshToken}
+                      userID={userID}
+                    />
+                  )
+                }
+              />
 
               <div>
                 <a
@@ -183,14 +167,6 @@ function YNABConnection({
                 </a>
               </div>
             </div>
-          </div>
-
-          {/* Temporary / Can be removed later */}
-          {/* This is to show that the refreshing of the tokens is happening */}
-          <div>
-            <div>AccToken: {accessToken}</div>
-            <div>RefToken: {refreshToken}</div>
-            <div>ExpDate: {expirationDate}</div>
           </div>
         </>
       ) : (
