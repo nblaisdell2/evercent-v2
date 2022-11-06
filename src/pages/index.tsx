@@ -23,6 +23,10 @@ const Home: NextPage = () => {
     setIsOpen(true);
   };
 
+  const closeModal = () => {
+    setIsOpen(false);
+  };
+
   const { user, isLoading, error } = useUser();
   const userEmail: string = user ? (user.email as string) : "";
 
@@ -61,6 +65,7 @@ const Home: NextPage = () => {
           budgetID={data.userID.defaultBudgetID}
           refetchUser={refetchUser}
           showModal={showModal}
+          closeModal={closeModal}
         />
       )}
     </>

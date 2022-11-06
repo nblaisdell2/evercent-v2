@@ -77,3 +77,7 @@ export function parseDate(isoDateString) {
   if (!isoDateString) return new Date();
   return new Date(isoDateString.replace("T", " ") + "Z");
 }
+
+export function padTo2Digits(num, digits = 2) {
+  return num.toString().padStart(digits, "0");
+}

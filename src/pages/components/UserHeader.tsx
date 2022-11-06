@@ -9,11 +9,13 @@ function UserHeader({
   budgetID,
   refetchUser,
   showModal,
+  closeModal,
 }: {
   userID: string;
   budgetID: string;
   refetchUser: () => Promise<void>;
   showModal: (modalContentID: number, modalContent: JSX.Element) => void;
+  closeModal: () => void;
 }) {
   const {
     loading: loadingDetails,
@@ -46,7 +48,12 @@ function UserHeader({
         refetchUser={refetchUser}
         showModal={showModal}
       />
-      <UserDetails />
+      <UserDetails
+        userID={userID}
+        budgetID={budgetID}
+        showModal={showModal}
+        closeModal={closeModal}
+      />
     </div>
   );
 }
