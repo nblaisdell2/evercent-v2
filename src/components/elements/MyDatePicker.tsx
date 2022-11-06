@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useDatePickerState } from "@react-stately/datepicker";
 import { useDatePicker } from "@react-aria/datepicker";
 import { FieldButton } from "./datepicker/Button";
@@ -6,6 +6,7 @@ import { Calendar } from "./datepicker/Calendar";
 import { DateField } from "./datepicker/DateField";
 import { OverlayProvider } from "@react-aria/overlays";
 import { Popover } from "./datepicker/Popover";
+import { parseDate } from "@internationalized/date";
 import {
   CalendarIcon,
   ExclamationCircleIcon,
@@ -22,6 +23,17 @@ export default function MyDatePicker(props: any) {
     dialogProps,
     calendarProps,
   } = useDatePicker(props, state, ref);
+
+  console.log("datepicker", {
+    props,
+    state,
+    groupProps,
+    labelProps,
+    fieldProps,
+    buttonProps,
+    dialogProps,
+    calendarProps,
+  });
 
   return (
     <OverlayProvider>
@@ -43,7 +55,14 @@ export default function MyDatePicker(props: any) {
             isOpen={state.isOpen}
             onClose={() => state.setOpen(false)}
           >
-            <Calendar {...calendarProps} />
+            <Calendar
+              {...calendarProps}
+              // focusedValue={state.dateValue}
+              // onFocusChange={(dateValue: any) => {
+              //   state.setDateValue(dateValue);
+              //   state.setOpen(true);
+              // }}
+            />
           </Popover>
         )}
       </div>

@@ -36,6 +36,8 @@ function UpdateUserDetailsModal({
 
   const [updateDetails] = useMutation(UPDATE_USER_DETAILS);
 
+  console.log("MODAL - newNextPaydate", newNextPaydate.substring(0, 10));
+
   return (
     <div className="text-center">
       <div className="text-3xl font-bold">User Details</div>
@@ -69,10 +71,15 @@ function UpdateUserDetailsModal({
       <div className="mt-16">
         <Label label="Next Paydate" />
         <MyDatePicker
-          label="Appointment date"
           minValue={today(getLocalTimeZone())}
           value={parseDate(newNextPaydate.substring(0, 10))}
           onChange={(newDate: any) => {
+            console.log(
+              "MODAL - OnChange - setting to",
+              new Date(newDate.year, newDate.month - 1, newDate.day)
+                .toISOString()
+                .substring(0, 10)
+            );
             setNewNextPaydate(
               new Date(
                 newDate.year,
