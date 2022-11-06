@@ -136,7 +136,7 @@ export function Calendar(props: any) {
           <CalendarGrid state={state} props={{}} />
         )) ||
           (calendarMode == "MonthPicker" && (
-            <div className="">
+            <div>
               <div className="flex flex-col">
                 <div className="flex">
                   {monthButton("Jan", 1)}
