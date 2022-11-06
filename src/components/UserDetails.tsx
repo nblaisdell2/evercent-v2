@@ -1,10 +1,10 @@
 import React from "react";
-import Label from "../elements/Label";
+import Label from "./elements/Label";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@apollo/client";
-import { GET_USER_DETAILS } from "../../graphql/queries";
+import { GET_USER_DETAILS } from "../graphql/queries";
 import { differenceInDays, startOfToday } from "date-fns";
-import { parseDate, padTo2Digits, ModalType } from "../../utils/utils";
+import { parseDate, padTo2Digits, ModalType } from "../utils/utils";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
 
 function UserDetails({

@@ -3,9 +3,9 @@ import type { NextPage } from "next";
 import { useUser } from "@auth0/nextjs-auth0";
 import { useQuery } from "@apollo/client";
 
-import Header from "./components/Header";
-import UserHeader from "./components/UserHeader";
-import ModalContent from "./components/modal/ModalContent";
+import Header from "../components/Header";
+import UserHeader from "../components/UserHeader";
+import ModalContent from "../components/modal/ModalContent";
 import { GET_USER_ID } from "../graphql/queries";
 
 const Home: NextPage = () => {

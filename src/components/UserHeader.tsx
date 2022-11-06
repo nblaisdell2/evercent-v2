@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/client";
 import React from "react";
-import { GET_YNAB_CONN_DETAILS } from "../../graphql/queries";
+import { GET_YNAB_CONN_DETAILS } from "../graphql/queries";
 import UserDetails from "./UserDetails";
-import YNABConnection from "../components/YNABConnection";
+import YNABConnection from "./YNABConnection";
 
 function UserHeader({
   userID,

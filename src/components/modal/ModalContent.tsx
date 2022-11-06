@@ -1,6 +1,6 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { ModalType } from "../../../utils/utils";
+import { ModalType } from "../../utils/utils";
 
 type Props = {
   open: boolean;

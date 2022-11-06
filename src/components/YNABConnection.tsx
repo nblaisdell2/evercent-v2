@@ -7,19 +7,16 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import {
-  GetURL_YNABAuthorizationPage,
-  GetURL_YNABBudget,
-} from "../../utils/ynab";
+import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
   GET_NEW_ACCESS_TOKEN,
   GET_DEFAULT_BUDGET_ID,
   GET_BUDGET_NAME,
-} from "../../graphql/queries";
-import { REFRESH_YNAB_TOKENS } from "../../graphql/mutations";
-import { parseDate, ModalType } from "../../utils/utils";
-import Label from "../elements/Label";
+} from "../graphql/queries";
+import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
+import { parseDate, ModalType } from "../utils/utils";
+import Label from "./elements/Label";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 
 function YNABConnection({

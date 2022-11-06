@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import Label from "../../elements/Label";
-import MyDatePicker from "../../elements/MyDatePicker";
-import RadioButtonGroup from "../../elements/RadioButtonGroup";
+import Label from "../elements/Label";
+import MyDatePicker from "../elements/MyDatePicker";
+import RadioButtonGroup from "../elements/RadioButtonGroup";
 import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useMutation } from "@apollo/client";
-import { UPDATE_USER_DETAILS } from "../../../graphql/mutations";
+import { UPDATE_USER_DETAILS } from "../../graphql/mutations";
 
 type Props = {
   userID: string;

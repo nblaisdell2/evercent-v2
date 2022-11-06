@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from "@apollo/client";
 import React, { useState } from "react";
-import { GET_BUDGETS } from "../../../graphql/queries";
-import Label from "../../elements/Label";
+import { GET_BUDGETS } from "../../graphql/queries";
+import Label from "../elements/Label";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
-import { UPDATE_DEFAULT_BUDGET_ID } from "../../../graphql/mutations";
+import { UPDATE_DEFAULT_BUDGET_ID } from "../../graphql/mutations";
 
 type Props = {
   currBudgetID: string;
