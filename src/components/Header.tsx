@@ -9,7 +9,7 @@ function Header() {
   return (
     <div className="bg-blue-900 text-white text-base sm:text-xl font-cinzel py-1 flex justify-between items-center">
       <div className="flex items-center">
-        <div className="h-10 w-10 relative ml-2">
+        <div className="h-8 sm:h-10 w-8 sm:w-10 relative ml-2">
           <Image
             src="/evercent_logo.png"
             objectFit="contain"
@@ -24,7 +24,7 @@ function Header() {
         {user ? "Welcome, " + user.nickname : "Welcome"}
       </div>
 
-      <div className="mr-2 hover:underline">
+      <div className="whitespace-nowrap sm:mr-0 mr-2 hover:underline">
         {user ? (
           <Link href={"/api/auth/logout"}>Log out</Link>
         ) : (
