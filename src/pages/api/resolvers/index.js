@@ -171,7 +171,6 @@ export const resolvers = {
       };
     },
     getNewAccessToken: async (_, args) => {
-      console.log("resolvers - new access tokens");
       const tokenDetails = await GetNewAccessToken(args);
       saveNewYNABTokens(args.userID, tokenDetails);
 
@@ -179,8 +178,6 @@ export const resolvers = {
     },
     getDefaultBudgetID: async (_, args) => {
       const budgetID = await GetDefaultBudgetID(args);
-      console.log("BudgetID", budgetID);
-
       saveNewYNABTokens(args.userID, budgetID.connDetails);
 
       await getAPIData(

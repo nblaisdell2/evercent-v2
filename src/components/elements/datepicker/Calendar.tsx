@@ -8,7 +8,6 @@ import { CalendarGrid } from "./CalendarGrid";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  CheckIcon,
   ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
@@ -26,22 +25,9 @@ export function Calendar(props: any) {
     state
   );
 
-  console.log("calendar", {
-    props,
-    state,
-    calendarProps,
-    prevButtonProps,
-    nextButtonProps,
-    title,
-  });
-
-  console.log("TITLE = '" + title + "'");
-
   const [calendarMode, setCalendarMode] = useState("DatePicker"); // "DatePicker", "MonthPicker"
 
   const monthButton = (text: string, num: number) => {
-    console.log("monthButton - ", state.minValue);
-
     const isDisabled =
       state.minValue &&
       (state.focusedDate.year < state.minValue.year ||

@@ -58,10 +58,6 @@ export function CalendarCell({ state, date }: { state: any; date: any }) {
         } ${isDisabled ? "disabled" : ""}`}
       >
         <div
-          onClick={() => {
-            console.log("date", date);
-            console.log("formattedDate", formattedDate);
-          }}
           className={`w-full h-full hover:cursor-pointer rounded-full flex items-center justify-center ${
             isDisabled && !isInvalid ? "text-gray-400 hover:cursor-default" : ""
           } ${

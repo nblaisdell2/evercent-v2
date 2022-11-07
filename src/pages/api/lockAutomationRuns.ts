@@ -83,8 +83,6 @@ async function GetAmountDetails(
   mthDetails: YNABMonth[],
   payFreq: string
 ) {
-  // console.log('category', category);
-
   if (!category.IncludeOnChart) {
     return {
       categoryAmount: category.CategoryAmount,
@@ -109,7 +107,6 @@ async function GetAmountDetails(
             x.categoryID.toUpperCase() == category.CategoryID
         );
 
-      // console.log("ynabCategory", ynabCategory);
       if (ynabCategory && ynabCategory.available >= category.CategoryAmount) {
         amt = await GetAmountByRepeatType(
           amt,

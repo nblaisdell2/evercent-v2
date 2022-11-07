@@ -78,6 +78,14 @@ export function parseDate(isoDateString) {
   return new Date(isoDateString.replace("T", " ") + "Z");
 }
 
+export function formatDate(date) {
+  return [
+    padTo2Digits(date.getMonth() + 1),
+    padTo2Digits(date.getDate()),
+    date.getFullYear(),
+  ].join("/");
+}
+
 export function padTo2Digits(num, digits = 2) {
   return num.toString().padStart(digits, "0");
 }

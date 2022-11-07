@@ -1,10 +1,14 @@
 import React from "react";
-import Label from "./elements/Label";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+
 import { useQuery } from "@apollo/client";
 import { GET_USER_DETAILS } from "../graphql/queries";
+
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+
 import { differenceInDays, startOfToday } from "date-fns";
-import { parseDate, padTo2Digits, ModalType } from "../utils/utils";
+import { parseDate, formatDate, ModalType } from "../utils/utils";
+
+import Label from "./elements/Label";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
 
 function UserDetails({
@@ -27,24 +31,10 @@ function UserDetails({
     },
   });
 
-  const formatDate = (date: Date): string => {
-    return [
-      padTo2Digits(date.getMonth() + 1),
-      padTo2Digits(date.getDate()),
-      date.getFullYear(),
-    ].join("/");
-  };
-
   if (loading) return null;
 
   const { monthlyIncome, nextPaydate, payFrequency } = data.user;
   const daysAway = differenceInDays(parseDate(nextPaydate), startOfToday());
-
-  console.log({
-    monthlyIncome,
-    payFrequency,
-    nextPaydate,
-  });
 
   return (
     <div className="flex items-center space-x-6">

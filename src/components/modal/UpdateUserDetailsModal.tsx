@@ -1,11 +1,15 @@
 import React, { useState } from "react";
+
+import { useMutation } from "@apollo/client";
+import { UPDATE_USER_DETAILS } from "../../graphql/mutations";
+
+import { CheckIcon } from "@heroicons/react/24/outline";
+
+import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
+
 import Label from "../elements/Label";
 import MyDatePicker from "../elements/MyDatePicker";
 import RadioButtonGroup from "../elements/RadioButtonGroup";
-import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
-import { CheckIcon } from "@heroicons/react/24/outline";
-import { useMutation } from "@apollo/client";
-import { UPDATE_USER_DETAILS } from "../../graphql/mutations";
 
 type Props = {
   userID: string;
@@ -36,7 +40,28 @@ function UpdateUserDetailsModal({
 
   const [updateDetails] = useMutation(UPDATE_USER_DETAILS);
 
-  console.log("MODAL - newNextPaydate", newNextPaydate.substring(0, 10));
+  const saveNewUserDetails = async () => {
+    if (
+      monthlyIncome !== newMonthlyIncome ||
+      payFrequency !== newPayFrequency ||
+      nextPaydate !== newNextPaydate
+    ) {
+      closeModal();
+
+      await updateDetails({
+        variables: {
+          userBudgetInput: {
+            userID: userID,
+            budgetID: budgetID,
+          },
+          newMonthlyIncome: newMonthlyIncome,
+          payFreq: newPayFrequency,
+          nextPaydate: newNextPaydate,
+        },
+      });
+      refetchUserDetails();
+    }
+  };
 
   return (
     <div className="text-center">
@@ -74,12 +99,6 @@ function UpdateUserDetailsModal({
           minValue={today(getLocalTimeZone())}
           value={parseDate(newNextPaydate.substring(0, 10))}
           onChange={(newDate: any) => {
-            console.log(
-              "MODAL - OnChange - setting to",
-              new Date(newDate.year, newDate.month - 1, newDate.day)
-                .toISOString()
-                .substring(0, 10)
-            );
             setNewNextPaydate(
               new Date(
                 newDate.year,
@@ -93,35 +112,7 @@ function UpdateUserDetailsModal({
 
       <div className="mt-16">
         <button
-          onClick={async () => {
-            console.log({
-              newMonthlyIncome,
-              newPayFrequency,
-              newNextPaydate,
-            });
-
-            if (
-              monthlyIncome !== newMonthlyIncome ||
-              payFrequency !== newPayFrequency ||
-              nextPaydate !== newNextPaydate
-            ) {
-              console.log("Updating user details in database");
-              await updateDetails({
-                variables: {
-                  userBudgetInput: {
-                    userID: userID,
-                    budgetID: budgetID,
-                  },
-                  newMonthlyIncome: newMonthlyIncome,
-                  payFreq: newPayFrequency,
-                  nextPaydate: newNextPaydate,
-                },
-              });
-              refetchUserDetails();
-            }
-
-            closeModal();
-          }}
+          onClick={saveNewUserDetails}
           className={`absolute bottom-0 inset-x-0 h-8 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
         >
           <div className="flex justify-center items-center">

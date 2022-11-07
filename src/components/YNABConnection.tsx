@@ -7,7 +7,6 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
   GET_NEW_ACCESS_TOKEN,
@@ -15,7 +14,10 @@ import {
   GET_BUDGET_NAME,
 } from "../graphql/queries";
 import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
+
 import { parseDate, ModalType } from "../utils/utils";
+import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
+
 import Label from "./elements/Label";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 
@@ -61,7 +63,6 @@ function YNABConnection({
     let response = await getNewTokens({
       variables: { userID, authCode },
     });
-    console.log(response);
     let tokenDetails = response.data.getNewAccessToken;
 
     // Get Budget Details from YNAB (BudgetID/BudgetName)
