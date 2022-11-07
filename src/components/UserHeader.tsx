@@ -38,7 +38,7 @@ function UserHeader({
   }
 
   return (
-    <div className="bg-[#F6F9FA] flex justify-between px-10 py-1">
+    <div className="bg-[#F6F9FA] flex justify-between px-2 sm:px-10 py-1 w-full">
       <YNABConnection
         userID={userID}
         budgetID={budgetID}

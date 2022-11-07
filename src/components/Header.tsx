@@ -24,7 +24,7 @@ function Header() {
         {user ? "Welcome, " + user.nickname : "Welcome"}
       </div>
 
-      <div className="whitespace-nowrap sm:mr-0 mr-2 hover:underline">
+      <div className="whitespace-nowrap mr-1 sm:mr-2 hover:underline">
         {user ? (
           <Link href={"/api/auth/logout"}>Log out</Link>
         ) : (

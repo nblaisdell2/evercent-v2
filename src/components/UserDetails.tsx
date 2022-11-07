@@ -37,42 +37,55 @@ function UserDetails({
   const daysAway = differenceInDays(parseDate(nextPaydate), startOfToday());
 
   return (
-    <div className="flex items-center space-x-6">
+    <div className="flex items-center justify-evenly w-full sm:w-auto space-x-2 sm:space-x-4 text-center">
       {/* Monthly Income */}
       <div className="flex flex-col items-center">
         <Label label="Monthly Income" />
-        <div className="text-green-500 font-bold text-xl">
+        <div className="text-green-500 font-bold text-sm sm:text-xl">
           {"$" + monthlyIncome.toString()}
         </div>
       </div>
 
       {/* Vertical Divider */}
-      <div className="w-[1px] h-10 bg-gray-400" />
+      <div className="w-[1px] h-full bg-gray-400" />
 
       {/* Pay Frequency */}
       <div className="flex flex-col items-center">
         <Label label="Pay Frequency" />
-        <div className="font-bold">
+        <div className="font-bold text-sm sm:text-base">
           {monthlyIncome == 0 ? "----" : payFrequency}
         </div>
       </div>
 
       {/* Vertical Divider */}
-      <div className="w-[1px] h-10 bg-gray-400" />
+      <div className="w-[1px] h-full bg-gray-400" />
 
       {/* Next Paydate */}
       <div className="flex flex-col items-center">
         <Label label="Next Paydate" />
-        <div className="font-bold">
+        <div className="hidden sm:block font-bold text-sm sm:text-base">
           {monthlyIncome == 0
             ? "----"
             : formatDate(parseDate(nextPaydate)) + " (" + daysAway + " days)"}
         </div>
+        <div className="block sm:hidden font-bold text-sm sm:text-base">
+          {monthlyIncome == 0 ? (
+            "----"
+          ) : (
+            <div>
+              <div>{formatDate(parseDate(nextPaydate))}</div>
+              <div>{"(" + daysAway + " days)"}</div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Vertical Divider */}
+      <div className="w-[1px] h-full bg-gray-400" />
 
       {/* Edit Icon */}
       <PencilSquareIcon
-        className="h-8 w-8 stroke-2 hover:cursor-pointer"
+        className="h-6 sm:h-8 w-6 sm:w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
         onClick={() =>
           showModal(
             ModalType.USER_DETAILS,

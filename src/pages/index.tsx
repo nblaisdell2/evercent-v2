@@ -50,7 +50,7 @@ const Home: NextPage = () => {
   }
 
   return (
-    <>
+    <div className="w-full">
       <Header />
       {isOpen && (
         <ModalContent
@@ -60,7 +60,7 @@ const Home: NextPage = () => {
           onClose={() => setIsOpen(false)}
         />
       )}
-      {/* {userEmail && (
+      {userEmail && (
         <UserHeader
           userID={data.userID.id}
           budgetID={data.userID.defaultBudgetID}
@@ -68,8 +68,8 @@ const Home: NextPage = () => {
           showModal={showModal}
           closeModal={closeModal}
         />
-      )} */}
-    </>
+      )}
+    </div>
   );
 };
 
