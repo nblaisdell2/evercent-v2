@@ -7,18 +7,23 @@ function Header() {
   const { user, error, isLoading } = useUser();
 
   return (
-    <div className="bg-blue-900 text-white text-xl py-1 flex justify-between font-cinzel items-center">
-      <div className="ml-2 flex items-center">
-        <Image
-          src="/evercent_logo.png"
-          className="object-contain"
-          width={35}
-          height={35}
-          alt="My Logo"
-        />
+    <div className="bg-blue-900 text-white text-base sm:text-xl font-cinzel py-1 flex justify-between items-center">
+      <div className="flex items-center">
+        <div className="h-10 w-10 relative ml-2">
+          <Image
+            src="/evercent_logo.png"
+            objectFit="contain"
+            layout="fill"
+            alt="My Logo"
+          />
+        </div>
         <div className="ml-1">EverCent</div>
       </div>
-      <div>{user ? "Welcome, " + user.nickname : "Welcome"}</div>
+
+      <div className="text-center">
+        {user ? "Welcome, " + user.nickname : "Welcome"}
+      </div>
+
       <div className="mr-2 hover:underline">
         {user ? (
           <Link href={"/api/auth/logout"}>Log out</Link>

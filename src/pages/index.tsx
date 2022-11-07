@@ -60,7 +60,7 @@ const Home: NextPage = () => {
           onClose={() => setIsOpen(false)}
         />
       )}
-      {userEmail && (
+      {/* {userEmail && (
         <UserHeader
           userID={data.userID.id}
           budgetID={data.userID.defaultBudgetID}
@@ -68,7 +68,7 @@ const Home: NextPage = () => {
           showModal={showModal}
           closeModal={closeModal}
         />
-      )}
+      )} */}
     </>
   );
 };
