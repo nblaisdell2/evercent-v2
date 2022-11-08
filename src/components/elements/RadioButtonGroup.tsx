@@ -8,7 +8,7 @@ type Props = {
 
 function RadioButtonGroup({ buttons, selectedButton, onSelect }: Props) {
   return (
-    <div className="flex justify-around items-center mt-1">
+    <div className="w-full flex justify-around items-center mt-1">
       {buttons.map((button) => {
         return (
           <div

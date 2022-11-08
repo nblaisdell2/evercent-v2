@@ -67,8 +67,8 @@ function UpdateUserDetailsModal({
     <div className="text-center">
       <div className="text-3xl font-bold">User Details</div>
 
-      <div className="absolute w-full h-[80%] flex flex-col justify-center">
-        <div className="mt-12">
+      <div className="absolute w-full h-[80%] flex flex-col items-center justify-around">
+        <div>
           <Label label="Monthly Income" />
           <input
             type="text"
@@ -83,7 +83,7 @@ function UpdateUserDetailsModal({
           />
         </div>
 
-        <div className="mt-16">
+        <div className="w-full">
           <Label label="Pay Frequency" />
           <RadioButtonGroup
             buttons={["Weekly", "Every 2 Weeks", "Monthly"]}
@@ -94,7 +94,7 @@ function UpdateUserDetailsModal({
           />
         </div>
 
-        <div className="mt-16">
+        <div>
           <Label label="Next Paydate" />
           <MyDatePicker
             minValue={today(getLocalTimeZone())}
