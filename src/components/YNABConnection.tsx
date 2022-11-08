@@ -122,7 +122,7 @@ function YNABConnection({
   }
 
   return (
-    <div className="hidden sm:flex">
+    <div className="flex">
       <div className="text-center mr-4">
         <Label label={"API Connection"} />
         <div

@@ -67,50 +67,52 @@ function UpdateUserDetailsModal({
     <div className="text-center">
       <div className="text-3xl font-bold">User Details</div>
 
-      <div className="mt-12">
-        <Label label="Monthly Income" />
-        <input
-          type="text"
-          value={"$" + newMonthlyIncome}
-          onChange={(e) => {
-            setNewMonthlyIncome(
-              parseInt(e.target.value.replace("$", "") || "0")
-            );
-          }}
-          onFocus={(e) => e.target.select()}
-          className="border border-black rounded-md h-12 w-40 text-center text-3xl font-bold text-green-500"
-        />
+      <div className="absolute w-full h-[80%] flex flex-col justify-center">
+        <div className="mt-12">
+          <Label label="Monthly Income" />
+          <input
+            type="text"
+            value={"$" + newMonthlyIncome}
+            onChange={(e) => {
+              setNewMonthlyIncome(
+                parseInt(e.target.value.replace("$", "") || "0")
+              );
+            }}
+            onFocus={(e) => e.target.select()}
+            className="border border-black rounded-md h-12 w-40 text-center text-3xl font-bold text-green-500"
+          />
+        </div>
+
+        <div className="mt-16">
+          <Label label="Pay Frequency" />
+          <RadioButtonGroup
+            buttons={["Weekly", "Every 2 Weeks", "Monthly"]}
+            selectedButton={newPayFrequency}
+            onSelect={(button) => {
+              setNewPayFrequency(button);
+            }}
+          />
+        </div>
+
+        <div className="mt-16">
+          <Label label="Next Paydate" />
+          <MyDatePicker
+            minValue={today(getLocalTimeZone())}
+            value={parseDate(newNextPaydate.substring(0, 10))}
+            onChange={(newDate: any) => {
+              setNewNextPaydate(
+                new Date(
+                  newDate.year,
+                  newDate.month - 1,
+                  newDate.day
+                ).toISOString()
+              );
+            }}
+          />
+        </div>
       </div>
 
-      <div className="mt-16">
-        <Label label="Pay Frequency" />
-        <RadioButtonGroup
-          buttons={["Weekly", "Every 2 Weeks", "Monthly"]}
-          selectedButton={newPayFrequency}
-          onSelect={(button) => {
-            setNewPayFrequency(button);
-          }}
-        />
-      </div>
-
-      <div className="mt-16">
-        <Label label="Next Paydate" />
-        <MyDatePicker
-          minValue={today(getLocalTimeZone())}
-          value={parseDate(newNextPaydate.substring(0, 10))}
-          onChange={(newDate: any) => {
-            setNewNextPaydate(
-              new Date(
-                newDate.year,
-                newDate.month - 1,
-                newDate.day
-              ).toISOString()
-            );
-          }}
-        />
-      </div>
-
-      <div className="mt-16">
+      <div>
         <button
           onClick={saveNewUserDetails}
           className={`absolute bottom-0 inset-x-0 h-8 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}

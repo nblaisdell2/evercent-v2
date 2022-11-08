@@ -41,7 +41,7 @@ function UserDetails({
       {/* Monthly Income */}
       <div className="flex flex-col items-center">
         <Label label="Monthly Income" />
-        <div className="text-green-500 font-bold text-sm sm:text-xl">
+        <div className="text-green-500 font-bold text-base sm:text-xl">
           {"$" + monthlyIncome.toString()}
         </div>
       </div>
@@ -74,7 +74,9 @@ function UserDetails({
           ) : (
             <div>
               <div>{formatDate(parseDate(nextPaydate))}</div>
-              <div>{"(" + daysAway + " days)"}</div>
+              <div className="text-xs sm:text-base -mt-1 sm:mt-0">
+                {"(" + daysAway + " days)"}
+              </div>
             </div>
           )}
         </div>
@@ -85,7 +87,7 @@ function UserDetails({
 
       {/* Edit Icon */}
       <PencilSquareIcon
-        className="h-6 sm:h-8 w-6 sm:w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
+        className="h-8 w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
         onClick={() =>
           showModal(
             ModalType.USER_DETAILS,

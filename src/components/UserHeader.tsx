@@ -39,16 +39,18 @@ function UserHeader({
 
   return (
     <div className="bg-[#F6F9FA] flex justify-between px-2 sm:px-10 py-1 w-full">
-      <YNABConnection
-        userID={userID}
-        budgetID={budgetID}
-        accessToken={dataDetails?.ynabConnDetails.accessToken}
-        refreshToken={dataDetails?.ynabConnDetails.refreshToken}
-        expirationDate={dataDetails?.ynabConnDetails.expirationDate}
-        refetchYNABConnDetails={refetchYNABConnDetails}
-        refetchUser={refetchUser}
-        showModal={showModal}
-      />
+      <div className="hidden sm:flex">
+        <YNABConnection
+          userID={userID}
+          budgetID={budgetID}
+          accessToken={dataDetails?.ynabConnDetails.accessToken}
+          refreshToken={dataDetails?.ynabConnDetails.refreshToken}
+          expirationDate={dataDetails?.ynabConnDetails.expirationDate}
+          refetchYNABConnDetails={refetchYNABConnDetails}
+          refetchUser={refetchUser}
+          showModal={showModal}
+        />
+      </div>
       <UserDetails
         userID={userID}
         budgetID={budgetID}
