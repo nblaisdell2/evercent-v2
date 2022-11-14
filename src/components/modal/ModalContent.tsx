@@ -48,10 +48,10 @@ function ModalContent({
         className="fixed top-0 bottom-0 left-0 right-0 opacity-70 bg-black z-10"
       />
       <div
-        className={`fixed top-24 left-2 right-2 bottom-24 ${
+        className={`fixed ${
           getModalBigMode(modalContentID)
-            ? "sm:left-5 sm:right-5 sm:h-[94%]"
-            : "sm:top-40 sm:left-[35%] sm:right-[35%] sm:h-[65%]"
+            ? "top-0 left-0 right-0 bottom-0 rounded-none sm:top-16 sm:left-5 sm:right-5 sm:h-[90%]"
+            : "top-24 left-2 right-2 bottom-24 sm:top-40 sm:left-96 sm:right-[35%] sm:h-[65%]"
         } bg-[#F6F9FA] rounded-lg p-2 z-20`}
       >
         <div className="flex justify-between" onClick={onClose}>

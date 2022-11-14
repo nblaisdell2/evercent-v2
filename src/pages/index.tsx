@@ -8,6 +8,7 @@ import { GET_USER_ID } from "../graphql/queries";
 import Header from "../components/Header";
 import UserHeader from "../components/UserHeader";
 import ModalContent from "../components/modal/ModalContent";
+import MainContent from "../components/MainContent";
 
 const Home: NextPage = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,7 +51,7 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="w-full">
+    <div className="flex flex-col h-screen">
       <Header />
       {isOpen && (
         <ModalContent
@@ -61,13 +62,24 @@ const Home: NextPage = () => {
         />
       )}
       {userEmail && (
-        <UserHeader
-          userID={data.userID.id}
-          budgetID={data.userID.defaultBudgetID}
-          refetchUser={refetchUser}
-          showModal={showModal}
-          closeModal={closeModal}
-        />
+        <>
+          <UserHeader
+            userID={data.userID.id}
+            budgetID={data.userID.defaultBudgetID}
+            refetchUser={refetchUser}
+            showModal={showModal}
+            closeModal={closeModal}
+          />
+
+          <div className="flex flex-grow">
+            <MainContent
+              userID={data.userID.id}
+              budgetID={data.userID.defaultBudgetID}
+              showModal={showModal}
+              closeModal={closeModal}
+            />
+          </div>
+        </>
       )}
     </div>
   );
