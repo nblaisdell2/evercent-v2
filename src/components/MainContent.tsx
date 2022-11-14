@@ -1,6 +1,15 @@
 import React from "react";
 import { ModalType } from "../utils/utils";
 
+import BudgetHelperFull from "./BudgetHelperFull";
+import BudgetHelperWidget from "./BudgetHelperWidget";
+import BudgetAutomationFull from "./BudgetAutomationFull";
+import BudgetAutomationWidget from "./BudgetAutomationWidget";
+import RegularExpensesFull from "./RegularExpensesFull";
+import RegularExpensesWidget from "./RegularExpensesWidget";
+import UpcomingExpensesFull from "./UpcomingExpensesFull";
+import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
+
 function MainContent({
   userID,
   budgetID,
@@ -37,38 +46,34 @@ function MainContent({
         {/* Box 1 - Budget Helper */}
         {widgetBox(
           "Budget Helper",
-          <div>Widget Content</div>,
+          <BudgetHelperWidget />,
           ModalType.BUDGET_HELPER,
-          <div>Budget Helper</div>
+          <BudgetHelperFull />
         )}
-        {/* {widgetBox("Budget Helper", <BudgetHelperWidget />)} */}
 
         {/* Box 2 - Budget Automation */}
         {widgetBox(
           "Budget Automation",
-          <div>Widget Content</div>,
+          <BudgetAutomationWidget />,
           ModalType.BUDGET_AUTOMATION,
-          <div>Budget Automation</div>
+          <BudgetAutomationFull />
         )}
-        {/* {widgetBox("Budget Automation", <BudgetAutomationWidget />)} */}
 
         {/* Box 3 - Regular Expenses */}
         {widgetBox(
           "Regular Expenses",
-          <div>Widget Content</div>,
+          <RegularExpensesWidget />,
           ModalType.REGULAR_EXPENSES,
-          <div>Regular Expenses</div>
+          <RegularExpensesFull />
         )}
-        {/* {widgetBox("Regular Expenses", <RegularExpensesWidget />)} */}
 
         {/* Box 4 - Upcoming Expenses */}
         {widgetBox(
           "Upcoming Expenses",
-          <div>Widget Content</div>,
+          <UpcomingExpensesWidget />,
           ModalType.UPCOMING_EXPENSES,
-          <div>Upcoming Expenses</div>
+          <UpcomingExpensesFull />
         )}
-        {/* {widgetBox("Upcoming Expenses", <UpcomingExpensesWidget />)} */}
       </div>
     </div>
   );
