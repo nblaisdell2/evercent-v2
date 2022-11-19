@@ -100,6 +100,18 @@ export const UPDATE_CATEGORIES = gql`
   }
 `;
 
+export const UPDATE_CATEGORY_INCLUSION = gql`
+  mutation UpdateCategoryInclusion(
+    $userBudgetInput: UserBudgetInput!
+    $categoriesToUpdate: UpdateExcludedCategoriesInput!
+  ) {
+    updateCategoryInclusion(
+      userBudgetInput: $userBudgetInput
+      updateCategoryInclusionInput: $categoriesToUpdate
+    )
+  }
+`;
+
 export const TOGGLE_CATEGORY_INCLUSION = gql`
   mutation ToggleCategoryInclusion(
     $userBudgetInput: UserBudgetInput!

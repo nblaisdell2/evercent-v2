@@ -5,6 +5,7 @@ import Label from "../elements/Label";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/router";
 import { UPDATE_DEFAULT_BUDGET_ID } from "../../graphql/mutations";
+import Card from "../elements/Card";
 
 type Props = {
   currBudgetID: string;
@@ -71,7 +72,7 @@ function ChangeBudgetModal({
           !newBudget ? "bottom-0" : "bottom-12"
         } w-full flex flex-col`}
       >
-        <div className="bg-white rounded-lg shadow-md shadow-slate-400 text-left flex-grow overflow-y-auto">
+        <Card className="text-left flex-grow overflow-y-auto">
           {data.budgets.map((budget: YNABBudget) => {
             return (
               <div
@@ -89,7 +90,7 @@ function ChangeBudgetModal({
               </div>
             );
           })}
-        </div>
+        </Card>
       </div>
 
       {newBudget && (

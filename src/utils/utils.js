@@ -2,6 +2,8 @@ import Axios from "axios";
 import Queries from "../pages/api/resolvers/resolverMapping.json";
 
 const INPUTS_TO_STRING = [
+  "refreshCategoriesInput",
+  "updateCategoryInclusionInput",
   "updateCategoriesInput",
   "saveAutomationInput",
   "saveLockedResultsInput",
@@ -31,7 +33,8 @@ export async function getAPIData(storedProcName, params, isMutation) {
 
   const keys = Object.keys(params);
   for (let i = 0; i < keys.length; i++) {
-    // console.log("param", params[keys[i]]);
+    console.log("keys[i]", keys[i]);
+    console.log("param", params[keys[i]]);
     if (params[keys[i]] instanceof Object) {
       if (INPUTS_TO_STRING.includes(keys[i])) {
         apiParams = {

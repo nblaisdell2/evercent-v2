@@ -8,11 +8,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import {
-  GET_NEW_ACCESS_TOKEN,
-  GET_DEFAULT_BUDGET_ID,
-  GET_BUDGET_NAME,
-} from "../graphql/queries";
+import { GET_BUDGET_NAME, GET_YNAB_INITIAL_DETAILS } from "../graphql/queries";
 import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
 
 import { parseDate, ModalType } from "../utils/utils";
@@ -20,30 +16,20 @@ import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 
 import Label from "./elements/Label";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
+import { UserData } from "../pages";
 
 function YNABConnection({
-  userID,
-  budgetID,
-  accessToken,
-  refreshToken,
-  expirationDate,
-  refetchYNABConnDetails,
+  userData,
   refetchUser,
   showModal,
 }: {
-  userID: string;
-  budgetID: string;
-  accessToken: string;
-  refreshToken: string;
-  expirationDate: string;
-  refetchYNABConnDetails: () => Promise<void>;
+  userData: UserData;
   refetchUser: () => Promise<void>;
   showModal: (modalContentID: number, modalContent: JSX.Element) => void;
 }) {
   const router = useRouter();
 
-  const [getNewTokens] = useLazyQuery(GET_NEW_ACCESS_TOKEN);
-  const [getYNABBudgetID] = useLazyQuery(GET_DEFAULT_BUDGET_ID);
+  const [getYNABInitialDetails] = useLazyQuery(GET_YNAB_INITIAL_DETAILS);
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
 
   const {
@@ -52,50 +38,43 @@ function YNABConnection({
     data: budgetName,
   } = useQuery(GET_BUDGET_NAME, {
     variables: {
-      userID: userID,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      budgetID: budgetID,
+      userID: userData.userID,
+      accessToken: userData.tokenDetails.accessToken,
+      refreshToken: userData.tokenDetails.refreshToken,
+      budgetID: userData.budgetID,
     },
   });
 
   const saveNewYNABTokens = async (authCode: string) => {
-    let response = await getNewTokens({
-      variables: { userID, authCode },
+    let response = await getYNABInitialDetails({
+      variables: { userID: userData.userID, authCode: authCode },
     });
-    let tokenDetails = response.data.getNewAccessToken;
-
-    // Get Budget Details from YNAB (BudgetID/BudgetName)
-    // and save the "DefaultBudgetID" to the database
-    await getYNABBudgetID({
-      variables: {
-        userID: userID,
-        accessToken: tokenDetails.accessToken,
-        refreshToken: tokenDetails.refreshToken,
-      },
-    });
+    // console.log("response", response);
+    // let initialDetails = response.data.getInitialYNABDetails;
+    // console.log("initial", initialDetails);
 
     delete router.query.code;
     router.push(router);
 
     await refetchUser();
-    await refetchYNABConnDetails();
   };
 
   const refreshYNABTokens = async (newTime: Date) => {
-    if (newTime > parseDate(expirationDate) && refreshToken) {
+    if (
+      newTime > parseDate(userData.tokenDetails.expirationDate) &&
+      userData.tokenDetails.refreshToken
+    ) {
       console.log("Refreshing Tokens");
 
       await refreshTokens({
         variables: {
-          userID: userID,
-          refreshToken: refreshToken,
-          expirationDate: expirationDate,
+          userID: userData.userID,
+          refreshToken: userData.tokenDetails.refreshToken,
+          expirationDate: userData.tokenDetails.expirationDate,
         },
       });
 
       await refetchUser();
-      await refetchYNABConnDetails();
     }
   };
 
@@ -113,9 +92,9 @@ function YNABConnection({
     refreshYNABTokens(new Date());
   }, 60000);
 
-  const budgetIDFound = !!budgetID;
+  const budgetIDFound = !!userData.budgetID;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
-  const ynabBudgetURL = GetURL_YNABBudget(budgetID);
+  const ynabBudgetURL = GetURL_YNABBudget(userData.budgetID);
 
   if (loadingName) {
     return <div>Still Loading...</div>;
@@ -146,10 +125,10 @@ function YNABConnection({
                   showModal(
                     ModalType.CHANGE_BUDGET,
                     <ChangeBudgetModal
-                      currBudgetID={budgetID}
-                      accessToken={accessToken}
-                      refreshToken={refreshToken}
-                      userID={userID}
+                      currBudgetID={userData.budgetID}
+                      accessToken={userData.tokenDetails.accessToken}
+                      refreshToken={userData.tokenDetails.refreshToken}
+                      userID={userData.userID}
                     />
                   )
                 }

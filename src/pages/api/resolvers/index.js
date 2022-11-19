@@ -7,15 +7,29 @@ import {
   GetNewAccessTokenRefresh,
   GetDefaultBudgetID,
   PostCategoryMonth,
+  GetBudget,
+  GetCategoryGroups,
 } from "../../../utils/ynab";
 import { getAPIData, saveNewYNABTokens } from "../../../utils/utils";
+import { v4 as uuidv4 } from "uuid";
+import { ja } from "date-fns/locale";
 
-function createCategory(categoryData) {
+function generateUUID() {
+  return uuidv4();
+}
+
+function createCategory(categoryData, catGroups) {
   return {
     guid: categoryData.CategoryGUID,
     budgetID: categoryData.BudgetID,
     categoryGroupID: categoryData.CategoryGroupID,
     categoryID: categoryData.CategoryID,
+    categoryGroupName: catGroups.find((grp) => {
+      return grp.categoryGroupID == categoryData.CategoryGroupID.toLowerCase();
+    })?.categoryGroupName,
+    categoryName: catGroups.find((grp) => {
+      return grp.categoryID == categoryData.CategoryID.toLowerCase();
+    })?.categoryName,
     amount: categoryData.CategoryAmount,
     extraAmount: categoryData.ExtraAmount,
     isRegularExpense: categoryData.IsRegularExpense,
@@ -132,6 +146,38 @@ function createRunsToLock(runsData) {
 
 export const resolvers = {
   Query: {
+    userData: async (_, args) => {
+      if (!args.userEmail) {
+        return {
+          userID: "",
+          budgetID: "",
+          tokenDetails: {
+            accessToken: "",
+            refreshToken: "",
+            expirationDate: new Date().toISOString(),
+          },
+        };
+      }
+      const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
+      const userData = queryData[0][0];
+
+      const queryDataTokens = await getAPIData(
+        Queries.QUERY_YNAB_CONN_DETAILS,
+        { userID: userData?.UserID },
+        false
+      );
+      const details = queryDataTokens[0][0];
+
+      return {
+        userID: userData?.UserID,
+        budgetID: userData?.DefaultBudgetID,
+        tokenDetails: {
+          accessToken: details?.AccessToken || "",
+          refreshToken: details?.RefreshToken || "",
+          expirationDate: details?.ExpirationDate || new Date().toISOString(),
+        },
+      };
+    },
     userID: async (_, args) => {
       const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
       const userData = queryData[0][0];
@@ -170,6 +216,92 @@ export const resolvers = {
         expirationDate: details?.ExpirationDate || new Date().toISOString(),
       };
     },
+    getInitialYNABDetails: async (_, args) => {
+      // Get a new set of accessToken/refreshTokens for this user
+      // connecting to YNAB for the first time
+      const tokenDetails = await GetNewAccessToken(args);
+      saveNewYNABTokens(args.userID, tokenDetails);
+
+      // Then, get the user's default BudgetID for the budget they
+      // selected. Then, save that to the database.
+      const budgetID = await GetDefaultBudgetID({
+        ...args,
+        accessToken: tokenDetails.accessToken,
+        refreshToken: tokenDetails.refreshToken,
+      });
+      await getAPIData(
+        Queries.MUTATION_UPDATE_BUDGET_ID,
+        { userID: args.userID, budgetID: budgetID.data },
+        true
+      );
+
+      // Then, get the user's budget categories, and save them to the
+      // database, as well. That way, when the page re-loads, we can pull
+      // them in.
+      const budgetData = await GetBudget({
+        ...args,
+        accessToken: tokenDetails.accessToken,
+        refreshToken: tokenDetails.refreshToken,
+        budgetID: budgetID.data,
+      });
+
+      // Format the data properly so that it can be accepted by the stored procedure
+      let budgetDetails = budgetData.data.map((bd) => {
+        return {
+          guid: generateUUID(),
+          categoryGroupID: bd.categoryGroupID,
+          categoryID: bd.categoryID,
+          amount: 0,
+          extraAmount: 0,
+          isRegularExpense: false,
+          isUpcomingExpense: false,
+        };
+      });
+      budgetDetails = {
+        details: budgetDetails,
+      };
+
+      // Save the category details to the database.
+      await getAPIData(
+        Queries.MUTATION_UPDATE_CATEGORIES,
+        {
+          userID: args.userID,
+          budgetID: budgetID.data,
+          updateCategoriesInput: budgetDetails,
+        },
+        true
+      );
+
+      // Return all 3 sets of data retrieved back to the user/client
+      return {
+        defaultBudgetID: budgetID.data,
+        tokenDetails: tokenDetails,
+        categories: budgetData.data,
+      };
+    },
+    getCategoryGroups: async (_, args) => {
+      const catGroups = await GetCategoryGroups(args);
+
+      const queryData = await getAPIData(
+        Queries.QUERY_EXCLUDED_CATEGORIES,
+        { userID: args.userID, budgetID: args.budgetID },
+        false
+      );
+      const details = queryData[0];
+
+      console.log("details", details);
+
+      for (let i = 0; i < catGroups.length; i++) {
+        catGroups[i].included = !details.some((d) => {
+          return d.CategoryID.toLowerCase() == catGroups[i].categoryID;
+        });
+      }
+
+      console.log("catGroups");
+      console.log(catGroups);
+
+      return catGroups;
+    },
     getNewAccessToken: async (_, args) => {
       const tokenDetails = await GetNewAccessToken(args);
       saveNewYNABTokens(args.userID, tokenDetails);
@@ -187,6 +319,12 @@ export const resolvers = {
       );
 
       return budgetID.data;
+    },
+    budget: async (_, args) => {
+      const budgetData = await GetBudget(args);
+      saveNewYNABTokens(args.userID, budgetData.connDetails);
+
+      return budgetData.data;
     },
     budgets: async (_, args) => {
       const budgetData = await GetBudgets(args);
@@ -207,10 +345,137 @@ export const resolvers = {
       return budgetMonths.data;
     },
     categories: async (_, args) => {
-      const queryData = await getAPIData(Queries.QUERY_CATEGORIES, args, false);
+      const queryData = await getAPIData(
+        Queries.QUERY_CATEGORIES,
+        {
+          userID: args.userBudgetInput.userID,
+          budgetID: args.userBudgetInput.budgetID,
+        },
+        false
+      );
       const categoryData = queryData[0];
+      console.log("categoryData", categoryData);
 
-      const categories = categoryData?.map(createCategory);
+      let { userID, budgetID } = args.userBudgetInput;
+      delete args.userBudgetInput;
+
+      const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
+      console.log("catGroups", catGroups);
+
+      // ======================================
+      // If we have any in catGroups (YNAB) that aren't in categoryData (database),
+      // then we need to adjust the database accordingly.
+      //   If there's data in catGroups but not categoryData, run a query
+      //   to add that data to the database, but don't "await" it, and just
+      //   manually add the data to "categories" below.
+
+      //   If there's data in categoryData, but not catGroups, that means it's
+      //   been deleted from YNAB, so we should delete it from categoryData, as well,
+      //   and run a query to remove it from the database at the same time, similar
+      //   to the steps above.
+      const queryDataExc = await getAPIData(
+        Queries.QUERY_EXCLUDED_CATEGORIES,
+        { userID, budgetID },
+        false
+      );
+      const details = queryDataExc[0];
+
+      let newResults = [];
+      for (let i = 0; i < catGroups.length; i++) {
+        if (
+          !categoryData.some((cat) => {
+            return (
+              cat.CategoryGroupID.toLowerCase() ==
+                catGroups[i].categoryGroupID &&
+              cat.CategoryID.toLowerCase() == catGroups[i].categoryID
+            );
+          }) &&
+          !details.some((cat) => {
+            return (
+              cat.CategoryGroupID.toLowerCase() ==
+                catGroups[i].categoryGroupID &&
+              cat.CategoryID.toLowerCase() == catGroups[i].categoryID
+            );
+          })
+        ) {
+          newResults.push({
+            categoryGroupID: catGroups[i].categoryGroupID.toUpperCase(),
+            categoryID: catGroups[i].categoryID.toUpperCase(),
+            guid: generateUUID().toUpperCase(),
+            doThis: "add",
+          });
+
+          const indexToInsert = categoryData.lastIndexOf(
+            categoryData.find((cat) => {
+              return (
+                cat.CategoryGroupID ==
+                catGroups[i].categoryGroupID.toUpperCase()
+              );
+            })
+          );
+          categoryData.splice(indexToInsert, 0, {
+            CategoryGUID: generateUUID().toUpperCase(),
+            BudgetID: budgetID,
+            CategoryGroupID: catGroups[i].categoryGroupID.toUpperCase(),
+            CategoryID: catGroups[i].categoryID.toUpperCase(),
+            CategoryAmount: 0,
+            ExtraAmount: 0,
+            IsRegularExpense: false,
+            IsUpcomingExpense: false,
+            IsMonthly: null,
+            NextDueDate: null,
+            ExpenseMonthsDivisor: null,
+            RepeatFreqNum: null,
+            RepeatFreqType: null,
+            IncludeOnChart: null,
+            MultipleTransactions: null,
+            TotalExpenseAmount: null,
+          });
+        }
+      }
+
+      for (let i = 0; i < categoryData.length; i++) {
+        if (
+          !catGroups.some((grp) => {
+            return (
+              grp.categoryGroupID ==
+                categoryData[i].CategoryGroupID.toLowerCase() &&
+              grp.categoryID == categoryData[i].CategoryID.toLowerCase()
+            );
+          })
+        ) {
+          newResults.push({
+            categoryGroupID: categoryData[i].CategoryGroupID,
+            categoryID: categoryData[i].CategoryID,
+            guid: categoryData[i].CategoryGUID,
+            doThis: "remove",
+          });
+          categoryData.splice(i, 1);
+        }
+      }
+
+      newResults = {
+        details: newResults,
+      };
+
+      if (newResults.details.length > 0) {
+        getAPIData(
+          Queries.MUTATION_REFRESH_CATEGORIES,
+          {
+            userID: userID,
+            budgetID: budgetID,
+            refreshCategoriesInput: newResults,
+          },
+          true
+        );
+      }
+      // ======================================
+
+      let categories = [];
+      for (let i = 0; i < categoryData.length; i++) {
+        categories.push(createCategory(categoryData[i], catGroups));
+      }
+
       return categories;
     },
     category: async (_, args) => {
@@ -323,7 +588,7 @@ export const resolvers = {
     },
     updateMonthsAheadTarget: async (_, args) => {
       const result = await getAPIData(
-        Queries.MUTATION_UPDATE_MONTHS_AHEAD_TARGET,
+        Queries.MUTATION_UPDATE_MONTHS_AHEAD_ / TARGET,
         args,
         true
       );
@@ -332,6 +597,14 @@ export const resolvers = {
     updateCategories: async (_, args) => {
       const result = await getAPIData(
         Queries.MUTATION_UPDATE_CATEGORIES,
+        args,
+        true
+      );
+      return !result ? "There was an error." : "Query Successful";
+    },
+    updateCategoryInclusion: async (_, args) => {
+      const result = await getAPIData(
+        Queries.MUTATION_UPDATE_CATEGORY_INCLUSION,
         args,
         true
       );

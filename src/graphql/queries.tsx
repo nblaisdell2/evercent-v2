@@ -1,5 +1,19 @@
 import { gql } from "@apollo/client";
 
+export const GET_USER_DATA = gql`
+  query GetUserData($userEmail: String!) {
+    userData(userEmail: $userEmail) {
+      userID
+      budgetID
+      tokenDetails {
+        accessToken
+        refreshToken
+        expirationDate
+      }
+    }
+  }
+`;
+
 export const GET_USER_ID = gql`
   query GetUserID($userEmail: String!) {
     userID(userEmail: $userEmail) {
@@ -57,6 +71,28 @@ export const GET_YNAB_CONN_DETAILS = gql`
       accessToken
       refreshToken
       expirationDate
+    }
+  }
+`;
+
+export const GET_YNAB_INITIAL_DETAILS = gql`
+  query GetYNABInitialDetails($userID: ID!, $authCode: String!) {
+    getInitialYNABDetails(userID: $userID, authCode: $authCode) {
+      defaultBudgetID
+      tokenDetails {
+        accessToken
+        refreshToken
+        expirationDate
+      }
+      categories {
+        categoryGroupID
+        categoryID
+        categoryGroupName
+        name
+        budgeted
+        activity
+        available
+      }
     }
   }
 `;
@@ -145,6 +181,28 @@ export const GET_BUDGET_MONTHS = gql`
   }
 `;
 
+export const GET_CATEGORY_GROUPS = gql`
+  query GetCategoryGroups(
+    $userID: ID!
+    $accessToken: String!
+    $refreshToken: String!
+    $budgetID: ID!
+  ) {
+    getCategoryGroups(
+      userID: $userID
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+      budgetID: $budgetID
+    ) {
+      categoryGroupID
+      categoryID
+      categoryGroupName
+      categoryName
+      included
+    }
+  }
+`;
+
 export const GET_CATEGORY_GROUP_AMOUNTS = gql`
   query GetCategoryGroupAmounts($userBudgetInput: UserBudgetInput!) {
     categories(userBudgetInput: $userBudgetInput) {
@@ -162,11 +220,21 @@ export const GET_CATEGORY_GROUP_AMOUNTS = gql`
 `;
 
 export const GET_CATEGORY_LIST = gql`
-  query GetCategoryList($userBudgetInput: UserBudgetInput!) {
-    categories(userBudgetInput: $userBudgetInput) {
+  query GetCategoryList(
+    $userBudgetInput: UserBudgetInput!
+    $accessToken: String!
+    $refreshToken: String!
+  ) {
+    categories(
+      userBudgetInput: $userBudgetInput
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+    ) {
       guid
       categoryGroupID
       categoryID
+      categoryGroupName
+      categoryName
       amount
       extraAmount
       isRegularExpense

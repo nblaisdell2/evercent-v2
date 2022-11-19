@@ -141,7 +141,7 @@ async function SendYNABRequest(method, uri, params, postData) {
     })
     .catch((e) => {
       console.log("ERROR FROM YNAB");
-      console.log(e);
+      // console.log(e);
       console.log("Error Message: " + e.response.data.error_description);
       console.log("Error Message: " + e.response.data.error);
 
@@ -236,6 +236,75 @@ export async function GetBudgetName(params) {
   );
 
   return GetResponseWithTokenDetails(response.data.data.budget.name, response);
+}
+
+export async function GetCategoryGroups(params) {
+  let response = await SendYNABRequest(
+    get,
+    API_BASE_URL + "/budgets/" + params.budgetID,
+    params
+  );
+
+  const budgetData = response.data.data.budget;
+  const categories = budgetData.categories;
+  let categoryGroups = budgetData.category_groups;
+  categoryGroups = categoryGroups.filter(
+    (cat) =>
+      !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
+  );
+
+  let categoryDetails = [];
+  for (let i = 0; i < categories.length; i++) {
+    let currGroup = categoryGroups.find((grp) => {
+      return grp.id == categories[i].category_group_id;
+    });
+    if (currGroup && !categories[i].hidden && !categories[i].deleted) {
+      categoryDetails.push({
+        categoryGroupID: categories[i].category_group_id,
+        categoryID: categories[i].id,
+        categoryGroupName: currGroup.name,
+        categoryName: categories[i].name,
+        included: true,
+      });
+    }
+  }
+
+  return categoryDetails;
+}
+
+export async function GetBudget(params) {
+  let response = await SendYNABRequest(
+    get,
+    API_BASE_URL + "/budgets/" + params.budgetID,
+    params
+  );
+
+  const budgetData = response.data.data.budget;
+  const categories = budgetData.categories;
+  let categoryGroups = budgetData.category_groups;
+  categoryGroups = categoryGroups.filter(
+    (cat) =>
+      !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
+  );
+
+  let categoryDetails = [];
+  for (let i = 0; i < categories.length; i++) {
+    let currGroup = categoryGroups.find((grp) => {
+      return grp.id == categories[i].category_group_id;
+    });
+    if (currGroup && !categories[i].hidden && !categories[i].deleted) {
+      categoryDetails.push({
+        categoryGroupID: categories[i].category_group_id,
+        categoryID: categories[i].id,
+        categoryGroupName: currGroup.name,
+        categoryName: categories[i].name,
+        budgeted: categories[i].budgeted,
+        activity: categories[i].activity,
+        available: categories[i].balance,
+      });
+    }
+  }
+  return GetResponseWithTokenDetails(categoryDetails, response);
 }
 
 export async function GetBudgetMonths(params) {

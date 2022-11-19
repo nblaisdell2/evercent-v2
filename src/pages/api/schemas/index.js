@@ -4,6 +4,12 @@ export const typeDefs = gql`
   # ===========
   #   TYPES
   # ===========
+  type UserData {
+    userID: ID!
+    budgetID: ID
+    tokenDetails: YNABConnection
+  }
+
   type UserID {
     id: ID!
     defaultBudgetID: ID
@@ -31,6 +37,12 @@ export const typeDefs = gql`
     name: String!
   }
 
+  type YNABInitialData {
+    defaultBudgetID: ID!
+    tokenDetails: YNABConnection
+    categories: [BudgetCategory!]
+  }
+
   # TODO: Should this be re-factored to have a list of BudgetCategoryGroup objects,
   #       each of which has a list of categories, or just have a list of categories
   #       like it is now?
@@ -49,11 +61,21 @@ export const typeDefs = gql`
     available: Float!
   }
 
+  type BudgetCategoryGroup {
+    categoryGroupID: ID!
+    categoryID: ID!
+    categoryGroupName: String!
+    categoryName: String!
+    included: Boolean!
+  }
+
   type Category {
     guid: ID!
     budgetID: ID!
     categoryGroupID: ID!
     categoryID: ID!
+    categoryGroupName: String!
+    categoryName: String!
     amount: Int!
     extraAmount: Int
     isRegularExpense: Boolean!
@@ -120,6 +142,27 @@ export const typeDefs = gql`
     userID: ID!
     budgetID: ID
   }
+
+  input UpdateExcludedCategoriesDetailsInput {
+    categoryGroupID: ID!
+    categoryID: ID!
+    included: Boolean!
+  }
+
+  input UpdateExcludedCategoriesInput {
+    details: [UpdateExcludedCategoriesDetailsInput]
+  }
+
+  # input RefreshCategoriesDetailsInput {
+  #   categoryGroupID: ID!
+  #   categoryID: ID!
+  #   guid: ID!
+  #   doThis: String!
+  # }
+
+  # input RefreshCategoriesInput {
+  #   details: [RefreshCategoriesDetailsInput]
+  # }
 
   input UpdateCategoriesInput {
     details: [UpdateCategoriesDetailsInput]
@@ -199,15 +242,29 @@ export const typeDefs = gql`
   #  QUERIES
   # ===========
   type Query {
+    userData(userEmail: String!): UserData!
     userID(userEmail: String!): UserID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
+    getInitialYNABDetails(userID: ID!, authCode: String!): YNABInitialData
     getNewAccessToken(userID: ID!, authCode: String!): YNABConnection
     getDefaultBudgetID(
       userID: ID!
       accessToken: String!
       refreshToken: String!
     ): ID!
+    getCategoryGroups(
+      userID: ID!
+      accessToken: String!
+      refreshToken: String!
+      budgetID: ID!
+    ): [BudgetCategoryGroup!]
+    budget(
+      userID: ID!
+      accessToken: String!
+      refreshToken: String!
+      budgetID: ID!
+    ): [BudgetCategory!]
     budgets(userID: ID!, accessToken: String!, refreshToken: String!): [Budget!]
     budgetName(
       userID: ID!
@@ -221,7 +278,17 @@ export const typeDefs = gql`
       refreshToken: String!
       budgetID: ID!
     ): [BudgetMonth]
-    categories(userBudgetInput: UserBudgetInput!): [Category!]
+    budgetMonth(
+      userID: ID!
+      accessToken: String!
+      refreshToken: String!
+      budgetID: ID!
+    ): BudgetMonth!
+    categories(
+      userBudgetInput: UserBudgetInput!
+      accessToken: String!
+      refreshToken: String!
+    ): [Category!]
     category(userBudgetInput: UserBudgetInput!, categoryGUID: ID!): Category!
     regularExpenses(
       userBudgetInput: UserBudgetInput!
@@ -273,9 +340,17 @@ export const typeDefs = gql`
       userBudgetInput: UserBudgetInput!
       newTarget: Int!
     ): String
+    # refreshCategories(
+    #   userBudgetInput: UserBudgetInput!
+    #   refreshCategoriesInput: RefreshCategoriesInput!
+    # ): String
     updateCategories(
       userBudgetInput: UserBudgetInput!
       updateCategoriesInput: UpdateCategoriesInput!
+    ): String
+    updateCategoryInclusion(
+      userBudgetInput: UserBudgetInput!
+      updateCategoryInclusionInput: UpdateExcludedCategoriesInput!
     ): String
     toggleCategoryInclusion(
       userBudgetInput: UserBudgetInput!

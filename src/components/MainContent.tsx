@@ -9,15 +9,14 @@ import RegularExpensesFull from "./RegularExpensesFull";
 import RegularExpensesWidget from "./RegularExpensesWidget";
 import UpcomingExpensesFull from "./UpcomingExpensesFull";
 import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
+import { UserData } from "../pages";
 
 function MainContent({
-  userID,
-  budgetID,
+  userData,
   showModal,
   closeModal,
 }: {
-  userID: string;
-  budgetID: string;
+  userData: UserData;
   showModal: (modalContentID: number, modalContent: JSX.Element) => void;
   closeModal: () => void;
 }) {
@@ -48,7 +47,7 @@ function MainContent({
           "Budget Helper",
           <BudgetHelperWidget />,
           ModalType.BUDGET_HELPER,
-          <BudgetHelperFull />
+          <BudgetHelperFull userData={userData} />
         )}
 
         {/* Box 2 - Budget Automation */}
