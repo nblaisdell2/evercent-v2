@@ -7,6 +7,7 @@ import {
   useButton,
   mergeProps,
   useFocusRing,
+  AriaSelectOptions,
 } from "react-aria";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
@@ -22,7 +23,7 @@ export function Select<T extends object>(props: AriaSelectProps<T>) {
   // Get props for child elements from useSelect
   let ref = React.useRef(null);
   let { labelProps, triggerProps, valueProps, menuProps } = useSelect(
-    {},
+    {} as AriaSelectOptions<unknown>,
     state,
     ref
   );
