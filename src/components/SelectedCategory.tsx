@@ -199,12 +199,11 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                           .substring(0, 10)
                       )}
                       value={parseDate(
-                        (
-                          category?.regularExpenseDetails?.nextDueDate ||
-                          today(getLocalTimeZone())
-                            .toDate(getLocalTimeZone())
-                            .toISOString()
-                        ).substring(0, 10)
+                        today(getLocalTimeZone())
+                          .toDate(getLocalTimeZone())
+                          .toISOString//   category?.regularExpenseDetails?.nextDueDate ||
+                          ()
+                          .substring(0, 10)
                       )}
                     />
                   </div>
@@ -226,7 +225,7 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                         <Select
                           label=""
                           selectedKey={
-                            category?.regularExpenseDetails?.repeatFreqNum ||
+                            // category?.regularExpenseDetails?.repeatFreqNum ||
                             "12"
                           }
                         >
@@ -248,7 +247,7 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                         <Select
                           label=""
                           selectedKey={
-                            category?.regularExpenseDetails?.repeatFreqType ||
+                            // category?.regularExpenseDetails?.repeatFreqType ||
                             "months"
                           }
                         >
@@ -263,7 +262,7 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                   <div className="flex flex-col items-center">
                     <div className="font-semibold">Include on Chart?</div>
                     <Switch
-                      checked={category.includeOnChart}
+                      checked={false /*category.includeOnChart*/}
                       onChange={(checked) => {}}
                       uncheckedIcon={<div></div>}
                       checkedIcon={<div></div>}
@@ -284,7 +283,7 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                       Multiple Monthly Transactions?
                     </div>
                     <Switch
-                      checked={category.multipleTransactions}
+                      checked={false /*category.multipleTransactions*/}
                       onChange={(checked) => {}}
                       uncheckedIcon={<div></div>}
                       checkedIcon={<div></div>}
