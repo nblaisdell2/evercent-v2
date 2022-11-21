@@ -22,6 +22,9 @@ export const ModalType = {
   UPCOMING_EXPENSES: 8,
 };
 
+// ========================= //
+// ====== DATABASES ======== //
+// ========================= //
 export async function getAPIData(storedProcName, params, isMutation) {
   // console.log("GET API DATA");
   // console.log("storedProcName", storedProcName);
@@ -33,8 +36,8 @@ export async function getAPIData(storedProcName, params, isMutation) {
 
   const keys = Object.keys(params);
   for (let i = 0; i < keys.length; i++) {
-    console.log("keys[i]", keys[i]);
-    console.log("param", params[keys[i]]);
+    // console.log("keys[i]", keys[i]);
+    // console.log("param", params[keys[i]]);
     if (params[keys[i]] instanceof Object) {
       if (INPUTS_TO_STRING.includes(keys[i])) {
         apiParams = {
@@ -76,6 +79,9 @@ export async function saveNewYNABTokens(userID, newTokenDetails) {
   }
 }
 
+// ========================= //
+// ======== DATES ========== //
+// ========================= //
 export function parseDate(isoDateString) {
   if (!isoDateString) return new Date();
   return new Date(isoDateString.replace("T", " ") + "Z");
@@ -89,6 +95,32 @@ export function formatDate(date) {
   ].join("/");
 }
 
+// ========================= //
+// ======== NUMBER ========= //
+// ========================= //
 export function padTo2Digits(num, digits = 2) {
   return num.toString().padStart(digits, "0");
+}
+
+export function calculatePercentage(numerator, denominator) {
+  if (denominator == 0) {
+    return 0;
+  }
+  return numerator / denominator;
+}
+
+// ========================= //
+// ======== STRINGS ======== //
+// ========================= //
+export function getMoneyString(amount) {
+  return "$" + amount.toString();
+}
+
+export function calculatePercentString(numerator, denominator) {
+  const perc = calculatePercentage(numerator, denominator);
+  return (perc * 100).toFixed(0) + "%";
+}
+
+export function getPercentString(num) {
+  return num.toString() + "%";
 }

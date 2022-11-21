@@ -18,18 +18,14 @@ function generateUUID() {
   return uuidv4();
 }
 
-function createCategory(categoryData, catGroups) {
+function createCategory(categoryData) {
   return {
     guid: categoryData.CategoryGUID,
     budgetID: categoryData.BudgetID,
     categoryGroupID: categoryData.CategoryGroupID,
     categoryID: categoryData.CategoryID,
-    categoryGroupName: catGroups.find((grp) => {
-      return grp.categoryGroupID == categoryData.CategoryGroupID.toLowerCase();
-    })?.categoryGroupName,
-    categoryName: catGroups.find((grp) => {
-      return grp.categoryID == categoryData.CategoryID.toLowerCase();
-    })?.categoryName,
+    categoryGroupName: categoryData.CategoryGroupName,
+    categoryName: categoryData.CategoryName,
     amount: categoryData.CategoryAmount,
     extraAmount: categoryData.ExtraAmount,
     isRegularExpense: categoryData.IsRegularExpense,
@@ -354,13 +350,13 @@ export const resolvers = {
         false
       );
       const categoryData = queryData[0];
-      console.log("categoryData", categoryData);
+      // console.log("categoryData", categoryData);
 
       let { userID, budgetID } = args.userBudgetInput;
       delete args.userBudgetInput;
 
       const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
-      console.log("catGroups", catGroups);
+      // console.log("catGroups", catGroups);
 
       // ======================================
       // If we have any in catGroups (YNAB) that aren't in categoryData (database),
@@ -471,10 +467,28 @@ export const resolvers = {
       }
       // ======================================
 
-      let categories = [];
-      for (let i = 0; i < categoryData.length; i++) {
-        categories.push(createCategory(categoryData[i], catGroups));
-      }
+      // By mapping over the "catGroups" returned by the YNAB API
+      // for each object in the database, we can ensure that the
+      // data returned to the client will match the same order that the
+      // YNAB data is shown in their actual budget.
+
+      const categories = catGroups.reduce((curr, grp) => {
+        let cat = categoryData.find((data) => {
+          return (
+            data.CategoryGroupID.toLowerCase() == grp.categoryGroupID &&
+            data.CategoryID.toLowerCase() == grp.categoryID
+          );
+        });
+
+        if (cat) {
+          cat.CategoryGroupName = grp.categoryGroupName;
+          cat.CategoryName = grp.categoryName;
+
+          curr.push(createCategory(cat));
+        }
+
+        return curr;
+      }, []);
 
       return categories;
     },

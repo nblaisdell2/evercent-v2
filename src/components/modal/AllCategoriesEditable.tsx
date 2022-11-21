@@ -1,6 +1,7 @@
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import React, { useState, useEffect } from "react";
+import { UPDATE_CATEGORY_INCLUSION } from "../../graphql/mutations";
 import { GET_CATEGORY_GROUPS } from "../../graphql/queries";
 import { UserData } from "../../pages";
 import Card from "../elements/Card";
@@ -9,10 +10,14 @@ import CheckBoxGroup, { CheckboxItem } from "../elements/CheckBoxGroup";
 type Props = {
   userData: UserData;
   closeModal: () => void;
-  onSave: (items: CheckboxItem[]) => Promise<void>;
+  refetchCategories: () => Promise<void>;
 };
 
-function AllCategoriesEditable({ userData, closeModal, onSave }: Props) {
+function AllCategoriesEditable({
+  userData,
+  closeModal,
+  refetchCategories,
+}: Props) {
   const { loading, error, data, refetch } = useQuery(GET_CATEGORY_GROUPS, {
     variables: {
       userID: userData.userID,
@@ -21,6 +26,50 @@ function AllCategoriesEditable({ userData, closeModal, onSave }: Props) {
       budgetID: userData.budgetID,
     },
   });
+
+  const [saveExcludedCategories] = useMutation(UPDATE_CATEGORY_INCLUSION);
+
+  const onSave = async () => {
+    // Get the individual items, not the parent/group items
+    const itemsToUpdate = items.filter((itm) => {
+      return itm.parentId !== "";
+    });
+
+    // Collect the unselected items, format the data appropriately,
+    // and add them to an array
+    const toUpdate = itemsToUpdate.reduce((curr: any[], item) => {
+      if (!item.selected) {
+        curr.push({
+          categoryGroupID: item.parentId,
+          categoryID: item.id,
+          included: item.selected,
+        });
+      }
+      return curr;
+    }, []);
+
+    // Update the "Excluded Categories" table in the database
+    await saveExcludedCategories({
+      variables: {
+        userBudgetInput: {
+          userID: userData.userID,
+          budgetID: userData.budgetID,
+        },
+        categoriesToUpdate: {
+          details: [...toUpdate],
+        },
+      },
+    });
+
+    // Refetch the data on this modal, as well as the categories
+    // on the main Budget Helper section
+    await refetch();
+    await refetchCategories();
+
+    // After the new data has been refetched, close this modal and go back
+    // to the Budget Helper section.
+    closeModal();
+  };
 
   const createList = (data: any) => {
     if (!data) return [];
@@ -79,15 +128,7 @@ function AllCategoriesEditable({ userData, closeModal, onSave }: Props) {
       </Card>
 
       <button
-        onClick={async () => {
-          await onSave(
-            items.filter((itm) => {
-              return itm.parentId !== "";
-            })
-          );
-          closeModal();
-          await refetch();
-        }}
+        onClick={onSave}
         className={`w-full h-12 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
       >
         <div className="flex justify-center items-center">

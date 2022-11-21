@@ -219,6 +219,37 @@ export const GET_CATEGORY_GROUP_AMOUNTS = gql`
   }
 `;
 
+export const GET_BUDGET_HELPER_DETAILS = gql`
+  query GetBudgetHelperDetails(
+    $userBudgetInput: UserBudgetInput!
+    $accessToken: String!
+    $refreshToken: String!
+  ) {
+    user(userBudgetInput: $userBudgetInput) {
+      monthlyIncome
+    }
+    categories(
+      userBudgetInput: $userBudgetInput
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+    ) {
+      guid
+      categoryGroupID
+      categoryID
+      categoryGroupName
+      categoryName
+      amount
+      extraAmount
+      isRegularExpense
+      isUpcomingExpense
+      regularExpenseDetails {
+        isMonthly
+        monthsDivisor
+      }
+    }
+  }
+`;
+
 export const GET_CATEGORY_LIST = gql`
   query GetCategoryList(
     $userBudgetInput: UserBudgetInput!

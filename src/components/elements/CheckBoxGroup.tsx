@@ -159,7 +159,11 @@ function CheckBoxGroup({ items, setItems }: Props) {
   };
 
   const createItem = (item: CheckboxItem, indent: number) => {
-    return <li key={item.id}>{createInputRow(item, indent, false)}</li>;
+    return (
+      <ul key={item.id}>
+        <li>{createInputRow(item, indent, false)}</li>
+      </ul>
+    );
   };
 
   const createGroup = (item: CheckboxItem, indent: number) => {

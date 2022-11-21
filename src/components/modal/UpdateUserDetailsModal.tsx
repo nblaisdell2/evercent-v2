@@ -10,6 +10,7 @@ import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
 import Label from "../elements/Label";
 import MyDatePicker from "../elements/MyDatePicker";
 import RadioButtonGroup from "../elements/RadioButtonGroup";
+import { getMoneyString } from "../../utils/utils";
 
 type Props = {
   userID: string;
@@ -72,7 +73,7 @@ function UpdateUserDetailsModal({
           <Label label="Monthly Income" />
           <input
             type="text"
-            value={"$" + newMonthlyIncome}
+            value={getMoneyString(newMonthlyIncome)}
             onChange={(e) => {
               setNewMonthlyIncome(
                 parseInt(e.target.value.replace("$", "") || "0")
