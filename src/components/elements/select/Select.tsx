@@ -14,8 +14,6 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { ListBox } from "./ListBox";
 import { Popover } from "./Popover";
 
-export { Item } from "react-stately";
-
 export function Select<T extends object>(props: AriaSelectProps<T>) {
   // Create state based on the incoming props
   let state = useSelectState(props);

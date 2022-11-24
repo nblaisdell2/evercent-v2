@@ -6,9 +6,7 @@ import { GET_USER_DATA } from "../graphql/queries";
 
 import Header from "../components/Header";
 import UserHeader from "../components/UserHeader";
-import ModalContent from "../components/modal/ModalContent";
 import MainContent from "../components/MainContent";
-import useModal from "../components/hooks/useModal";
 
 export type TokenDetails = {
   accessToken: string;
@@ -23,14 +21,6 @@ export type UserData = {
 };
 
 const Home: NextPage = () => {
-  const {
-    isOpen,
-    modalContentID,
-    modalComponentToDisplay,
-    showModal,
-    closeModal,
-  } = useModal();
-
   const { user, isLoading, error } = useUser();
   const userEmail: string = user ? (user.email as string) : "";
 
@@ -57,29 +47,12 @@ const Home: NextPage = () => {
   return (
     <div className="flex flex-col h-screen">
       <Header />
-      {isOpen && (
-        <ModalContent
-          open={isOpen}
-          modalContentID={modalContentID}
-          modalComponentToDisplay={modalComponentToDisplay}
-          onClose={closeModal}
-        />
-      )}
       {userEmail && (
         <>
-          <UserHeader
-            userData={data.userData}
-            refetchUser={refetchUser}
-            showModal={showModal}
-            closeModal={closeModal}
-          />
+          <UserHeader userData={data.userData} refetchUser={refetchUser} />
 
           <div className="flex flex-grow">
-            <MainContent
-              userData={data.userData}
-              showModal={showModal}
-              closeModal={closeModal}
-            />
+            <MainContent userData={data.userData} />
           </div>
         </>
       )}

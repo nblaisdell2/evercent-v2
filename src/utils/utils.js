@@ -20,6 +20,7 @@ export const ModalType = {
   BUDGET_AUTOMATION: 6,
   REGULAR_EXPENSES: 7,
   UPCOMING_EXPENSES: 8,
+  BUDGET_HELPER_CHECK: 9,
 };
 
 // ========================= //
@@ -84,6 +85,7 @@ export async function saveNewYNABTokens(userID, newTokenDetails) {
 // ========================= //
 export function parseDate(isoDateString) {
   if (!isoDateString) return new Date();
+  isoDateString = isoDateString.replace("Z", "");
   return new Date(isoDateString.replace("T", " ") + "Z");
 }
 
@@ -116,11 +118,11 @@ export function getMoneyString(amount) {
   return "$" + amount.toString();
 }
 
-export function calculatePercentString(numerator, denominator) {
+export function calculatePercentString(numerator, denominator, digits = 0) {
   const perc = calculatePercentage(numerator, denominator);
-  return (perc * 100).toFixed(0) + "%";
+  return getPercentString(perc, digits);
 }
 
-export function getPercentString(num) {
-  return num.toString() + "%";
+export function getPercentString(num, digits = 0) {
+  return (num * 100).toFixed(digits) + "%";
 }

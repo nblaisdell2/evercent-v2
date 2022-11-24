@@ -17,16 +17,18 @@ import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 import Label from "./elements/Label";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 import { UserData } from "../pages";
+import useModal from "./hooks/useModal";
+import ModalContent from "./modal/ModalContent";
 
 function YNABConnection({
   userData,
   refetchUser,
-  showModal,
 }: {
   userData: UserData;
   refetchUser: () => Promise<void>;
-  showModal: (modalContentID: number, modalContent: JSX.Element) => void;
 }) {
+  const { isOpen, showModal, closeModal } = useModal();
+
   const router = useRouter();
 
   const [getYNABInitialDetails] = useLazyQuery(GET_YNAB_INITIAL_DETAILS);
@@ -101,62 +103,68 @@ function YNABConnection({
   }
 
   return (
-    <div className="flex">
-      <div className="text-center mr-4">
-        <Label label={"API Connection"} />
-        <div
-          className={`${
-            !budgetIDFound ? "bg-[#E48E0C]" : "bg-green-600"
-          } text-white font-semibold rounded-full`}
+    <>
+      {isOpen && (
+        <ModalContent
+          modalContentID={ModalType.CHANGE_BUDGET}
+          onClose={closeModal}
         >
-          {!budgetIDFound ? "Disconnected" : "Connected"}
+          <ChangeBudgetModal
+            currBudgetID={userData.budgetID}
+            accessToken={userData.tokenDetails.accessToken}
+            refreshToken={userData.tokenDetails.refreshToken}
+            userID={userData.userID}
+          />
+        </ModalContent>
+      )}
+
+      <div className="flex">
+        <div className="text-center mr-4">
+          <Label label={"API Connection"} />
+          <div
+            className={`${
+              !budgetIDFound ? "bg-[#E48E0C]" : "bg-green-600"
+            } text-white font-semibold rounded-full`}
+          >
+            {!budgetIDFound ? "Disconnected" : "Connected"}
+          </div>
         </div>
-      </div>
 
-      {budgetIDFound ? (
-        <>
-          <div className="text-center ml-4">
-            <Label label={"Current Budget"} />
-            <div className="flex justify-center space-x-1">
-              <div className=" font-bold">{budgetName?.budgetName}</div>
-              <PencilSquareIcon
-                className="h-6 w-6 stroke-2 hover:cursor-pointer"
-                onClick={() =>
-                  showModal(
-                    ModalType.CHANGE_BUDGET,
-                    <ChangeBudgetModal
-                      currBudgetID={userData.budgetID}
-                      accessToken={userData.tokenDetails.accessToken}
-                      refreshToken={userData.tokenDetails.refreshToken}
-                      userID={userData.userID}
-                    />
-                  )
-                }
-              />
+        {budgetIDFound ? (
+          <>
+            <div className="text-center ml-4">
+              <Label label={"Current Budget"} />
+              <div className="flex justify-center space-x-1">
+                <div className=" font-bold">{budgetName?.budgetName}</div>
+                <PencilSquareIcon
+                  className="h-6 w-6 stroke-2 hover:cursor-pointer"
+                  onClick={showModal}
+                />
 
-              <div>
-                <a
-                  target="_blank"
-                  href={ynabBudgetURL}
-                  rel="noopener noreferrer"
-                >
-                  <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2 hover:cursor-pointer" />
-                </a>
+                <div>
+                  <a
+                    target="_blank"
+                    href={ynabBudgetURL}
+                    rel="noopener noreferrer"
+                  >
+                    <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2 hover:cursor-pointer" />
+                  </a>
+                </div>
               </div>
             </div>
+          </>
+        ) : (
+          <div className="flex items-center">
+            <a href={ynabAuthURL}>
+              <div className="ml-4 flex space-x-1 hover:underline hover:cursor-pointer hover:text-blue-400">
+                <div className="font-bold">Connect to YNAB</div>
+                <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2" />
+              </div>
+            </a>
           </div>
-        </>
-      ) : (
-        <div className="flex items-center">
-          <a href={ynabAuthURL}>
-            <div className="ml-4 flex space-x-1 hover:underline hover:cursor-pointer hover:text-blue-400">
-              <div className="font-bold">Connect to YNAB</div>
-              <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2" />
-            </div>
-          </a>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 

@@ -227,6 +227,8 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
   ) {
     user(userBudgetInput: $userBudgetInput) {
       monthlyIncome
+      payFrequency
+      nextPaydate
     }
     categories(
       userBudgetInput: $userBudgetInput
@@ -244,7 +246,15 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
       isUpcomingExpense
       regularExpenseDetails {
         isMonthly
+        nextDueDate
         monthsDivisor
+        repeatFreqNum
+        repeatFreqType
+        includeOnChart
+        multipleTransactions
+      }
+      upcomingDetails {
+        expenseAmount
       }
     }
   }

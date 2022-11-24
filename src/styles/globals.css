@@ -2,11 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Removes arrows in "number" inputs */
+
 @layer utilities {
+    /* Removes arrows in "number" inputs */
     input[type="number"]::-webkit-inner-spin-button,
     input[type="number"]::-webkit-outer-spin-button {
       @apply appearance-none;
     }
+
+    
+    /* Removes scrollbar in scrollable divs - Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Removes scrollbar in scrollable divs - Other browsers */
+    .no-scrollbar {
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+
   }
   

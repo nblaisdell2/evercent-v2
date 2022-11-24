@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from "react";
-
-import { useQuery } from "@apollo/client";
-import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
+import React, { useState } from "react";
 
 import useModal from "./hooks/useModal";
-import ModalContent from "./modal/ModalContent";
 
 import Amounts from "./Amounts";
 import BudgetHelperCharts from "./BudgetHelperCharts";
@@ -12,16 +8,41 @@ import CategoryList from "./CategoryList";
 import SelectedCategory from "./SelectedCategory";
 
 import type { UserData } from "../pages";
-import { calculatePercentage } from "../utils/utils";
+import ModalContent from "./modal/ModalContent";
+import AllCategoriesEditable from "./modal/AllCategoriesEditable";
+import { ModalType } from "../utils/utils";
+
+export type RegularExpenseDetails = {
+  guid: string;
+  isMonthly: boolean;
+  nextDueDate: string;
+  monthsDivisor: number;
+  repeatFreqNum: number;
+  repeatFreqType: string;
+  includeOnChart: boolean;
+  multipleTransactions: boolean;
+};
+
+export type UpcomingDetails = {
+  guid: string;
+  expenseAmount: number;
+};
 
 export type CategoryListItem = {
+  guid: string;
+  categoryGroupID: string;
+  categoryID: string;
+  groupName: string;
   name: string;
   amount: number;
   extraAmount: number;
   adjustedAmt: number;
+  adjustedAmtPlusExtra: number;
   percentIncome: number;
   isRegularExpense: boolean;
   isUpcomingExpense: boolean;
+  regularExpenseDetails: RegularExpenseDetails;
+  upcomingDetails: UpcomingDetails;
 };
 
 export type CategoryListGroup = {
@@ -30,114 +51,84 @@ export type CategoryListGroup = {
   amount: number;
   extraAmount: number;
   adjustedAmt: number;
+  adjustedAmtPlusExtra: number;
   percentIncome: number;
   categories: CategoryListItem[];
 };
 
-function BudgetHelperFull({ userData }: { userData: UserData }) {
-  const {
-    isOpen,
-    modalContentID,
-    modalComponentToDisplay,
-    showModal,
-    closeModal,
-  } = useModal();
+function BudgetHelperFull({
+  userData,
+  monthlyIncome,
+  payFrequency,
+  nextPaydate,
+  categoryList,
+  setCategoryList,
+  changesMade,
+  setChangesMade,
+  expandedGroups,
+  setExpandedGroups,
+  onSave,
+  refetchCategories,
+  getGroupAmounts,
+}: {
+  userData: UserData;
+  monthlyIncome: number;
+  payFrequency: string;
+  nextPaydate: string;
+  categoryList: CategoryListGroup[];
+  setCategoryList: (newList: CategoryListGroup[]) => void;
+  changesMade: boolean;
+  setChangesMade: (newChanges: boolean) => void;
+  expandedGroups: string[];
+  setExpandedGroups: any;
+  onSave: () => void;
+  refetchCategories: () => Promise<void>;
+  getGroupAmounts: (categories: CategoryListItem[]) => {
+    amount: number;
+    extraAmount: number;
+    adjustedAmt: number;
+    adjustedAmtPlusExtra: number;
+    percentIncome: number;
+  };
+}) {
+  const { isOpen, showModal, closeModal } = useModal();
 
-  const { loading, error, data, refetch } = useQuery(
-    GET_BUDGET_HELPER_DETAILS,
-    {
-      variables: {
-        userBudgetInput: {
-          userID: userData.userID,
-          budgetID: userData.budgetID,
-        },
-        accessToken: userData.tokenDetails.accessToken,
-        refreshToken: userData.tokenDetails.refreshToken,
-      },
-    }
-  );
-
-  const [categoryList, setCategoryList] = useState<CategoryListGroup[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryListItem | null>();
 
-  useEffect(() => {
-    if (data) {
-      setCategoryList(getCategoryList(data.categories));
-    }
-  }, [data]);
-
   const getTotalAmountUsed = () => {
     return categoryList.reduce((prev, curr) => {
-      return prev + curr.adjustedAmt;
+      return prev + curr.adjustedAmtPlusExtra;
     }, 0);
   };
 
-  const getCategoryList = (categories: any) => {
-    let categoryListTemp = [];
-    let cats: any[] = [];
-    let currGroup = "";
-    let amountTotal = 0;
-    let extraAmountTotal = 0;
-    let adjustedAmtTotal = 0;
-    let percentIncomeTotal = 0;
-    for (let i = 0; i < categories.length; i++) {
-      if (currGroup !== categories[i].categoryGroupName) {
-        if (currGroup !== "") {
-          categoryListTemp.push({
-            groupName: currGroup,
-            isExpanded: false,
-            amount: amountTotal,
-            extraAmount: extraAmountTotal,
-            adjustedAmt: adjustedAmtTotal,
-            percentIncome: percentIncomeTotal,
-            categories: cats,
-          });
-
-          cats = [];
-          amountTotal = 0;
-          extraAmountTotal = 0;
-          adjustedAmtTotal = 0;
-          percentIncomeTotal = 0;
-        }
-        currGroup = categories[i].categoryGroupName;
-      }
-
-      amountTotal += categories[i].amount;
-      extraAmountTotal += categories[i].extraAmount;
-      adjustedAmtTotal += categories[i].amount;
-      percentIncomeTotal += calculatePercentage(
-        categories[i].amount,
-        data.user.monthlyIncome
-      );
-
-      cats.push({
-        name: categories[i].categoryName,
-        amount: categories[i].amount,
-        extraAmount: categories[i].extraAmount,
-        adjustedAmt: categories[i].amount, // TODO: This needs to be adjusted appropriately
-        percentIncome: calculatePercentage(
-          categories[i].amount,
-          data.user.monthlyIncome
-        ),
-        isRegularExpense: categories[i].isRegularExpense,
-        isUpcomingExpense: categories[i].isUpcomingExpense,
-      });
-    }
-    categoryListTemp.push({
-      groupName: currGroup,
-      isExpanded: false,
-      amount: amountTotal,
-      extraAmount: extraAmountTotal,
-      adjustedAmt: adjustedAmtTotal,
-      percentIncome: percentIncomeTotal,
-      categories: cats,
-    });
-
-    return categoryListTemp;
+  const selectCategory = (category: CategoryListItem | null) => {
+    setSelectedCategory(category);
   };
 
-  const selectCategory = (item: CategoryListItem | null) => {
+  const updateSelectedCategory = (item: CategoryListItem | null) => {
+    if (item) {
+      let newCategoryList = [...categoryList];
+      const groupIdx = newCategoryList.findIndex((grp) => {
+        return grp.groupName == item.groupName;
+      });
+      const newGroup = { ...newCategoryList[groupIdx] };
+      const catIdx = newGroup.categories.findIndex((cat) => {
+        return cat.name == item.name;
+      });
+      let newCats = [...newGroup.categories];
+
+      newCats[catIdx] = { ...newCats[catIdx], ...item };
+      newCategoryList[groupIdx] = {
+        ...newCategoryList[groupIdx],
+        categories: newCats,
+        ...getGroupAmounts(newCats),
+      };
+
+      setCategoryList(newCategoryList);
+      setChangesMade(true);
+    }
+
     setSelectedCategory(item);
   };
 
@@ -147,37 +138,51 @@ function BudgetHelperFull({ userData }: { userData: UserData }) {
     let existingGroup = newCategoryList.filter((existingGrp) => {
       return existingGrp.groupName == grp.groupName;
     })[0];
-    existingGroup.isExpanded = !existingGroup.isExpanded;
+    let newToggle = !existingGroup.isExpanded;
+    if (newToggle) {
+      setExpandedGroups((prev: string[]) => {
+        return [...prev, existingGroup.groupName];
+      });
+    } else {
+      setExpandedGroups((prev: string[]) => {
+        return prev.filter((grp) => {
+          return grp != existingGroup.groupName;
+        });
+      });
+    }
+    existingGroup.isExpanded = newToggle;
 
     setCategoryList(newCategoryList);
   };
 
-  if (loading || !categoryList) return <div></div>;
-
-  console.log("category data", data);
+  if (!categoryList) return <div></div>;
   console.log("list", categoryList);
 
   return (
     <>
       {isOpen && (
         <ModalContent
-          open={isOpen}
-          modalContentID={modalContentID}
-          modalComponentToDisplay={modalComponentToDisplay}
+          modalContentID={ModalType.ALL_CATEGORIES_LIST}
           onClose={closeModal}
-        />
+        >
+          <AllCategoriesEditable
+            userData={userData}
+            refetchCategories={refetchCategories}
+            closeModal={closeModal}
+          />
+        </ModalContent>
       )}
 
       <div className="h-full mx-4 flex flex-col">
         {/* Amount Section */}
         <Amounts
-          monthlyIncome={data.user.monthlyIncome}
+          monthlyIncome={monthlyIncome}
           amountUsed={getTotalAmountUsed()}
         />
 
         {/* Charts Section */}
         <BudgetHelperCharts
-          monthlyIncome={data.user.monthlyIncome}
+          monthlyIncome={monthlyIncome}
           categoryList={categoryList}
         />
 
@@ -185,20 +190,24 @@ function BudgetHelperFull({ userData }: { userData: UserData }) {
         {!selectedCategory ? (
           <CategoryList
             userData={userData}
-            monthlyIncome={data.user.monthlyIncome}
+            monthlyIncome={monthlyIncome}
             categoryList={categoryList}
             showModal={showModal}
             closeModal={closeModal}
             refetchCategories={async () => {
-              await refetch();
+              await refetchCategories();
             }}
+            onSave={onSave}
             toggleExpanded={toggleExpanded}
             selectCategory={selectCategory}
           />
         ) : (
           <SelectedCategory
             initialCategory={selectedCategory}
-            selectCategory={selectCategory}
+            monthlyIncome={monthlyIncome}
+            payFrequency={payFrequency}
+            nextPaydate={nextPaydate}
+            updateSelectedCategory={updateSelectedCategory}
           />
         )}
       </div>

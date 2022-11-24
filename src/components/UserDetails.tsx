@@ -10,18 +10,18 @@ import { parseDate, formatDate, ModalType } from "../utils/utils";
 
 import Label from "./elements/Label";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
+import useModal from "./hooks/useModal";
+import ModalContent from "./modal/ModalContent";
 
 function UserDetails({
   userID,
   budgetID,
-  showModal,
-  closeModal,
 }: {
   userID: string;
   budgetID: string;
-  showModal: (modalContentID: number, modalContent: JSX.Element) => void;
-  closeModal: () => void;
 }) {
+  const { isOpen, showModal, closeModal } = useModal();
+
   const { loading, error, data, refetch } = useQuery(GET_USER_DETAILS, {
     variables: {
       userBudgetInput: {
@@ -37,73 +37,78 @@ function UserDetails({
   const daysAway = differenceInDays(parseDate(nextPaydate), startOfToday());
 
   return (
-    <div className="flex items-center justify-evenly w-full sm:w-auto space-x-2 sm:space-x-4 text-center">
-      {/* Monthly Income */}
-      <div className="flex flex-col items-center">
-        <Label label="Monthly Income" />
-        <div className="text-green-500 font-bold text-base sm:text-xl">
-          {"$" + monthlyIncome.toString()}
+    <>
+      {isOpen && (
+        <ModalContent
+          modalContentID={ModalType.USER_DETAILS}
+          onClose={closeModal}
+        >
+          <UpdateUserDetailsModal
+            userID={userID}
+            budgetID={budgetID}
+            monthlyIncome={monthlyIncome}
+            payFrequency={payFrequency}
+            nextPaydate={nextPaydate}
+            refetchUserDetails={refetch}
+            closeModal={closeModal}
+          />
+        </ModalContent>
+      )}
+      <div className="flex items-center justify-evenly w-full sm:w-auto space-x-2 sm:space-x-4 text-center">
+        {/* Monthly Income */}
+        <div className="flex flex-col items-center">
+          <Label label="Monthly Income" />
+          <div className="text-green-500 font-bold text-base sm:text-xl">
+            {"$" + monthlyIncome.toString()}
+          </div>
         </div>
-      </div>
 
-      {/* Vertical Divider */}
-      <div className="w-[1px] h-full bg-gray-400" />
+        {/* Vertical Divider */}
+        <div className="w-[1px] h-full bg-gray-400" />
 
-      {/* Pay Frequency */}
-      <div className="flex flex-col items-center">
-        <Label label="Pay Frequency" />
-        <div className="font-bold text-sm sm:text-base">
-          {monthlyIncome == 0 ? "----" : payFrequency}
+        {/* Pay Frequency */}
+        <div className="flex flex-col items-center">
+          <Label label="Pay Frequency" />
+          <div className="font-bold text-sm sm:text-base">
+            {monthlyIncome == 0 ? "----" : payFrequency}
+          </div>
         </div>
-      </div>
 
-      {/* Vertical Divider */}
-      <div className="w-[1px] h-full bg-gray-400" />
+        {/* Vertical Divider */}
+        <div className="w-[1px] h-full bg-gray-400" />
 
-      {/* Next Paydate */}
-      <div className="flex flex-col items-center">
-        <Label label="Next Paydate" />
-        <div className="hidden sm:block font-bold text-sm sm:text-base">
-          {monthlyIncome == 0
-            ? "----"
-            : formatDate(parseDate(nextPaydate)) + " (" + daysAway + " days)"}
-        </div>
-        <div className="block sm:hidden font-bold text-sm sm:text-base">
-          {monthlyIncome == 0 ? (
-            "----"
-          ) : (
-            <div>
-              <div>{formatDate(parseDate(nextPaydate))}</div>
-              <div className="text-xs sm:text-base -mt-1 sm:mt-0">
-                {"(" + daysAway + " days)"}
+        {/* Next Paydate */}
+        <div className="flex flex-col items-center">
+          <Label label="Next Paydate" />
+          <div className="hidden sm:block font-bold text-sm sm:text-base">
+            {monthlyIncome == 0
+              ? "----"
+              : formatDate(parseDate(nextPaydate)) + " (" + daysAway + " days)"}
+          </div>
+          <div className="block sm:hidden font-bold text-sm sm:text-base">
+            {monthlyIncome == 0 ? (
+              "----"
+            ) : (
+              <div>
+                <div>{formatDate(parseDate(nextPaydate))}</div>
+                <div className="text-xs sm:text-base -mt-1 sm:mt-0">
+                  {"(" + daysAway + " days)"}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {/* Vertical Divider */}
+        <div className="w-[1px] h-full bg-gray-400" />
+
+        {/* Edit Icon */}
+        <PencilSquareIcon
+          className="h-8 w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
+          onClick={showModal}
+        />
       </div>
-
-      {/* Vertical Divider */}
-      <div className="w-[1px] h-full bg-gray-400" />
-
-      {/* Edit Icon */}
-      <PencilSquareIcon
-        className="h-8 w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
-        onClick={() =>
-          showModal(
-            ModalType.USER_DETAILS,
-            <UpdateUserDetailsModal
-              userID={userID}
-              budgetID={budgetID}
-              monthlyIncome={monthlyIncome}
-              payFrequency={payFrequency}
-              nextPaydate={nextPaydate}
-              refetchUserDetails={refetch}
-              closeModal={closeModal}
-            />
-          )
-        }
-      />
-    </div>
+    </>
   );
 }
 

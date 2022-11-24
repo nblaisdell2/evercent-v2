@@ -1,21 +1,25 @@
 import React, { useState } from "react";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
+import { today, getLocalTimeZone } from "@internationalized/date";
 
 import { CategoryListItem } from "./BudgetHelperFull";
 import Label from "./elements/Label";
 import Card from "./elements/Card";
 
 import Switch from "react-switch";
-import { getMoneyString } from "../utils/utils";
+import { calculatePercentage, getMoneyString, parseDate } from "../utils/utils";
 import MyDatePicker from "./elements/MyDatePicker";
 import { Select } from "./elements/select/Select";
 import { Item } from "react-stately";
+import { addMonths, addWeeks, format, differenceInDays } from "date-fns";
 
 type Props = {
   initialCategory: CategoryListItem;
-  selectCategory: (item: CategoryListItem | null) => void;
+  monthlyIncome: number;
+  payFrequency: string;
+  nextPaydate: string;
+  updateSelectedCategory: (item: CategoryListItem | null) => void;
 };
 
 type PostingMonth = {
@@ -23,7 +27,13 @@ type PostingMonth = {
   amount: number;
 };
 
-function SelectedCategory({ initialCategory, selectCategory }: Props) {
+function SelectedCategory({
+  initialCategory,
+  monthlyIncome,
+  payFrequency,
+  nextPaydate,
+  updateSelectedCategory,
+}: Props) {
   const [category, setCategory] = useState(initialCategory);
 
   const toggleOptions = (checked: boolean, option: string) => {
@@ -31,6 +41,21 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
 
     newCategory.isRegularExpense =
       option == "Regular Expense" ? checked : false;
+    if (
+      newCategory.isRegularExpense &&
+      !newCategory.regularExpenseDetails.repeatFreqType
+    ) {
+      // Set regular expense defaults here
+      newCategory.regularExpenseDetails.isMonthly = true;
+      newCategory.regularExpenseDetails.nextDueDate = today(getLocalTimeZone())
+        .toDate(getLocalTimeZone())
+        .toISOString();
+      newCategory.regularExpenseDetails.monthsDivisor = 1;
+      newCategory.regularExpenseDetails.repeatFreqNum = 1;
+      newCategory.regularExpenseDetails.repeatFreqType = "Months";
+      newCategory.regularExpenseDetails.includeOnChart = true;
+      newCategory.regularExpenseDetails.multipleTransactions = false;
+    }
     newCategory.isUpcomingExpense =
       option == "Upcoming Expense" ? checked : false;
 
@@ -54,16 +79,95 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
     ];
   };
 
+  const getAdjustedAmt = (category: CategoryListItem) => {
+    return category.amount;
+  };
+
+  const updateCategory = (newFields: any) => {
+    setCategory((prev) => {
+      let newCat: any = { ...prev };
+      let keys = Object.keys(newFields);
+      for (let i = 0; i < keys.length; i++) {
+        newCat[keys[i]] = newFields[keys[i]];
+      }
+
+      newCat.adjustedAmt = getAdjustedAmt(newCat);
+      newCat.adjustedAmtPlusExtra = newCat.adjustedAmt + newCat.extraAmount;
+      newCat.percentIncome = calculatePercentage(
+        newCat.adjustedAmtPlusExtra,
+        monthlyIncome
+      );
+
+      // console.log(
+      //   "percent?",
+      //   calculatePercentage(newCat.adjustedAmtPlusExtra, monthlyIncome) * 100
+      // );
+
+      updateSelectedCategory(newCat);
+      return newCat as CategoryListItem;
+    });
+  };
+
+  const getAdjustedAmtByFrequency = (
+    adjustedAmt: number,
+    payFrequency: string
+  ) => {
+    switch (payFrequency) {
+      case "Weekly":
+        return adjustedAmt / 4;
+      case "Every 2 Weeks":
+        return adjustedAmt / 2;
+      case "Monthly":
+      default:
+        return adjustedAmt;
+    }
+  };
+
+  const getUpcomingPaydate = (
+    purchaseAmt: number,
+    adjustedAmt: number,
+    payFreq: string,
+    nextPaydate: string
+  ) => {
+    if (!adjustedAmt || !purchaseAmt) {
+      return null;
+    }
+
+    const amtPerPaycheck = getAdjustedAmtByFrequency(adjustedAmt, payFreq);
+    const numPaychecks = Math.ceil(purchaseAmt / amtPerPaycheck);
+
+    let newPaydate = parseDate(nextPaydate);
+    switch (payFreq) {
+      case "Weekly":
+        newPaydate = addWeeks(newPaydate, numPaychecks);
+        break;
+      case "Every 2 Weeks":
+        newPaydate = addWeeks(newPaydate, numPaychecks * 2);
+        break;
+      case "Monthly":
+        newPaydate = addMonths(newPaydate, numPaychecks);
+    }
+
+    return newPaydate.toISOString();
+  };
+
   const postingMonths = getPostingMonthAmounts();
 
+  const upcomingPaydate = getUpcomingPaydate(
+    category.upcomingDetails.expenseAmount,
+    category.adjustedAmtPlusExtra,
+    payFrequency,
+    nextPaydate
+  );
   console.log("What is this?", category);
+  console.log("upcoming paydate", upcomingPaydate);
 
   return (
     <div className="flex flex-col flex-grow mt-4">
       <div className="inline-flex items-center">
         <div
           onClick={() => {
-            selectCategory(null);
+            updateSelectedCategory(null);
           }}
           className="inline-flex border-b border-transparent hover:border-black hover:cursor-pointer"
         >
@@ -86,6 +190,22 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                 <input
                   type="number"
                   className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
+                  value={category.amount.toString()}
+                  onChange={(e: any) => {
+                    let { data, inputType } = e.nativeEvent;
+                    if (
+                      (data >= "0" && data <= "9") ||
+                      [
+                        "deleteContentForward",
+                        "deleteContentBackward",
+                      ].includes(inputType)
+                    ) {
+                      updateCategory({
+                        amount: parseInt(e.target.value) || 0,
+                        adjustedAmt: parseInt(e.target.value) || 0,
+                      });
+                    }
+                  }}
                   onFocus={(e) => e.target.select()}
                 />
               </div>
@@ -94,6 +214,22 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                 <input
                   type="number"
                   className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
+                  value={category.extraAmount.toString()}
+                  onChange={(e: any) => {
+                    let { data, inputType } = e.nativeEvent;
+                    if (
+                      (data >= "0" && data <= "9") ||
+                      [
+                        "deleteContentForward",
+                        "deleteContentBackward",
+                      ].includes(inputType)
+                    ) {
+                      updateCategory({
+                        extraAmount: parseInt(e.target.value) || 0,
+                      });
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
             </div>
@@ -139,11 +275,15 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
             <div className="text-center">
               <div className="mb-2">
                 <Label label={"Adjusted Amount"} className="text-xl" />
-                <div className="font-bold text-3xl">{"$50"}</div>
+                <div className="font-bold text-3xl">
+                  {getMoneyString(category.adjustedAmt)}
+                </div>
               </div>
               <div>
                 <Label label={"Adjusted plus Extra"} className="text-xl" />
-                <div className="font-bold text-3xl">{"$50"}</div>
+                <div className="font-bold text-3xl">
+                  {getMoneyString(category.adjustedAmt + category.extraAmount)}
+                </div>
               </div>
             </div>
 
@@ -199,21 +339,60 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                           .substring(0, 10)
                       )}
                       value={parseDate(
-                        today(getLocalTimeZone())
-                          .toDate(getLocalTimeZone())
-                          .toISOString//   category?.regularExpenseDetails?.nextDueDate ||
-                          ()
-                          .substring(0, 10)
+                        category?.regularExpenseDetails?.nextDueDate.substring(
+                          0,
+                          10
+                        )
                       )}
+                      onChange={(newDate: any) => {
+                        updateCategory({
+                          regularExpenseDetails: {
+                            ...category.regularExpenseDetails,
+                            nextDueDate: new Date(
+                              newDate.year,
+                              newDate.month - 1,
+                              newDate.day
+                            ).toISOString(),
+                          },
+                        });
+                      }}
                     />
                   </div>
                   <div className="flex flex-col items-center">
                     <div className="font-semibold">Frequency</div>
                     <div className="flex border-2 border-blue-900 rounded-md font-bold">
-                      <div className="p-[3px] w-20 text-center hover:text-white hover:font-bold hover:bg-blue-900 hover:opacity-70 hover:cursor-pointer">
+                      <div
+                        className={`p-[3px] w-20 text-center hover:cursor-pointer ${
+                          category.regularExpenseDetails.isMonthly
+                            ? "bg-blue-900 hover:bg-blue-900 text-white hover:text-white font-bold hover:font-bold"
+                            : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
+                        }`}
+                        onClick={() => {
+                          updateCategory({
+                            regularExpenseDetails: {
+                              ...category.regularExpenseDetails,
+                              isMonthly: true,
+                            },
+                          });
+                        }}
+                      >
                         Monthly
                       </div>
-                      <div className="p-[3px] w-20 text-center hover:text-white hover:font-bold hover:bg-blue-900 hover:opacity-70 hover:cursor-pointer">
+                      <div
+                        className={`p-[3px] w-20 text-center hover:cursor-pointer ${
+                          !category.regularExpenseDetails.isMonthly
+                            ? "bg-blue-900 hover:bg-blue-900 text-white hover:text-white font-bold hover:font-bold"
+                            : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
+                        }`}
+                        onClick={() => {
+                          updateCategory({
+                            regularExpenseDetails: {
+                              ...category.regularExpenseDetails,
+                              isMonthly: false,
+                            },
+                          });
+                        }}
+                      >
                         By Date
                       </div>
                     </div>
@@ -224,10 +403,15 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                       <div className="flex items-center w-16 h-full mr-1">
                         <Select
                           label=""
-                          selectedKey={
-                            // category?.regularExpenseDetails?.repeatFreqNum ||
-                            "12"
-                          }
+                          selectedKey={category.regularExpenseDetails.repeatFreqNum.toString()}
+                          onSelectionChange={(sel) => {
+                            updateCategory({
+                              regularExpenseDetails: {
+                                ...category.regularExpenseDetails,
+                                repeatFreqNum: parseInt(sel.toString()),
+                              },
+                            });
+                          }}
                         >
                           <Item key="1">1</Item>
                           <Item key="2">2</Item>
@@ -247,12 +431,19 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                         <Select
                           label=""
                           selectedKey={
-                            // category?.regularExpenseDetails?.repeatFreqType ||
-                            "months"
+                            category.regularExpenseDetails.repeatFreqType
                           }
+                          onSelectionChange={(sel) => {
+                            updateCategory({
+                              regularExpenseDetails: {
+                                ...category.regularExpenseDetails,
+                                repeatFreqType: sel.toString(),
+                              },
+                            });
+                          }}
                         >
-                          <Item key="months">Months</Item>
-                          <Item key="years">Years</Item>
+                          <Item key="Months">Months</Item>
+                          <Item key="Years">Years</Item>
                         </Select>
                       </div>
                     </div>
@@ -262,8 +453,15 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                   <div className="flex flex-col items-center">
                     <div className="font-semibold">Include on Chart?</div>
                     <Switch
-                      checked={false /*category.includeOnChart*/}
-                      onChange={(checked) => {}}
+                      checked={category.regularExpenseDetails.includeOnChart}
+                      onChange={(checked) => {
+                        updateCategory({
+                          regularExpenseDetails: {
+                            ...category.regularExpenseDetails,
+                            includeOnChart: checked,
+                          },
+                        });
+                      }}
                       uncheckedIcon={<div></div>}
                       checkedIcon={<div></div>}
                       onColor={"#1E3A8A"}
@@ -283,8 +481,17 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                       Multiple Monthly Transactions?
                     </div>
                     <Switch
-                      checked={false /*category.multipleTransactions*/}
-                      onChange={(checked) => {}}
+                      checked={
+                        category.regularExpenseDetails.multipleTransactions
+                      }
+                      onChange={(checked) => {
+                        updateCategory({
+                          regularExpenseDetails: {
+                            ...category.regularExpenseDetails,
+                            multipleTransactions: checked,
+                          },
+                        });
+                      }}
                       uncheckedIcon={<div></div>}
                       checkedIcon={<div></div>}
                       onColor={"#1E3A8A"}
@@ -294,6 +501,7 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
               </div>
             </Card>
           )}
+
           {category.isUpcomingExpense && (
             <Card className="flex flex-col flex-grow p-1 text-xl">
               <div className="text-center font-bold text-xl">
@@ -305,15 +513,47 @@ function SelectedCategory({ initialCategory, selectCategory }: Props) {
                   <input
                     type="number"
                     className="border border-black rounded-md outline-none text-center h-8 w-56 appearance-none"
+                    value={(
+                      category.upcomingDetails.expenseAmount || 0
+                    ).toString()}
+                    onChange={(e: any) => {
+                      let { data, inputType } = e.nativeEvent;
+                      if (
+                        (data >= "0" && data <= "9") ||
+                        [
+                          "deleteContentForward",
+                          "deleteContentBackward",
+                        ].includes(inputType)
+                      ) {
+                        updateCategory({
+                          upcomingDetails: {
+                            ...category.upcomingDetails,
+                            expenseAmount: parseInt(e.target.value) || null,
+                          },
+                        });
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
                   />
                 </div>
                 <div className="flex flex-col items-center">
                   <Label label={"Purchase Date"} className="font-semibold" />
-                  <div className="font-bold text-2xl">Jan 23, 2022</div>
+                  <div className="font-bold text-2xl">
+                    {!upcomingPaydate
+                      ? "----"
+                      : format(parseDate(upcomingPaydate), "MMM d, yyyy")}
+                  </div>
                 </div>
                 <div className="flex flex-col items-center">
                   <Label label={"Days Away"} className="font-semibold" />
-                  <div className="font-bold text-2xl">45</div>
+                  <div className="font-bold text-2xl">
+                    {!upcomingPaydate
+                      ? "----"
+                      : differenceInDays(
+                          parseDate(upcomingPaydate),
+                          today(getLocalTimeZone()).toDate(getLocalTimeZone())
+                        )}
+                  </div>
                 </div>
               </div>
             </Card>
