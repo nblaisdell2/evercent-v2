@@ -144,7 +144,7 @@ function SelectedCategory({
     const amtPerPaycheck = getAdjustedAmtByFrequency(adjustedAmt, payFreq);
     const numPaychecks = Math.ceil(purchaseAmt / amtPerPaycheck);
 
-    let newPaydate = getDateFromCalendarDate(nextPaydate);
+    let newPaydate = parseDateUtil(nextPaydate);
     switch (payFreq) {
       case "Weekly":
         newPaydate = addWeeks(newPaydate, numPaychecks);
@@ -167,17 +167,6 @@ function SelectedCategory({
     payFrequency,
     nextPaydate
   );
-  console.log("What is this?", category);
-  console.log("upcoming paydate", upcomingPaydate);
-  console.log(
-    "What about this?",
-    parseDate(
-      (
-        category?.regularExpenseDetails?.nextDueDate || new Date().toISOString()
-      ).substring(0, 10)
-    )
-  );
-  console.log(today(getLocalTimeZone()));
 
   return (
     <div className="flex flex-col flex-grow mt-4">

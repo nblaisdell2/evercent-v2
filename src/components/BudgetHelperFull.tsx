@@ -193,6 +193,7 @@ function BudgetHelperFull({
         <BudgetHelperCharts
           monthlyIncome={monthlyIncome}
           categoryList={categoryList}
+          amountUsed={getTotalAmountUsed()}
         />
 
         {/* Category List / Edit / Save section */}

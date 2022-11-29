@@ -81,6 +81,13 @@ export async function saveNewYNABTokens(userID, newTokenDetails) {
   }
 }
 
+export function merge(obj, fieldName) {
+  let subArrays = obj.map((x) => x[fieldName]);
+  return subArrays.reduce((a, b) => {
+    return a.concat(b);
+  }, []);
+}
+
 // ========================= //
 // ======== DATES ========== //
 // ========================= //
