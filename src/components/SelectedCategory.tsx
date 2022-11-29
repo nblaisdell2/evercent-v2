@@ -1,14 +1,20 @@
 import React, { useState } from "react";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-import { today, getLocalTimeZone } from "@internationalized/date";
+import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
 
 import { CategoryListItem } from "./BudgetHelperFull";
 import Label from "./elements/Label";
 import Card from "./elements/Card";
 
 import Switch from "react-switch";
-import { calculatePercentage, getMoneyString, parseDate } from "../utils/utils";
+import {
+  calculatePercentage,
+  getAdjustedAmount,
+  getDateFromCalendarDate,
+  getMoneyString,
+  parseDate as parseDateUtil,
+} from "../utils/utils";
 import MyDatePicker from "./elements/MyDatePicker";
 import { Select } from "./elements/select/Select";
 import { Item } from "react-stately";
@@ -19,6 +25,7 @@ type Props = {
   monthlyIncome: number;
   payFrequency: string;
   nextPaydate: string;
+  budgetMonths: any[];
   updateSelectedCategory: (item: CategoryListItem | null) => void;
 };
 
@@ -32,6 +39,7 @@ function SelectedCategory({
   monthlyIncome,
   payFrequency,
   nextPaydate,
+  budgetMonths,
   updateSelectedCategory,
 }: Props) {
   const [category, setCategory] = useState(initialCategory);
@@ -47,9 +55,7 @@ function SelectedCategory({
     ) {
       // Set regular expense defaults here
       newCategory.regularExpenseDetails.isMonthly = true;
-      newCategory.regularExpenseDetails.nextDueDate = today(getLocalTimeZone())
-        .toDate(getLocalTimeZone())
-        .toISOString();
+      newCategory.regularExpenseDetails.nextDueDate = nextPaydate;
       newCategory.regularExpenseDetails.monthsDivisor = 1;
       newCategory.regularExpenseDetails.repeatFreqNum = 1;
       newCategory.regularExpenseDetails.repeatFreqType = "Months";
@@ -60,6 +66,7 @@ function SelectedCategory({
       option == "Upcoming Expense" ? checked : false;
 
     setCategory(newCategory);
+    updateSelectedCategory(newCategory);
   };
 
   const getPostingMonthAmounts = (): PostingMonth[] => {
@@ -79,10 +86,6 @@ function SelectedCategory({
     ];
   };
 
-  const getAdjustedAmt = (category: CategoryListItem) => {
-    return category.amount;
-  };
-
   const updateCategory = (newFields: any) => {
     setCategory((prev) => {
       let newCat: any = { ...prev };
@@ -91,7 +94,12 @@ function SelectedCategory({
         newCat[keys[i]] = newFields[keys[i]];
       }
 
-      newCat.adjustedAmt = getAdjustedAmt(newCat);
+      if (newCat.regularExpenseDetails.isMonthly) {
+        newCat.regularExpenseDetails.repeatFreqNum = 1;
+        newCat.regularExpenseDetails.repeatFreqType = "Months";
+      }
+
+      newCat.adjustedAmt = getAdjustedAmount(newCat, budgetMonths, nextPaydate);
       newCat.adjustedAmtPlusExtra = newCat.adjustedAmt + newCat.extraAmount;
       newCat.percentIncome = calculatePercentage(
         newCat.adjustedAmtPlusExtra,
@@ -136,7 +144,7 @@ function SelectedCategory({
     const amtPerPaycheck = getAdjustedAmtByFrequency(adjustedAmt, payFreq);
     const numPaychecks = Math.ceil(purchaseAmt / amtPerPaycheck);
 
-    let newPaydate = parseDate(nextPaydate);
+    let newPaydate = getDateFromCalendarDate(nextPaydate);
     switch (payFreq) {
       case "Weekly":
         newPaydate = addWeeks(newPaydate, numPaychecks);
@@ -161,6 +169,15 @@ function SelectedCategory({
   );
   console.log("What is this?", category);
   console.log("upcoming paydate", upcomingPaydate);
+  console.log(
+    "What about this?",
+    parseDate(
+      (
+        category?.regularExpenseDetails?.nextDueDate || new Date().toISOString()
+      ).substring(0, 10)
+    )
+  );
+  console.log(today(getLocalTimeZone()));
 
   return (
     <div className="flex flex-col flex-grow mt-4">
@@ -276,13 +293,16 @@ function SelectedCategory({
               <div className="mb-2">
                 <Label label={"Adjusted Amount"} className="text-xl" />
                 <div className="font-bold text-3xl">
-                  {getMoneyString(category.adjustedAmt)}
+                  {getMoneyString(category.adjustedAmt, 2)}
                 </div>
               </div>
               <div>
                 <Label label={"Adjusted plus Extra"} className="text-xl" />
                 <div className="font-bold text-3xl">
-                  {getMoneyString(category.adjustedAmt + category.extraAmount)}
+                  {getMoneyString(
+                    category.adjustedAmt + category.extraAmount,
+                    2
+                  )}
                 </div>
               </div>
             </div>
@@ -333,26 +353,23 @@ function SelectedCategory({
                     <div className="font-semibold">Next Due Date</div>
                     <MyDatePicker
                       minValue={parseDate(
-                        today(getLocalTimeZone())
-                          .toDate(getLocalTimeZone())
-                          .toISOString()
-                          .substring(0, 10)
-                      )}
-                      value={parseDate(
-                        category?.regularExpenseDetails?.nextDueDate.substring(
+                        (nextPaydate || new Date().toISOString()).substring(
                           0,
                           10
                         )
+                      )}
+                      value={parseDate(
+                        (
+                          category?.regularExpenseDetails?.nextDueDate ||
+                          new Date().toISOString()
+                        ).substring(0, 10)
                       )}
                       onChange={(newDate: any) => {
                         updateCategory({
                           regularExpenseDetails: {
                             ...category.regularExpenseDetails,
-                            nextDueDate: new Date(
-                              newDate.year,
-                              newDate.month - 1,
-                              newDate.day
-                            ).toISOString(),
+                            nextDueDate:
+                              getDateFromCalendarDate(newDate).toISOString(),
                           },
                         });
                       }}
@@ -541,7 +558,7 @@ function SelectedCategory({
                   <div className="font-bold text-2xl">
                     {!upcomingPaydate
                       ? "----"
-                      : format(parseDate(upcomingPaydate), "MMM d, yyyy")}
+                      : format(parseDateUtil(upcomingPaydate), "MMM d, yyyy")}
                   </div>
                 </div>
                 <div className="flex flex-col items-center">
@@ -550,7 +567,7 @@ function SelectedCategory({
                     {!upcomingPaydate
                       ? "----"
                       : differenceInDays(
-                          parseDate(upcomingPaydate),
+                          parseDateUtil(upcomingPaydate),
                           today(getLocalTimeZone()).toDate(getLocalTimeZone())
                         )}
                   </div>

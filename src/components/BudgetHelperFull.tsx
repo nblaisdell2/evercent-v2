@@ -28,6 +28,12 @@ export type UpcomingDetails = {
   expenseAmount: number;
 };
 
+export type BudgetAmounts = {
+  budgeted: number;
+  activity: number;
+  available: number;
+};
+
 export type CategoryListItem = {
   guid: string;
   categoryGroupID: string;
@@ -43,6 +49,7 @@ export type CategoryListItem = {
   isUpcomingExpense: boolean;
   regularExpenseDetails: RegularExpenseDetails;
   upcomingDetails: UpcomingDetails;
+  budgetAmounts: BudgetAmounts;
 };
 
 export type CategoryListGroup = {
@@ -61,6 +68,7 @@ function BudgetHelperFull({
   monthlyIncome,
   payFrequency,
   nextPaydate,
+  budgetMonths,
   categoryList,
   setCategoryList,
   changesMade,
@@ -75,6 +83,7 @@ function BudgetHelperFull({
   monthlyIncome: number;
   payFrequency: string;
   nextPaydate: string;
+  budgetMonths: any[];
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
   changesMade: boolean;
@@ -207,6 +216,7 @@ function BudgetHelperFull({
             monthlyIncome={monthlyIncome}
             payFrequency={payFrequency}
             nextPaydate={nextPaydate}
+            budgetMonths={budgetMonths}
             updateSelectedCategory={updateSelectedCategory}
           />
         )}

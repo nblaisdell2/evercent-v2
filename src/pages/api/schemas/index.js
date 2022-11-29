@@ -51,6 +51,12 @@ export const typeDefs = gql`
     categories: [BudgetCategory!]
   }
 
+  type BudgetAmounts {
+    budgeted: Float!
+    activity: Float!
+    available: Float!
+  }
+
   type BudgetCategory {
     categoryGroupID: ID!
     categoryGroupName: String!
@@ -82,6 +88,7 @@ export const typeDefs = gql`
     isUpcomingExpense: Boolean!
     regularExpenseDetails: RegularExpenseDetails
     upcomingDetails: UpcomingDetails
+    budgetAmounts: BudgetAmounts
   }
 
   type RegularExpenseDetails {
@@ -273,10 +280,9 @@ export const typeDefs = gql`
       budgetID: ID!
     ): String!
     budgetMonths(
-      userID: ID!
+      userBudgetInput: UserBudgetInput!
       accessToken: String!
       refreshToken: String!
-      budgetID: ID!
     ): [BudgetMonth]
     budgetMonth(
       userID: ID!

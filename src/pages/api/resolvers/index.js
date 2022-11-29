@@ -44,6 +44,11 @@ function createCategory(categoryData) {
       guid: categoryData.CategoryGUID,
       totalExpenseAmount: categoryData.TotalExpenseAmount,
     },
+    budgetAmounts: {
+      budgeted: categoryData.BudgetAmountBudgeted,
+      activity: categoryData.BudgetAmountActivity,
+      available: categoryData.BudgetAmountAvailable,
+    },
   };
 }
 
@@ -335,6 +340,11 @@ export const resolvers = {
       return budgetName.data;
     },
     budgetMonths: async (_, args) => {
+      let { userID, budgetID } = args.userBudgetInput;
+      delete args.userBudgetInput;
+      args.userID = userID;
+      args.budgetID = budgetID;
+
       const budgetMonths = await GetBudgetMonths(args);
       saveNewYNABTokens(args.userID, budgetMonths.connDetails);
 
@@ -483,6 +493,9 @@ export const resolvers = {
         if (cat) {
           cat.CategoryGroupName = grp.categoryGroupName;
           cat.CategoryName = grp.categoryName;
+          cat.BudgetAmountBudgeted = grp.budgeted;
+          cat.BudgetAmountActivity = grp.activity;
+          cat.BudgetAmountAvailable = grp.available;
 
           curr.push(createCategory(cat));
         }

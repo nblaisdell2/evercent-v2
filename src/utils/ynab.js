@@ -246,7 +246,7 @@ export async function GetCategoryGroups(params) {
   );
 
   const budgetData = response.data.data.budget;
-  const categories = budgetData.categories;
+  const categories = budgetData.categories; //budgetData.months[0].categories; //
   let categoryGroups = budgetData.category_groups;
   categoryGroups = categoryGroups.filter(
     (cat) =>
@@ -259,11 +259,20 @@ export async function GetCategoryGroups(params) {
       return grp.id == categories[i].category_group_id;
     });
     if (currGroup && !categories[i].hidden && !categories[i].deleted) {
+      let latestMonthData = budgetData.months[0].categories.filter((cat) => {
+        return (
+          cat.category_group_id == categories[i].category_group_id &&
+          cat.id == categories[i].id
+        );
+      })[0];
       categoryDetails.push({
         categoryGroupID: categories[i].category_group_id,
         categoryID: categories[i].id,
         categoryGroupName: currGroup.name,
         categoryName: categories[i].name,
+        budgeted: latestMonthData.budgeted / 1000,
+        activity: latestMonthData.activity / 1000,
+        available: latestMonthData.balance / 1000,
         included: true,
       });
     }

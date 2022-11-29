@@ -1,4 +1,5 @@
 import Axios from "axios";
+import { addDays, differenceInMonths } from "date-fns";
 import Queries from "../pages/api/resolvers/resolverMapping.json";
 
 const INPUTS_TO_STRING = [
@@ -89,12 +90,24 @@ export function parseDate(isoDateString) {
   return new Date(isoDateString.replace("T", " ") + "Z");
 }
 
+export function getDateFromCalendarDate(calendarDate) {
+  return new Date(calendarDate.year, calendarDate.month - 1, calendarDate.day);
+}
+
 export function formatDate(date) {
   return [
     padTo2Digits(date.getMonth() + 1),
     padTo2Digits(date.getDate()),
     date.getFullYear(),
   ].join("/");
+}
+
+export function getSQLDate(date) {
+  return [
+    date.getFullYear(),
+    padTo2Digits(date.getMonth() + 1),
+    padTo2Digits(date.getDate()),
+  ].join("-");
 }
 
 // ========================= //
@@ -114,8 +127,11 @@ export function calculatePercentage(numerator, denominator) {
 // ========================= //
 // ======== STRINGS ======== //
 // ========================= //
-export function getMoneyString(amount) {
-  return "$" + amount.toString();
+export function getMoneyString(amount, digits = 0) {
+  if (amount % 1 > 0) {
+    return "$" + amount.toFixed(digits);
+  }
+  return "$" + amount.toFixed(0);
 }
 
 export function calculatePercentString(numerator, denominator, digits = 0) {
@@ -126,3 +142,78 @@ export function calculatePercentString(numerator, denominator, digits = 0) {
 export function getPercentString(num, digits = 0) {
   return (num * 100).toFixed(digits) + "%";
 }
+
+// EVERCENT
+
+export const getAdjustedAmount = (category, budgetMonths, nextPaydate) => {
+  let adjustedAmt = category.amount;
+
+  if (category.isRegularExpense) {
+    if (!category.regularExpenseDetails.includeOnChart) {
+      return 0;
+    }
+
+    let dtNextDueDate = parseDate(category.regularExpenseDetails.nextDueDate);
+    dtNextDueDate = addDays(dtNextDueDate, -(dtNextDueDate.getDate() - 1));
+    let strDueDate = getSQLDate(dtNextDueDate);
+
+    let dtNextPaydate = parseDate(nextPaydate);
+    dtNextPaydate = addDays(dtNextPaydate, -(dtNextPaydate.getDate() - 1));
+    let strNextPaydate = getSQLDate(dtNextPaydate);
+
+    let dtToday = parseDate(new Date().toISOString());
+    dtToday = addDays(dtToday, -(dtToday.getDate() - 1));
+    let strToday = getSQLDate(dtToday);
+
+    let bmCat = budgetMonths
+      .filter((budMonth) => {
+        return budMonth.month == strDueDate;
+      })[0]
+      .categories.filter((cat) => {
+        return (
+          cat.categoryGroupID == category.categoryGroupID.toLowerCase() &&
+          cat.categoryID == category.categoryID.toLowerCase()
+        );
+      })[0];
+    // console.log("strDueDate    ", strDueDate);
+    // console.log("strNextPaydate", strNextPaydate);
+    // console.log("strToday      ", strToday);
+    // console.log("bmCat", bmCat);
+
+    // Check "budgetMonths" for this category on the month of the nextDueDate
+    // to see if the amount needed for the category has already been met
+    //   If it has, the number of months should be calculated from the repeatFreqNum/repeatFreqType
+    //   If it hasn't, the number of months should be calculated from the user's nextPayDate to the nextDueDate
+    let amountNeeded = category.amount - bmCat.available;
+    // console.log("amountNeeded", amountNeeded);
+    let numMonths = 1;
+    if (amountNeeded <= 0) {
+      numMonths =
+        category.regularExpenseDetails.repeatFreqNum *
+        (category.regularExpenseDetails.repeatFreqType == "Months" ? 1 : 12);
+      amountNeeded = category.amount;
+    } else {
+      numMonths = differenceInMonths(dtNextDueDate, dtNextPaydate) + 1;
+    }
+    // console.log("amountNeeded again", amountNeeded);
+    // console.log("numMonths", numMonths);
+
+    let sameMonth = (strNextPaydate == strDueDate) == strToday; // check if nextDueDate and today are the same month
+    if (
+      !category.regularExpenseDetails.multipleTransactions &&
+      sameMonth &&
+      category.budgetAmounts.activity != 0
+    ) {
+      numMonths -= 1;
+    }
+    // console.log("numMonths again", numMonths);
+
+    adjustedAmt = amountNeeded / numMonths;
+
+    if (adjustedAmt % 1 > 0) {
+      adjustedAmt += 0.01;
+    }
+  }
+
+  return adjustedAmt;
+};

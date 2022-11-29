@@ -89,11 +89,11 @@ function CategoryList({
             <CheckIcon className="h-6 w-6 text-green-600 stroke-2" />
           )}
         </div>
-        <div className="w-[14%]">{getMoneyString(category.amount)}</div>
-        <div className="w-[14%]">{getMoneyString(category.adjustedAmt)}</div>
-        <div className="w-[14%]">{getMoneyString(category.extraAmount)}</div>
+        <div className="w-[14%]">{getMoneyString(category.amount, 2)}</div>
+        <div className="w-[14%]">{getMoneyString(category.adjustedAmt, 2)}</div>
+        <div className="w-[14%]">{getMoneyString(category.extraAmount, 2)}</div>
         <div className="w-[14%]">
-          {getMoneyString(category.adjustedAmtPlusExtra)}
+          {getMoneyString(category.adjustedAmtPlusExtra, 2)}
         </div>
         <div className="w-[14%]">
           {getPercentString(category.percentIncome)}

@@ -256,6 +256,27 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
       upcomingDetails {
         expenseAmount
       }
+      budgetAmounts {
+        budgeted
+        activity
+        available
+      }
+    }
+    budgetMonths(
+      userBudgetInput: $userBudgetInput
+      accessToken: $accessToken
+      refreshToken: $refreshToken
+    ) {
+      month
+      categories {
+        categoryGroupID
+        categoryGroupName
+        categoryID
+        name
+        budgeted
+        activity
+        available
+      }
     }
   }
 `;

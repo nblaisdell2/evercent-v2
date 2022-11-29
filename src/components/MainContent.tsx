@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { calculatePercentage, ModalType } from "../utils/utils";
+import {
+  calculatePercentage,
+  getSQLDate,
+  ModalType,
+  parseDate,
+  getAdjustedAmount,
+} from "../utils/utils";
 
 import BudgetHelperFull, {
   CategoryListGroup,
@@ -53,7 +59,7 @@ function MainContent({ userData }: { userData: UserData }) {
     closeModal: closeModalUE,
   } = useModal();
 
-  const { loading, error, data, refetch, updateQuery } = useQuery(
+  const { loading, error, data, refetch } = useQuery(
     GET_BUDGET_HELPER_DETAILS,
     {
       variables: {
@@ -98,6 +104,12 @@ function MainContent({ userData }: { userData: UserData }) {
         currGroup = categoryData[i].categoryGroupName;
       }
 
+      let adjAmt = getAdjustedAmount(
+        categoryData[i],
+        data.budgetMonths,
+        data.user.nextPaydate
+      );
+
       cats.push({
         guid: categoryData[i].guid,
         categoryGroupID: categoryData[i].categoryGroupID,
@@ -106,11 +118,10 @@ function MainContent({ userData }: { userData: UserData }) {
         name: categoryData[i].categoryName,
         amount: categoryData[i].amount,
         extraAmount: categoryData[i].extraAmount,
-        adjustedAmt: categoryData[i].amount, // TODO: This needs to be adjusted appropriately
-        adjustedAmtPlusExtra:
-          categoryData[i].amount + categoryData[i].extraAmount,
+        adjustedAmt: adjAmt,
+        adjustedAmtPlusExtra: adjAmt + categoryData[i].extraAmount,
         percentIncome: calculatePercentage(
-          categoryData[i].amount + categoryData[i].extraAmount,
+          adjAmt + categoryData[i].extraAmount,
           data.user.monthlyIncome
         ),
         isRegularExpense: categoryData[i].isRegularExpense,
@@ -129,6 +140,11 @@ function MainContent({ userData }: { userData: UserData }) {
         upcomingDetails: {
           guid: categoryData[i].guid,
           expenseAmount: categoryData[i].upcomingDetails.expenseAmount,
+        },
+        budgetAmounts: {
+          budgeted: categoryData[i].budgetAmounts.budgeted,
+          activity: categoryData[i].budgetAmounts.activity,
+          available: categoryData[i].budgetAmounts.available,
         },
       });
     }
@@ -252,6 +268,12 @@ function MainContent({ userData }: { userData: UserData }) {
                 __typename: "UpcomingDetails",
                 expenseAmount: cat?.upcomingDetails?.expenseAmount,
               },
+              budgetAmounts: {
+                __typename: "BudgetAmounts",
+                budgeted: cat?.budgetAmounts?.budgeted,
+                activity: cat?.budgetAmounts?.activity,
+                available: cat?.budgetAmounts?.available,
+              },
             };
           });
           return [...prev, ...catList];
@@ -312,6 +334,8 @@ function MainContent({ userData }: { userData: UserData }) {
     return <div></div>;
   }
 
+  console.log("data", data);
+
   return (
     <div className="w-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
       <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full h-full sm:w-[80%]">
@@ -324,6 +348,7 @@ function MainContent({ userData }: { userData: UserData }) {
             userData={userData}
             changesMade={changesMade}
             setChangesMade={setChangesMade}
+            budgetMonths={data.budgetMonths}
             categoryList={categoryList}
             setCategoryList={setCategoryList}
             expandedGroups={expandedGroups}
@@ -340,67 +365,6 @@ function MainContent({ userData }: { userData: UserData }) {
           isOpenBH,
           showModalBH,
           closeModalBH
-        )}
-
-        {isOpenBHWarning && (
-          <ModalContent
-            modalContentID={ModalType.BUDGET_HELPER_CHECK}
-            onClose={closeModalBHWarning}
-          >
-            <div className="flex flex-col items-center h-full w-full">
-              <div className="flex items-center mt-6 mb-20">
-                <ExclamationTriangleIcon className="h-10 w-10 text-orange-400" />
-                <div className="font-bold text-3xl -mt-1">Unsaved Changes!</div>
-              </div>
-              <div className="mb-10 text-lg text-center">
-                Would you like to save the changes before exiting?
-              </div>
-
-              <div className="w-full flex flex-col space-y-10 mt-10">
-                <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    closeModalBHWarning();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <ArrowLeftIcon className="h-10 w-10 text-black stroke-2 mr-2" />
-                    <div className="font-semibold text-2xl">Go Back</div>
-                  </div>
-                </button>
-                <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    setChangesMade(false);
-                    closeModalBHWarning();
-                    closeModalBH();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <XMarkIcon className="h-10 w-10 text-red-600 stroke-2" />
-                    <div className="font-semibold text-2xl">
-                      Disard Changes and Exit
-                    </div>
-                  </div>
-                </button>
-                <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    onSave();
-                    closeModalBHWarning();
-                    closeModalBH();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <CheckIcon className="h-10 w-10 text-green-600 stroke-2" />
-                    <div className="font-semibold text-2xl">
-                      Save Changes and Exit
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
-          </ModalContent>
         )}
 
         {/* Box 2 - Budget Automation */}
@@ -434,6 +398,68 @@ function MainContent({ userData }: { userData: UserData }) {
           isOpenUE,
           showModalUE,
           closeModalUE
+        )}
+        {isOpenBHWarning && (
+          <ModalContent
+            modalContentID={ModalType.BUDGET_HELPER_CHECK}
+            onClose={closeModalBHWarning}
+          >
+            <div className="flex flex-col items-center h-full w-full">
+              <div className="flex items-center mt-6 mb-20">
+                <ExclamationTriangleIcon className="h-10 w-10 text-orange-400" />
+                <div className="font-bold text-3xl -mt-1">Unsaved Changes!</div>
+              </div>
+              <div className="mb-10 text-lg text-center">
+                Would you like to save the changes before exiting?
+              </div>
+
+              <div className="w-full flex flex-col space-y-10 mt-10">
+                <button
+                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  onClick={() => {
+                    closeModalBHWarning();
+                  }}
+                >
+                  <div className="flex justify-center items-center">
+                    <ArrowLeftIcon className="h-10 w-10 text-black stroke-2 mr-2" />
+                    <div className="font-semibold text-2xl">Go Back</div>
+                  </div>
+                </button>
+                <button
+                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  onClick={() => {
+                    setChangesMade(false);
+                    // reset the category list to before we entered the widget, using the existing data
+                    setCategoryList(getCategoryList(data.categories));
+                    closeModalBHWarning();
+                    closeModalBH();
+                  }}
+                >
+                  <div className="flex justify-center items-center">
+                    <XMarkIcon className="h-10 w-10 text-red-600 stroke-2" />
+                    <div className="font-semibold text-2xl">
+                      Discard Changes and Exit
+                    </div>
+                  </div>
+                </button>
+                <button
+                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  onClick={() => {
+                    onSave();
+                    closeModalBHWarning();
+                    closeModalBH();
+                  }}
+                >
+                  <div className="flex justify-center items-center">
+                    <CheckIcon className="h-10 w-10 text-green-600 stroke-2" />
+                    <div className="font-semibold text-2xl">
+                      Save Changes and Exit
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </ModalContent>
         )}
       </div>
     </div>
