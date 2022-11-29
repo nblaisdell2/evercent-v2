@@ -32,32 +32,38 @@ import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
 import { useMutation, useQuery } from "@apollo/client";
 import { UPDATE_CATEGORIES } from "../graphql/mutations";
 
-function MainContent({ userData }: { userData: UserData }) {
+function MainContent({
+  userData,
+  setModalIsShowing,
+}: {
+  userData: UserData;
+  setModalIsShowing: (newShow: boolean) => void;
+}) {
   const {
     isOpen: isOpenBH,
     showModal: showModalBH,
     closeModal: closeModalBH,
-  } = useModal();
+  } = useModal(setModalIsShowing);
   const {
     isOpen: isOpenBHWarning,
     showModal: showModalBHWarning,
     closeModal: closeModalBHWarning,
-  } = useModal();
+  } = useModal(setModalIsShowing);
   const {
     isOpen: isOpenBA,
     showModal: showModalBA,
     closeModal: closeModalBA,
-  } = useModal();
+  } = useModal(setModalIsShowing);
   const {
     isOpen: isOpenRE,
     showModal: showModalRE,
     closeModal: closeModalRE,
-  } = useModal();
+  } = useModal(setModalIsShowing);
   const {
     isOpen: isOpenUE,
     showModal: showModalUE,
     closeModal: closeModalUE,
-  } = useModal();
+  } = useModal(setModalIsShowing);
 
   const { loading, error, data, refetch } = useQuery(
     GET_BUDGET_HELPER_DETAILS,

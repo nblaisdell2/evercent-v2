@@ -54,10 +54,10 @@ function UserDetails({
           />
         </ModalContent>
       )}
-      <div className="flex items-center justify-evenly w-full sm:w-auto space-x-2 sm:space-x-4 text-center">
+      <div className="flex items-center justify-evenly w-full sm:w-auto sm:space-x-4 text-center">
         {/* Monthly Income */}
-        <div className="flex flex-col items-center">
-          <Label label="Monthly Income" />
+        <div className="flex flex-col items-center h-full justify-start">
+          <Label label="Monthly Income" className="text-sm" />
           <div className="text-green-500 font-bold text-base sm:text-xl">
             {"$" + monthlyIncome.toString()}
           </div>
@@ -67,8 +67,8 @@ function UserDetails({
         <div className="w-[1px] h-full bg-gray-400" />
 
         {/* Pay Frequency */}
-        <div className="flex flex-col items-center">
-          <Label label="Pay Frequency" />
+        <div className="flex flex-col items-center h-full justify-start">
+          <Label label="Pay Frequency" className="text-sm" />
           <div className="font-bold text-sm sm:text-base">
             {monthlyIncome == 0 ? "----" : payFrequency}
           </div>
@@ -78,8 +78,8 @@ function UserDetails({
         <div className="w-[1px] h-full bg-gray-400" />
 
         {/* Next Paydate */}
-        <div className="flex flex-col items-center">
-          <Label label="Next Paydate" />
+        <div className="flex flex-col items-center h-full justify-start">
+          <Label label="Next Paydate" className="text-sm" />
           <div className="hidden sm:block font-bold text-sm sm:text-base">
             {monthlyIncome == 0
               ? "----"
@@ -104,7 +104,7 @@ function UserDetails({
 
         {/* Edit Icon */}
         <PencilSquareIcon
-          className="h-8 w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
+          className="h-6 w-6 sm:h-8 sm:w-8 -mr-1 sm:mr-0 stroke-2 hover:cursor-pointer"
           onClick={showModal}
         />
       </div>

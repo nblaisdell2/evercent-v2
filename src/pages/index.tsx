@@ -7,6 +7,7 @@ import { GET_USER_DATA } from "../graphql/queries";
 import Header from "../components/Header";
 import UserHeader from "../components/UserHeader";
 import MainContent from "../components/MainContent";
+import { useState } from "react";
 
 export type TokenDetails = {
   accessToken: string;
@@ -23,6 +24,8 @@ export type UserData = {
 const Home: NextPage = () => {
   const { user, isLoading, error } = useUser();
   const userEmail: string = user ? (user.email as string) : "";
+
+  const [modalIsShowing, setModalIsShowing] = useState(false);
 
   const {
     loading,
@@ -45,14 +48,21 @@ const Home: NextPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
+    <div
+      className={`flex flex-col h-screen ${
+        modalIsShowing && "overflow-y-hidden"
+      }`}
+    >
       <Header />
       {userEmail && (
         <>
           <UserHeader userData={data.userData} refetchUser={refetchUser} />
 
-          <div className="flex flex-grow">
-            <MainContent userData={data.userData} />
+          <div className="flex flex-grow over">
+            <MainContent
+              userData={data.userData}
+              setModalIsShowing={setModalIsShowing}
+            />
           </div>
         </>
       )}
