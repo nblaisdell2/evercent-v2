@@ -33,7 +33,11 @@ function Amounts({
             label="Amount Remaining"
             className="text-sm sm:text-xl whitespace-pre-wrap text-center"
           />
-          <div className="font-bold text-xl sm:text-3xl -mt-1">
+          <div
+            className={`font-bold text-xl sm:text-3xl -mt-1 ${
+              monthlyIncome - amountUsed < 0 && "text-red-500"
+            }`}
+          >
             {amtRemaining}
           </div>
         </div>

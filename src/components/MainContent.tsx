@@ -410,7 +410,7 @@ function MainContent({
             modalContentID={ModalType.BUDGET_HELPER_CHECK}
             onClose={closeModalBHWarning}
           >
-            <div className="flex flex-col items-center h-full w-full">
+            <div className="flex flex-col items-center h-full w-full relative">
               <div className="flex items-center mt-6 mb-20">
                 <ExclamationTriangleIcon className="h-10 w-10 text-orange-400" />
                 <div className="font-bold text-3xl -mt-1">Unsaved Changes!</div>
@@ -419,9 +419,9 @@ function MainContent({
                 Would you like to save the changes before exiting?
               </div>
 
-              <div className="w-full flex flex-col space-y-10 mt-10">
+              <div className="w-full absolute bottom-0 space-y-2 sm:space-y-12 flex flex-col pb-2">
                 <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
                   onClick={() => {
                     closeModalBHWarning();
                   }}
@@ -432,7 +432,7 @@ function MainContent({
                   </div>
                 </button>
                 <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
                   onClick={() => {
                     setChangesMade(false);
                     // reset the category list to before we entered the widget, using the existing data
@@ -449,7 +449,7 @@ function MainContent({
                   </div>
                 </button>
                 <button
-                  className={`w-full h-20 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
                   onClick={() => {
                     onSave();
                     closeModalBHWarning();

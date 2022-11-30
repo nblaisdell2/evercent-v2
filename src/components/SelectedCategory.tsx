@@ -507,8 +507,10 @@ function SelectedCategory({
         <div className="hidden sm:flex flex-grow m-2">
           {/* left side */}
           <div className="w-[25%] mr-2">
-            <Card className="bg-blue-300 h-full flex flex-col space-y-16 items-center p-2">
-              <div className="font-bold text-3xl">{category.name}</div>
+            <Card className="bg-blue-300 h-full flex flex-col space-y-12 items-center p-2">
+              <div className="font-bold text-center text-3xl">
+                {category.name}
+              </div>
               <div className="flex w-full text-center justify-around">
                 <div>
                   <div className="font-semibold">Amount</div>

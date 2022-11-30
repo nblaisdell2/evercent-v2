@@ -250,7 +250,7 @@ function BudgetHelperCharts({
             options={{
               ...chartOptions,
               colors: [
-                ...CHART_COLORS.slice(0, chartDataGroup[0].length - 1),
+                ...CHART_COLORS.slice(0, chartDataCategory[0].length - 2),
                 "#A0A0A0",
               ],
             }}
