@@ -25,6 +25,8 @@ export function ListBox(props: ListBoxProps) {
   let { listBoxRef = ref, state } = props;
   let { listBoxProps } = useListBox(props, state, listBoxRef);
 
+  console.log("listbox", state, props, listBoxProps);
+
   return (
     <ul
       {...listBoxProps}
@@ -90,7 +92,7 @@ function Option({ item, state }: OptionProps) {
     <li
       {...optionProps}
       ref={ref}
-      className={`m-1 rounded-md py-2 px-2 text-sm outline-none cursor-default flex items-center justify-between ${text} ${
+      className={`m-1 rounded-md py-2 px-2 text-sm outline-none cursor-pointer flex items-center justify-between ${text} ${
         isFocused ? "bg-blue-100" : ""
       } ${isSelected ? "font-bold" : ""}`}
     >

@@ -1,16 +1,7 @@
-import React, { useEffect, useState } from "react";
-import {
-  calculatePercentage,
-  getSQLDate,
-  ModalType,
-  parseDate,
-  getAdjustedAmount,
-} from "../utils/utils";
+import React, { useState } from "react";
+import { ModalType } from "../utils/utils";
 
-import BudgetHelperFull, {
-  CategoryListGroup,
-  CategoryListItem,
-} from "./BudgetHelperFull";
+import BudgetHelperFull from "./BudgetHelperFull";
 import BudgetHelperWidget from "./BudgetHelperWidget";
 import BudgetAutomationFull from "./BudgetAutomationFull";
 import BudgetAutomationWidget from "./BudgetAutomationWidget";
@@ -22,15 +13,11 @@ import { UserData } from "../pages";
 import ModalContent from "./modal/ModalContent";
 import useModal from "./hooks/useModal";
 
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import {
-  CheckIcon,
-  ArrowLeftIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
 import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
 import { useMutation, useQuery } from "@apollo/client";
 import { UPDATE_CATEGORIES } from "../graphql/mutations";
+import { CategoryListGroup } from "../utils/evercent";
+import UnsavedChangesModal from "./modal/UnsavedChangesModal";
 
 function MainContent({
   userData,
@@ -65,6 +52,9 @@ function MainContent({
     closeModal: closeModalUE,
   } = useModal(setModalIsShowing);
 
+  const [categoryList, setCategoryList] = useState<CategoryListGroup[]>([]);
+  const [changesMade, setChangesMade] = useState(false);
+
   const { loading, error, data, refetch } = useQuery(
     GET_BUDGET_HELPER_DETAILS,
     {
@@ -76,115 +66,13 @@ function MainContent({
         accessToken: userData.tokenDetails.accessToken,
         refreshToken: userData.tokenDetails.refreshToken,
       },
+      onCompleted(data) {
+        setCategoryList(data.categories);
+      },
     }
   );
 
   const [updateCategories] = useMutation(UPDATE_CATEGORIES);
-
-  const [categoryList, setCategoryList] = useState<CategoryListGroup[]>([]);
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-  const [changesMade, setChangesMade] = useState(false);
-
-  useEffect(() => {
-    if (data) {
-      setCategoryList(getCategoryList(data.categories));
-    }
-  }, [data]);
-
-  const getCategoryList = (categoryData: any): CategoryListGroup[] => {
-    let categoryListTemp: CategoryListGroup[] = [];
-    let cats: CategoryListItem[] = [];
-    let currGroup = "";
-    for (let i = 0; i < categoryData.length; i++) {
-      if (currGroup !== categoryData[i].categoryGroupName) {
-        if (currGroup !== "") {
-          categoryListTemp.push({
-            groupName: currGroup,
-            isExpanded: expandedGroups.includes(currGroup),
-            categories: cats,
-            ...getGroupAmounts(cats),
-          });
-
-          cats = [];
-        }
-        currGroup = categoryData[i].categoryGroupName;
-      }
-
-      let adjAmt = getAdjustedAmount(
-        categoryData[i],
-        data.budgetMonths,
-        data.user.nextPaydate
-      );
-
-      cats.push({
-        guid: categoryData[i].guid,
-        categoryGroupID: categoryData[i].categoryGroupID,
-        categoryID: categoryData[i].categoryID,
-        groupName: currGroup,
-        name: categoryData[i].categoryName,
-        amount: categoryData[i].amount,
-        extraAmount: categoryData[i].extraAmount,
-        adjustedAmt: adjAmt,
-        adjustedAmtPlusExtra: adjAmt + categoryData[i].extraAmount,
-        percentIncome: calculatePercentage(
-          adjAmt + categoryData[i].extraAmount,
-          data.user.monthlyIncome
-        ),
-        isRegularExpense: categoryData[i].isRegularExpense,
-        isUpcomingExpense: categoryData[i].isUpcomingExpense,
-        regularExpenseDetails: {
-          guid: categoryData[i].guid,
-          isMonthly: categoryData[i].regularExpenseDetails.isMonthly,
-          nextDueDate: categoryData[i].regularExpenseDetails.nextDueDate,
-          monthsDivisor: categoryData[i].regularExpenseDetails.monthsDivisor,
-          repeatFreqNum: categoryData[i].regularExpenseDetails.repeatFreqNum,
-          repeatFreqType: categoryData[i].regularExpenseDetails.repeatFreqType,
-          includeOnChart: categoryData[i].regularExpenseDetails.includeOnChart,
-          multipleTransactions:
-            categoryData[i].regularExpenseDetails.multipleTransactions,
-        },
-        upcomingDetails: {
-          guid: categoryData[i].guid,
-          expenseAmount: categoryData[i].upcomingDetails.expenseAmount,
-        },
-        budgetAmounts: {
-          budgeted: categoryData[i].budgetAmounts.budgeted,
-          activity: categoryData[i].budgetAmounts.activity,
-          available: categoryData[i].budgetAmounts.available,
-        },
-      });
-    }
-    categoryListTemp.push({
-      groupName: currGroup,
-      isExpanded: expandedGroups.includes(currGroup),
-      categories: cats,
-      ...getGroupAmounts(cats),
-    });
-
-    return categoryListTemp;
-  };
-
-  const getGroupAmounts = (categories: CategoryListItem[]) => {
-    return categories.reduce(
-      (prev, curr) => {
-        return {
-          amount: prev.amount + curr.amount,
-          extraAmount: prev.extraAmount + curr.extraAmount,
-          adjustedAmt: prev.adjustedAmt + curr.adjustedAmt,
-          adjustedAmtPlusExtra:
-            prev.adjustedAmtPlusExtra + curr.adjustedAmtPlusExtra,
-          percentIncome: prev.percentIncome + curr.percentIncome,
-        };
-      },
-      {
-        amount: 0,
-        extraAmount: 0,
-        adjustedAmt: 0,
-        adjustedAmtPlusExtra: 0,
-        percentIncome: 0,
-      }
-    );
-  };
 
   const onSave = () => {
     if (!changesMade) {
@@ -336,6 +224,31 @@ function MainContent({
     );
   };
 
+  const onExit = (exitType: "back" | "discard" | "save") => {
+    switch (exitType) {
+      case "back":
+        closeModalBHWarning();
+        break;
+
+      case "discard":
+        setChangesMade(false);
+        // reset the category list to before we entered the widget, using the existing data
+        setCategoryList(data?.categories);
+        closeModalBHWarning();
+        closeModalBH();
+        break;
+
+      case "save":
+        onSave();
+        closeModalBHWarning();
+        closeModalBH();
+        break;
+
+      default:
+        break;
+    }
+  };
+
   if (loading || !data) {
     return <div></div>;
   }
@@ -352,20 +265,16 @@ function MainContent({
           ModalType.BUDGET_HELPER,
           <BudgetHelperFull
             userData={userData}
-            changesMade={changesMade}
             setChangesMade={setChangesMade}
-            budgetMonths={data.budgetMonths}
             categoryList={categoryList}
             setCategoryList={setCategoryList}
-            expandedGroups={expandedGroups}
-            setExpandedGroups={setExpandedGroups}
+            budgetMonths={data.budgetMonths}
             monthlyIncome={data.user.monthlyIncome}
             payFrequency={data.user.payFrequency}
             nextPaydate={data.user.nextPaydate}
             refetchCategories={async () => {
               await refetch();
             }}
-            getGroupAmounts={getGroupAmounts}
             onSave={onSave}
           />,
           isOpenBH,
@@ -405,66 +314,13 @@ function MainContent({
           showModalUE,
           closeModalUE
         )}
+
         {isOpenBHWarning && (
           <ModalContent
             modalContentID={ModalType.BUDGET_HELPER_CHECK}
             onClose={closeModalBHWarning}
           >
-            <div className="flex flex-col items-center h-full w-full relative">
-              <div className="flex items-center mt-6 mb-20">
-                <ExclamationTriangleIcon className="h-10 w-10 text-orange-400" />
-                <div className="font-bold text-3xl -mt-1">Unsaved Changes!</div>
-              </div>
-              <div className="mb-10 text-lg text-center">
-                Would you like to save the changes before exiting?
-              </div>
-
-              <div className="w-full absolute bottom-0 space-y-2 sm:space-y-12 flex flex-col pb-2">
-                <button
-                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    closeModalBHWarning();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <ArrowLeftIcon className="h-10 w-10 text-black stroke-2 mr-2" />
-                    <div className="font-semibold text-2xl">Go Back</div>
-                  </div>
-                </button>
-                <button
-                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    setChangesMade(false);
-                    // reset the category list to before we entered the widget, using the existing data
-                    setCategoryList(getCategoryList(data.categories));
-                    closeModalBHWarning();
-                    closeModalBH();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <XMarkIcon className="h-10 w-10 text-red-600 stroke-2" />
-                    <div className="font-semibold text-2xl">
-                      Discard Changes and Exit
-                    </div>
-                  </div>
-                </button>
-                <button
-                  className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                  onClick={() => {
-                    onSave();
-                    closeModalBHWarning();
-                    closeModalBH();
-                  }}
-                >
-                  <div className="flex justify-center items-center">
-                    <CheckIcon className="h-10 w-10 text-green-600 stroke-2" />
-                    <div className="font-semibold text-2xl">
-                      Save Changes and Exit
-                    </div>
-                  </div>
-                </button>
-              </div>
-            </div>
+            <UnsavedChangesModal onExit={onExit} />
           </ModalContent>
         )}
       </div>

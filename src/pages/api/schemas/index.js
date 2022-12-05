@@ -43,18 +43,9 @@ export const typeDefs = gql`
     categories: [BudgetCategory!]
   }
 
-  # TODO: Should this be re-factored to have a list of BudgetCategoryGroup objects,
-  #       each of which has a list of categories, or just have a list of categories
-  #       like it is now?
   type BudgetMonth {
     month: String!
     categories: [BudgetCategory!]
-  }
-
-  type BudgetAmounts {
-    budgeted: Float!
-    activity: Float!
-    available: Float!
   }
 
   type BudgetCategory {
@@ -75,15 +66,30 @@ export const typeDefs = gql`
     included: Boolean!
   }
 
+  type CategoryGroup {
+    groupName: String!
+    amount: Float!
+    extraAmount: Float!
+    adjustedAmt: Float!
+    adjustedAmtPlusExtra: Float!
+    percentIncome: Float!
+    categories: [Category!]
+  }
+
+  # TODO: Should this be re-factored to have a list of BudgetCategoryGroup objects,
+  #       each of which has a list of categories, or just have a list of categories
+  #       like it is now?
   type Category {
     guid: ID!
-    budgetID: ID!
     categoryGroupID: ID!
     categoryID: ID!
-    categoryGroupName: String!
-    categoryName: String!
+    groupName: String!
+    name: String!
     amount: Int!
-    extraAmount: Int
+    extraAmount: Int!
+    adjustedAmt: Float!
+    adjustedAmtPlusExtra: Float!
+    percentIncome: Float!
     isRegularExpense: Boolean!
     isUpcomingExpense: Boolean!
     regularExpenseDetails: RegularExpenseDetails
@@ -105,6 +111,12 @@ export const typeDefs = gql`
   type UpcomingDetails {
     guid: ID!
     expenseAmount: Int
+  }
+
+  type BudgetAmounts {
+    budgeted: Float!
+    activity: Float!
+    available: Float!
   }
 
   type AutoRun {
@@ -294,7 +306,7 @@ export const typeDefs = gql`
       userBudgetInput: UserBudgetInput!
       accessToken: String!
       refreshToken: String!
-    ): [Category!]
+    ): [CategoryGroup!]
     category(userBudgetInput: UserBudgetInput!, categoryGUID: ID!): Category!
     regularExpenses(
       userBudgetInput: UserBudgetInput!

@@ -4,7 +4,7 @@ import Chart, {
   ReactGoogleChartEvent,
 } from "react-google-charts";
 import { merge } from "../utils/utils";
-import { CategoryListGroup, CategoryListItem } from "./BudgetHelperFull";
+import { CategoryListGroup, CategoryListItem } from "../utils/evercent";
 
 type Props = {
   monthlyIncome: number;

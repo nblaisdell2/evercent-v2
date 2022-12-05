@@ -235,31 +235,42 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
       accessToken: $accessToken
       refreshToken: $refreshToken
     ) {
-      guid
-      categoryGroupID
-      categoryID
-      categoryGroupName
-      categoryName
+      groupName
       amount
       extraAmount
-      isRegularExpense
-      isUpcomingExpense
-      regularExpenseDetails {
-        isMonthly
-        nextDueDate
-        monthsDivisor
-        repeatFreqNum
-        repeatFreqType
-        includeOnChart
-        multipleTransactions
-      }
-      upcomingDetails {
-        expenseAmount
-      }
-      budgetAmounts {
-        budgeted
-        activity
-        available
+      adjustedAmt
+      adjustedAmtPlusExtra
+      percentIncome
+      categories {
+        guid
+        categoryGroupID
+        categoryID
+        groupName
+        name
+        amount
+        extraAmount
+        adjustedAmt
+        adjustedAmtPlusExtra
+        percentIncome
+        isRegularExpense
+        isUpcomingExpense
+        regularExpenseDetails {
+          isMonthly
+          nextDueDate
+          monthsDivisor
+          repeatFreqNum
+          repeatFreqType
+          includeOnChart
+          multipleTransactions
+        }
+        upcomingDetails {
+          expenseAmount
+        }
+        budgetAmounts {
+          budgeted
+          activity
+          available
+        }
       }
     }
     budgetMonths(

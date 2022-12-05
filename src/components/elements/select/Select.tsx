@@ -48,15 +48,17 @@ export function Select<T extends object>(props: AriaSelectProps<T>) {
       <button
         {...mergeProps(buttonProps, focusProps)}
         ref={ref}
-        className={`p-1 pl-3 relative inline-flex flex-row items-center justify-between rounded-md overflow-hidden cursor-default shadow-sm border-2 outline-none ${
+        className={`p-1 pl-3 relative inline-flex flex-row items-center justify-between rounded-md overflow-hidden cursor-pointer shadow-sm border-2 outline-none ${
           isFocusVisible ? "border-pink-500" : "border-gray-300"
-        } ${state.isOpen ? "bg-gray-100" : "bg-white"}`}
+        } ${state.isOpen && !props.isDisabled ? "bg-gray-100" : "bg-white"} ${
+          props.isDisabled ? "bg-gray-200 hover:cursor-not-allowed" : "bg-white"
+        }`}
       >
         <span
           {...valueProps}
           className={`text-md ${
             state.selectedItem ? "text-gray-800" : "text-gray-500"
-          }`}
+          }  ${props.isDisabled && "text-[#919090] hover:cursor-not-allowed"}`}
         >
           {state.selectedItem
             ? state.selectedItem.rendered
@@ -68,7 +70,7 @@ export function Select<T extends object>(props: AriaSelectProps<T>) {
           }`}
         />
       </button>
-      {state.isOpen && (
+      {state.isOpen && !props.isDisabled && (
         <Popover
           state={state}
           triggerRef={ref}

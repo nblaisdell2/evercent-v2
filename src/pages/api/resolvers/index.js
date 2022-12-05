@@ -10,9 +10,17 @@ import {
   GetBudget,
   GetCategoryGroups,
 } from "../../../utils/ynab";
-import { getAPIData, saveNewYNABTokens } from "../../../utils/utils";
+import {
+  calculatePercentage,
+  getAPIData,
+  saveNewYNABTokens,
+} from "../../../utils/utils";
+import {
+  getAdjustedAmount,
+  getAdjustedAmountPlusExtra,
+  getGroupAmounts,
+} from "../../../utils/evercent";
 import { v4 as uuidv4 } from "uuid";
-import { ja } from "date-fns/locale";
 
 function generateUUID() {
   return uuidv4();
@@ -20,34 +28,34 @@ function generateUUID() {
 
 function createCategory(categoryData) {
   return {
-    guid: categoryData.CategoryGUID,
-    budgetID: categoryData.BudgetID,
-    categoryGroupID: categoryData.CategoryGroupID,
-    categoryID: categoryData.CategoryID,
-    categoryGroupName: categoryData.CategoryGroupName,
-    categoryName: categoryData.CategoryName,
-    amount: categoryData.CategoryAmount,
-    extraAmount: categoryData.ExtraAmount,
-    isRegularExpense: categoryData.IsRegularExpense,
-    isUpcomingExpense: categoryData.IsUpcomingExpense,
+    guid: catDB.CategoryGUID,
+    budgetID: catDB.BudgetID,
+    categoryGroupID: catDB.CategoryGroupID,
+    categoryID: catDB.CategoryID,
+    categoryGroupName: catDB.CategoryGroupName,
+    categoryName: catDB.CategoryName,
+    amount: catDB.CategoryAmount,
+    extraAmount: catDB.ExtraAmount,
+    isRegularExpense: catDB.IsRegularExpense,
+    isUpcomingExpense: catDB.IsUpcomingExpense,
     regularExpenseDetails: {
-      guid: categoryData.CategoryGUID,
-      isMonthly: categoryData.IsMonthly,
-      nextDueDate: categoryData.NextDueDate,
-      monthsDivisor: categoryData.ExpenseMonthsDivisor,
-      repeatFreqNum: categoryData.RepeatFreqNum,
-      repeatFreqType: categoryData.RepeatFreqType,
-      includeOnChart: categoryData.IncludeOnChart,
-      multipleTransactions: categoryData.MultipleTransactions,
+      guid: catDB.CategoryGUID,
+      isMonthly: catDB.IsMonthly,
+      nextDueDate: catDB.NextDueDate,
+      monthsDivisor: catDB.ExpenseMonthsDivisor,
+      repeatFreqNum: catDB.RepeatFreqNum,
+      repeatFreqType: catDB.RepeatFreqType,
+      includeOnChart: catDB.IncludeOnChart,
+      multipleTransactions: catDB.MultipleTransactions,
     },
     upcomingDetails: {
-      guid: categoryData.CategoryGUID,
-      totalExpenseAmount: categoryData.TotalExpenseAmount,
+      guid: catDB.CategoryGUID,
+      totalExpenseAmount: catDB.TotalExpenseAmount,
     },
     budgetAmounts: {
-      budgeted: categoryData.BudgetAmountBudgeted,
-      activity: categoryData.BudgetAmountActivity,
-      available: categoryData.BudgetAmountAvailable,
+      budgeted: catDB.BudgetAmountBudgeted,
+      activity: catDB.BudgetAmountActivity,
+      available: catDB.BudgetAmountAvailable,
     },
   };
 }
@@ -351,6 +359,8 @@ export const resolvers = {
       return budgetMonths.data;
     },
     categories: async (_, args) => {
+      console.log("Inside the categories resolver");
+
       const queryData = await getAPIData(
         Queries.QUERY_CATEGORIES,
         {
@@ -362,11 +372,20 @@ export const resolvers = {
       const categoryData = queryData[0];
       // console.log("categoryData", categoryData);
 
+      const userQueryData = await getAPIData(
+        Queries.QUERY_USER,
+        { userBudgetInput: args.userBudgetInput },
+        false
+      );
+      const user = userQueryData[0][0];
+
       let { userID, budgetID } = args.userBudgetInput;
       delete args.userBudgetInput;
 
       const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
-      // console.log("catGroups", catGroups);
+      const budgetMonths = await GetBudgetMonths({ ...args, userID, budgetID });
+      const bm = budgetMonths.data;
+      console.log("catGroups", catGroups);
 
       // ======================================
       // If we have any in catGroups (YNAB) that aren't in categoryData (database),
@@ -477,33 +496,119 @@ export const resolvers = {
       }
       // ======================================
 
+      console.log("user data", user);
+      // console.log("categoryData", categoryData);
       // By mapping over the "catGroups" returned by the YNAB API
       // for each object in the database, we can ensure that the
       // data returned to the client will match the same order that the
       // YNAB data is shown in their actual budget.
-
-      const categories = catGroups.reduce((curr, grp) => {
-        let cat = categoryData.find((data) => {
+      let categoryListTemp = [];
+      let cats = [];
+      let currGroup = "";
+      for (let i = 0; i < catGroups.length; i++) {
+        console.log("currGroup", catGroups[i]);
+        let catDB = categoryData.find((data) => {
           return (
-            data.CategoryGroupID.toLowerCase() == grp.categoryGroupID &&
-            data.CategoryID.toLowerCase() == grp.categoryID
+            data.CategoryGroupID.toLowerCase() ==
+              catGroups[i].categoryGroupID &&
+            data.CategoryID.toLowerCase() == catGroups[i].categoryID
           );
         });
+        console.log("catDB", catDB);
 
-        if (cat) {
-          cat.CategoryGroupName = grp.categoryGroupName;
-          cat.CategoryName = grp.categoryName;
-          cat.BudgetAmountBudgeted = grp.budgeted;
-          cat.BudgetAmountActivity = grp.activity;
-          cat.BudgetAmountAvailable = grp.available;
+        if (currGroup !== catGroups[i].categoryGroupName) {
+          if (currGroup !== "") {
+            categoryListTemp.push({
+              groupName: currGroup,
+              categories: cats,
+              ...getGroupAmounts(cats),
+            });
 
-          curr.push(createCategory(cat));
+            cats = [];
+          }
+          currGroup = catGroups[i].categoryGroupName;
         }
 
-        return curr;
-      }, []);
+        if (catDB) {
+          let currCat = {
+            guid: catDB.CategoryGUID,
+            categoryGroupID: catGroups[i].categoryGroupID,
+            categoryID: catGroups[i].categoryID,
+            groupName: currGroup,
+            name: catGroups[i].categoryName,
+            amount: catDB.CategoryAmount,
+            extraAmount: catDB.ExtraAmount,
+            // adjustedAmt: adjAmt,
+            // adjustedAmtPlusExtra: adjAmt + categoryData[i].extraAmount,
+            // percentIncome: calculatePercentage(
+            //   adjAmt + categoryData[i].extraAmount,
+            //   user.MonthlyIncome // NEED INCOME
+            // ),
+            isRegularExpense: catDB.IsRegularExpense,
+            isUpcomingExpense: catDB.IsUpcomingExpense,
+            regularExpenseDetails: {
+              guid: catDB.CategoryGUID,
+              isMonthly: catDB.IsMonthly,
+              nextDueDate: catDB.NextDueDate,
+              monthsDivisor: catDB.ExpenseMonthsDivisor,
+              repeatFreqNum: catDB.RepeatFreqNum,
+              repeatFreqType: catDB.RepeatFreqType,
+              includeOnChart: catDB.IncludeOnChart,
+              multipleTransactions: catDB.MultipleTransactions,
+            },
+            upcomingDetails: {
+              guid: catDB.CategoryGUID,
+              totalExpenseAmount: catDB.TotalExpenseAmount,
+            },
+            budgetAmounts: {
+              budgeted: catGroups[i].budgeted,
+              activity: catGroups[i].activity,
+              available: catGroups[i].available,
+            },
+          };
+          currCat.adjustedAmt = getAdjustedAmount(
+            currCat,
+            bm,
+            user.NextPaydate
+          );
+          currCat.adjustedAmtPlusExtra = getAdjustedAmountPlusExtra(currCat);
+          currCat.percentIncome = calculatePercentage(
+            currCat.adjustedAmtPlusExtra,
+            user.MonthlyIncome // NEED INCOME
+          );
+          cats.push(currCat);
+        }
+      }
+      categoryListTemp.push({
+        groupName: currGroup,
+        categories: cats,
+        ...getGroupAmounts(cats),
+      });
 
-      return categories;
+      console.log("temp list", categoryListTemp);
+
+      // const categories = catGroups.reduce((curr, grp) => {
+      //   let cat = categoryData.find((data) => {
+      //     return (
+      //       data.CategoryGroupID.toLowerCase() == grp.categoryGroupID &&
+      //       data.CategoryID.toLowerCase() == grp.categoryID
+      //     );
+      //   });
+
+      //   if (cat) {
+      //     cat.CategoryGroupName = grp.categoryGroupName;
+      //     cat.CategoryName = grp.categoryName;
+      //     cat.BudgetAmountBudgeted = grp.budgeted;
+      //     cat.BudgetAmountActivity = grp.activity;
+      //     cat.BudgetAmountAvailable = grp.available;
+
+      //     curr.push(createCategory(cat));
+      //   }
+
+      //   return curr;
+      // }, []);
+
+      return categoryListTemp;
     },
     category: async (_, args) => {
       const queryData = await getAPIData(Queries.QUERY_CATEGORY, args, false);

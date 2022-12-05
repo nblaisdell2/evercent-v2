@@ -1,43 +1,56 @@
+import React, { useState } from "react";
 import {
   CheckIcon,
   ChevronDownIcon,
   ChevronRightIcon,
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
-import React from "react";
+import { getMoneyString, getPercentString, ModalType } from "../utils/utils";
+import {
+  getCategoriesCount,
+  CategoryListGroup,
+  CategoryListItem,
+} from "../utils/evercent";
 import { UserData } from "../pages";
-import { getMoneyString, getPercentString } from "../utils/utils";
-import { CategoryListGroup, CategoryListItem } from "./BudgetHelperFull";
 import Card from "./elements/Card";
 import Label from "./elements/Label";
 
+import useModal from "./hooks/useModal";
+import ModalContent from "./modal/ModalContent";
+import AllCategoriesEditable from "./modal/AllCategoriesEditable";
+
 type Props = {
   userData: UserData;
-  monthlyIncome: number;
-  categoryList: CategoryListGroup[];
-  showModal: () => void;
-  closeModal: () => void;
   refetchCategories: () => Promise<void>;
+  categoryList: CategoryListGroup[];
   onSave: () => void;
-  toggleExpanded: (grp: CategoryListGroup) => void;
   selectCategory: (item: CategoryListItem) => void;
 };
 
 function CategoryList({
   userData,
-  monthlyIncome,
-  categoryList,
-  showModal,
-  closeModal,
   refetchCategories,
+  categoryList,
   onSave,
-  toggleExpanded,
   selectCategory,
 }: Props) {
-  const getCategoriesCount = () => {
-    return categoryList.reduce((prev, curr) => {
-      return prev + curr.categories.length;
-    }, 0);
+  const { isOpen, showModal, closeModal } = useModal();
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  const groupIsExpanded = (grp: CategoryListGroup): boolean => {
+    return expandedGroups.includes(grp.groupName);
+  };
+
+  const toggleExpanded = (grp: CategoryListGroup) => {
+    let newGroups = [...expandedGroups];
+
+    if (newGroups.includes(grp.groupName)) {
+      newGroups = newGroups.filter((g) => g != grp.groupName);
+    } else {
+      newGroups.push(grp.groupName);
+    }
+
+    setExpandedGroups(newGroups);
   };
 
   const groupRow = (grp: CategoryListGroup) => {
@@ -48,7 +61,7 @@ function CategoryList({
         onClick={() => toggleExpanded(grp)}
       >
         <div className="w-[5%] sm:w-[2%] flex justify-center items-center">
-          {grp.isExpanded ? (
+          {groupIsExpanded(grp) ? (
             <ChevronDownIcon className="h-4 sm:h-6 w-4 sm:w-6" />
           ) : (
             <ChevronRightIcon className="h-4 sm:h-6 w-4 sm:w-6" />
@@ -161,7 +174,7 @@ function CategoryList({
             {categoryList.map((category) => {
               const gRow = groupRow(category);
               let cRows;
-              if (category.categories.length > 0 && category.isExpanded) {
+              if (category.categories.length > 0 && groupIsExpanded(category)) {
                 cRows = category.categories.map((indCat) => {
                   return categoryRow(indCat);
                 });
@@ -179,7 +192,9 @@ function CategoryList({
           <div>
             <Label label="Categories Selected" className="text-xl" />
             <div className="flex justify-center items-center">
-              <div className="font-bold text-3xl">{getCategoriesCount()}</div>
+              <div className="font-bold text-3xl">
+                {getCategoriesCount(categoryList)}
+              </div>
 
               <PencilSquareIcon
                 className="h-8 w-8 mt-[1px] stroke-2 hover:cursor-pointer"
@@ -201,6 +216,19 @@ function CategoryList({
           </button>
         </div>
       </div>
+
+      {isOpen && (
+        <ModalContent
+          modalContentID={ModalType.ALL_CATEGORIES_LIST}
+          onClose={closeModal}
+        >
+          <AllCategoriesEditable
+            userData={userData}
+            refetchCategories={refetchCategories}
+            closeModal={closeModal}
+          />
+        </ModalContent>
+      )}
     </div>
   );
 }

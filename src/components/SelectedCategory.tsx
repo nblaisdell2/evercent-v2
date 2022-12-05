@@ -3,22 +3,26 @@ import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
 
-import { CategoryListItem } from "./BudgetHelperFull";
 import Label from "./elements/Label";
 import Card from "./elements/Card";
+import MyDatePicker from "./elements/MyDatePicker";
+import MySelect from "./elements/MySelect";
+import MyToggle from "./elements/MyToggle";
 
-import Switch from "react-switch";
 import {
   calculatePercentage,
-  getAdjustedAmount,
   getDateFromCalendarDate,
   getMoneyString,
   parseDate as parseDateUtil,
 } from "../utils/utils";
-import MyDatePicker from "./elements/MyDatePicker";
-import { Select } from "./elements/select/Select";
-import { Item } from "react-stately";
-import { addMonths, addWeeks, format, differenceInDays } from "date-fns";
+import { format, differenceInDays } from "date-fns";
+import {
+  getPostingMonthAmounts,
+  getUpcomingPaydate,
+  getAdjustedAmount,
+  CategoryListItem,
+  getAdjustedAmountPlusExtra,
+} from "../utils/evercent";
 
 type Props = {
   initialCategory: CategoryListItem;
@@ -27,11 +31,6 @@ type Props = {
   nextPaydate: string;
   budgetMonths: any[];
   updateSelectedCategory: (item: CategoryListItem | null) => void;
-};
-
-type PostingMonth = {
-  month: string;
-  amount: number;
 };
 
 function SelectedCategory({
@@ -69,27 +68,11 @@ function SelectedCategory({
     updateSelectedCategory(newCategory);
   };
 
-  const getPostingMonthAmounts = (): PostingMonth[] => {
-    // TODO: This needs to calculate the real month/amounts
-    return [
-      { month: "Jan 2022", amount: 10 },
-      { month: "Feb 2022", amount: 10 },
-      { month: "Mar 2022", amount: 10 },
-      { month: "Apr 2022", amount: 10 },
-      { month: "May 2022", amount: 10 },
-      { month: "Jun 2022", amount: 10 },
-      { month: "Jul 2022", amount: 10 },
-      { month: "Aug 2022", amount: 10 },
-      { month: "Sep 2022", amount: 10 },
-      { month: "Oct 2022", amount: 10 },
-      { month: "Nov 2022", amount: 10 },
-    ];
-  };
-
   const updateCategory = (newFields: any) => {
     setCategory((prev) => {
       let newCat: any = { ...prev };
       let keys = Object.keys(newFields);
+      console.log(newFields);
       for (let i = 0; i < keys.length; i++) {
         newCat[keys[i]] = newFields[keys[i]];
       }
@@ -100,63 +83,15 @@ function SelectedCategory({
       }
 
       newCat.adjustedAmt = getAdjustedAmount(newCat, budgetMonths, nextPaydate);
-      newCat.adjustedAmtPlusExtra = newCat.adjustedAmt + newCat.extraAmount;
+      newCat.adjustedAmtPlusExtra = getAdjustedAmountPlusExtra(newCat);
       newCat.percentIncome = calculatePercentage(
         newCat.adjustedAmtPlusExtra,
         monthlyIncome
       );
 
-      // console.log(
-      //   "percent?",
-      //   calculatePercentage(newCat.adjustedAmtPlusExtra, monthlyIncome) * 100
-      // );
-
       updateSelectedCategory(newCat);
-      return newCat as CategoryListItem;
+      return newCat;
     });
-  };
-
-  const getAdjustedAmtByFrequency = (
-    adjustedAmt: number,
-    payFrequency: string
-  ) => {
-    switch (payFrequency) {
-      case "Weekly":
-        return adjustedAmt / 4;
-      case "Every 2 Weeks":
-        return adjustedAmt / 2;
-      case "Monthly":
-      default:
-        return adjustedAmt;
-    }
-  };
-
-  const getUpcomingPaydate = (
-    purchaseAmt: number,
-    adjustedAmt: number,
-    payFreq: string,
-    nextPaydate: string
-  ) => {
-    if (!adjustedAmt || !purchaseAmt) {
-      return null;
-    }
-
-    const amtPerPaycheck = getAdjustedAmtByFrequency(adjustedAmt, payFreq);
-    const numPaychecks = Math.ceil(purchaseAmt / amtPerPaycheck);
-
-    let newPaydate = parseDateUtil(nextPaydate);
-    switch (payFreq) {
-      case "Weekly":
-        newPaydate = addWeeks(newPaydate, numPaychecks);
-        break;
-      case "Every 2 Weeks":
-        newPaydate = addWeeks(newPaydate, numPaychecks * 2);
-        break;
-      case "Monthly":
-        newPaydate = addMonths(newPaydate, numPaychecks);
-    }
-
-    return newPaydate.toISOString();
   };
 
   const postingMonths = getPostingMonthAmounts();
@@ -186,10 +121,12 @@ function SelectedCategory({
       </div>
 
       <>
+        {/* Mobile Version */}
         <div className="flex flex-col sm:hidden">
           <div className="text-center w-full font-bold text-3xl mb-2">
             {category.name}
           </div>
+
           <Card className="flex flex-col w-full text-center p-2">
             <div className="flex justify-around">
               <div className="mb-2">
@@ -258,32 +195,27 @@ function SelectedCategory({
               </div>
             </div>
           </Card>
+
           <Card className="flex flex-col items-center w-full my-2 pb-2">
             <div className="text-2xl font-bold mb-2">Options</div>
             <div>
               <label className="flex mb-2 hover:cursor-pointer">
-                <Switch
+                <MyToggle
                   checked={category.isRegularExpense}
-                  onChange={(checked) => {
+                  onToggle={(checked) => {
                     toggleOptions(checked, "Regular Expense");
                   }}
                   className="mr-2"
-                  uncheckedIcon={<div></div>}
-                  checkedIcon={<div></div>}
-                  onColor={"#1E3A8A"}
                 />
                 <div>Regular Expense</div>
               </label>
               <label className="flex hover:cursor-pointer">
-                <Switch
+                <MyToggle
                   checked={category.isUpcomingExpense}
-                  onChange={(checked) => {
+                  onToggle={(checked) => {
                     toggleOptions(checked, "Upcoming Expense");
                   }}
                   className="mr-2"
-                  uncheckedIcon={<div></div>}
-                  checkedIcon={<div></div>}
-                  onColor={"#1E3A8A"}
                 />
                 <div>Upcoming Expense</div>
               </label>
@@ -296,7 +228,7 @@ function SelectedCategory({
                 Regular Expense Details
               </div>
               <div className="flex items-center justify-between pl-1">
-                <div className="font-semibold mr-2 mr-2">Next Due Date</div>
+                <div className="font-semibold mr-2">Next Due Date</div>
                 <MyDatePicker
                   minValue={parseDate(
                     (nextPaydate || new Date().toISOString()).substring(0, 10)
@@ -361,9 +293,22 @@ function SelectedCategory({
                 <div className="font-semibold mr-2">Repeat Every?</div>
                 <div className="flex items-center h-10">
                   <div className="flex items-center w-16 h-full mr-1">
-                    <Select
-                      label=""
-                      selectedKey={category.regularExpenseDetails.repeatFreqNum.toString()}
+                    <MySelect
+                      values={[
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                      ]}
+                      selectedValue={category.regularExpenseDetails.repeatFreqNum.toString()}
                       onSelectionChange={(sel) => {
                         updateCategory({
                           regularExpenseDetails: {
@@ -372,25 +317,13 @@ function SelectedCategory({
                           },
                         });
                       }}
-                    >
-                      <Item key="1">1</Item>
-                      <Item key="2">2</Item>
-                      <Item key="3">3</Item>
-                      <Item key="4">4</Item>
-                      <Item key="5">5</Item>
-                      <Item key="6">6</Item>
-                      <Item key="7">7</Item>
-                      <Item key="8">8</Item>
-                      <Item key="9">9</Item>
-                      <Item key="10">10</Item>
-                      <Item key="11">11</Item>
-                      <Item key="12">12</Item>
-                    </Select>
+                      isDisabled={category.regularExpenseDetails.isMonthly}
+                    />
                   </div>
                   <div className="flex items-center h-full ml-1">
-                    <Select
-                      label=""
-                      selectedKey={
+                    <MySelect
+                      values={["Months", "Years"]}
+                      selectedValue={
                         category.regularExpenseDetails.repeatFreqType
                       }
                       onSelectionChange={(sel) => {
@@ -401,18 +334,16 @@ function SelectedCategory({
                           },
                         });
                       }}
-                    >
-                      <Item key="Months">Months</Item>
-                      <Item key="Years">Years</Item>
-                    </Select>
+                      isDisabled={category.regularExpenseDetails.isMonthly}
+                    />
                   </div>
                 </div>
               </div>
               <div className="flex items-center justify-between pl-1">
                 <div className="font-semibold mr-2">Include on Chart?</div>
-                <Switch
+                <MyToggle
                   checked={category.regularExpenseDetails.includeOnChart}
-                  onChange={(checked) => {
+                  onToggle={(checked) => {
                     updateCategory({
                       regularExpenseDetails: {
                         ...category.regularExpenseDetails,
@@ -420,18 +351,15 @@ function SelectedCategory({
                       },
                     });
                   }}
-                  uncheckedIcon={<div></div>}
-                  checkedIcon={<div></div>}
-                  onColor={"#1E3A8A"}
                 />
               </div>
               <div className="flex items-center justify-between pl-1">
                 <div className="font-semibold mr-2">
                   Multiple Monthly Transactions?
                 </div>
-                <Switch
+                <MyToggle
                   checked={category.regularExpenseDetails.multipleTransactions}
-                  onChange={(checked) => {
+                  onToggle={(checked) => {
                     updateCategory({
                       regularExpenseDetails: {
                         ...category.regularExpenseDetails,
@@ -439,9 +367,6 @@ function SelectedCategory({
                       },
                     });
                   }}
-                  uncheckedIcon={<div></div>}
-                  checkedIcon={<div></div>}
-                  onColor={"#1E3A8A"}
                 />
               </div>
             </Card>
@@ -504,7 +429,9 @@ function SelectedCategory({
             </Card>
           )}
         </div>
-        <div className="hidden sm:flex flex-grow m-2">
+
+        {/* Web Version */}
+        <div className="hidden sm:flex h-full m-2">
           {/* left side */}
           <div className="w-[25%] mr-2">
             <Card className="bg-blue-300 h-full flex flex-col space-y-12 items-center p-2">
@@ -529,7 +456,7 @@ function SelectedCategory({
                       ) {
                         updateCategory({
                           amount: parseInt(e.target.value) || 0,
-                          adjustedAmt: parseInt(e.target.value) || 0,
+                          // adjustedAmt: parseInt(e.target.value) || 0,
                         });
                       }
                     }}
@@ -564,28 +491,22 @@ function SelectedCategory({
                 <div className="text-2xl font-bold mb-2">Options</div>
                 <div>
                   <label className="flex mb-2 hover:cursor-pointer">
-                    <Switch
+                    <MyToggle
                       checked={category.isRegularExpense}
-                      onChange={(checked) => {
+                      onToggle={(checked) => {
                         toggleOptions(checked, "Regular Expense");
                       }}
                       className="mr-2"
-                      uncheckedIcon={<div></div>}
-                      checkedIcon={<div></div>}
-                      onColor={"#1E3A8A"}
                     />
                     <div>Regular Expense</div>
                   </label>
                   <label className="flex hover:cursor-pointer">
-                    <Switch
+                    <MyToggle
                       checked={category.isUpcomingExpense}
-                      onChange={(checked) => {
+                      onToggle={(checked) => {
                         toggleOptions(checked, "Upcoming Expense");
                       }}
                       className="mr-2"
-                      uncheckedIcon={<div></div>}
-                      checkedIcon={<div></div>}
-                      onColor={"#1E3A8A"}
                     />
                     <div>Upcoming Expense</div>
                   </label>
@@ -609,10 +530,7 @@ function SelectedCategory({
                 <div>
                   <Label label={"Adjusted plus Extra"} className="text-xl" />
                   <div className="font-bold text-3xl">
-                    {getMoneyString(
-                      category.adjustedAmt + category.extraAmount,
-                      2
-                    )}
+                    {getMoneyString(category.adjustedAmtPlusExtra, 2)}
                   </div>
                 </div>
               </div>
@@ -632,14 +550,11 @@ function SelectedCategory({
                     <>
                       {postingMonths.map((pm) => {
                         return (
-                          <div
-                            key={pm.month}
-                            className="flex items-center justify-around"
-                          >
+                          <div key={pm.month} className="flex">
                             <div className="uppercase w-[55%] mr-2 text-right font-semibold">
                               {pm.month}
                             </div>
-                            <div className="font-bold flex-grow text-green-500">
+                            <div className="font-bold text-green-500">
                               {getMoneyString(pm.amount)}
                             </div>
                           </div>
@@ -653,7 +568,7 @@ function SelectedCategory({
 
             {/* bottom section */}
             {category.isRegularExpense && (
-              <Card className="flex-grow space-y-8 p-1">
+              <Card className="h-full space-y-8 p-1">
                 <div className="text-center font-bold text-xl">
                   Regular Expense Details
                 </div>
@@ -728,9 +643,21 @@ function SelectedCategory({
                       <div className="font-semibold">Repeat Every?</div>
                       <div className="flex items-center h-10">
                         <div className="flex items-center w-16 h-full mr-1">
-                          <Select
-                            label=""
-                            selectedKey={category.regularExpenseDetails.repeatFreqNum.toString()}
+                          <MySelect
+                            values={[
+                              "1",
+                              "2",
+                              "3",
+                              "4",
+                              "5",
+                              "6",
+                              "7",
+                              "8",
+                              "9",
+                              "10",
+                              "11",
+                              "12",
+                            ]}
                             onSelectionChange={(sel) => {
                               updateCategory({
                                 regularExpenseDetails: {
@@ -739,27 +666,15 @@ function SelectedCategory({
                                 },
                               });
                             }}
-                          >
-                            <Item key="1">1</Item>
-                            <Item key="2">2</Item>
-                            <Item key="3">3</Item>
-                            <Item key="4">4</Item>
-                            <Item key="5">5</Item>
-                            <Item key="6">6</Item>
-                            <Item key="7">7</Item>
-                            <Item key="8">8</Item>
-                            <Item key="9">9</Item>
-                            <Item key="10">10</Item>
-                            <Item key="11">11</Item>
-                            <Item key="12">12</Item>
-                          </Select>
+                            selectedValue={category.regularExpenseDetails.repeatFreqNum.toString()}
+                            isDisabled={
+                              category.regularExpenseDetails.isMonthly
+                            }
+                          />
                         </div>
                         <div className="flex items-center h-full ml-1">
-                          <Select
-                            label=""
-                            selectedKey={
-                              category.regularExpenseDetails.repeatFreqType
-                            }
+                          <MySelect
+                            values={["Months", "Years"]}
                             onSelectionChange={(sel) => {
                               updateCategory({
                                 regularExpenseDetails: {
@@ -768,10 +683,13 @@ function SelectedCategory({
                                 },
                               });
                             }}
-                          >
-                            <Item key="Months">Months</Item>
-                            <Item key="Years">Years</Item>
-                          </Select>
+                            selectedValue={
+                              category.regularExpenseDetails.repeatFreqType
+                            }
+                            isDisabled={
+                              category.regularExpenseDetails.isMonthly
+                            }
+                          />
                         </div>
                       </div>
                     </div>
@@ -779,9 +697,9 @@ function SelectedCategory({
                   <div className="flex justify-around">
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">Include on Chart?</div>
-                      <Switch
+                      <MyToggle
                         checked={category.regularExpenseDetails.includeOnChart}
-                        onChange={(checked) => {
+                        onToggle={(checked) => {
                           updateCategory({
                             regularExpenseDetails: {
                               ...category.regularExpenseDetails,
@@ -789,29 +707,17 @@ function SelectedCategory({
                             },
                           });
                         }}
-                        uncheckedIcon={<div></div>}
-                        checkedIcon={<div></div>}
-                        onColor={"#1E3A8A"}
                       />
                     </div>
-                    {/* <div>
-                      <div>Always Use Current Month?</div>
-                      <Switch
-                        checked={category.useCurrentMonth}
-                        onChange={(checked) => {}}
-                        uncheckedIcon={<div></div>}
-                        checkedIcon={<div></div>}
-                        onColor={"#1E3A8A"}
-                      /></div> */}
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">
                         Multiple Monthly Transactions?
                       </div>
-                      <Switch
+                      <MyToggle
                         checked={
                           category.regularExpenseDetails.multipleTransactions
                         }
-                        onChange={(checked) => {
+                        onToggle={(checked) => {
                           updateCategory({
                             regularExpenseDetails: {
                               ...category.regularExpenseDetails,
@@ -819,9 +725,6 @@ function SelectedCategory({
                             },
                           });
                         }}
-                        uncheckedIcon={<div></div>}
-                        checkedIcon={<div></div>}
-                        onColor={"#1E3A8A"}
                       />
                     </div>
                   </div>
