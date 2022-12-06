@@ -17,7 +17,23 @@ const IGNORED_CATEGORY_GROUPS = [
   "Hidden Categories", // Any categories hidden by the user in their budget, don't include them
 ];
 
+const CacheValue = {
+  CategoryGroups: 0,
+  Categories: 1,
+  BudgetMonths: 2,
+  BudgetID: 3,
+  BudgetName: 4,
+};
 let CACHE = {};
+
+function cacheYNABData(budgetData) {
+  console.log("CACHING DATA");
+  CACHE[CacheValue.CategoryGroups] = budgetData.category_groups;
+  CACHE[CacheValue.Categories] = budgetData.categories;
+  CACHE[CacheValue.BudgetMonths] = budgetData.months;
+  CACHE[CacheValue.BudgetID] = budgetData.id;
+  CACHE[CacheValue.BudgetName] = budgetData.name;
+}
 
 // ### PRIVATE FUNCTIONS ###
 function isOverRateLimitThreshold(response) {
@@ -223,6 +239,7 @@ export async function GetDefaultBudgetID(params) {
   console.log("ynab repsnose", response);
 
   let budgetData = response.data.data.budget;
+  cacheYNABData(budgetData);
 
   let defaultBudgetID = budgetData.id;
   return GetResponseWithTokenDetails(defaultBudgetID, response);
@@ -253,6 +270,12 @@ export async function GetBudgetName(params) {
     return GetResponseWithTokenDetails(null, { newTokenDetails: null });
   }
 
+  if (CacheValue.BudgetName in CACHE) {
+    return GetResponseWithTokenDetails(CACHE[CacheValue.BudgetName], {
+      newTokenDetails: null,
+    });
+  }
+
   let response = await SendYNABRequest(
     "GetBudgetName",
     get,
@@ -260,12 +283,7 @@ export async function GetBudgetName(params) {
     params
   );
 
-  CACHE = {
-    CategoryGroups: response.data.data.budget.category_groups,
-    Categories: response.data.data.budget.categories,
-    BudgetMonths: response.data.data.budget.months,
-  };
-
+  cacheYNABData(response.data.data.budget);
   return GetResponseWithTokenDetails(response.data.data.budget.name, response);
 }
 
@@ -281,8 +299,8 @@ export async function GetCategoryGroups(params) {
   // const categories = budgetData.categories; //budgetData.months[0].categories; //
   // let categoryGroups = budgetData.category_groups;
 
-  const categories = CACHE["Categories"]; //budgetData.months[0].categories; //
-  let categoryGroups = CACHE["CategoryGroups"];
+  const categories = CACHE[CacheValue.Categories]; //budgetData.months[0].categories; //
+  let categoryGroups = CACHE[CacheValue.CategoryGroups];
   categoryGroups = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
@@ -294,7 +312,7 @@ export async function GetCategoryGroups(params) {
       return grp.id == categories[i].category_group_id;
     });
     if (currGroup && !categories[i].hidden && !categories[i].deleted) {
-      let latestMonthData = CACHE["BudgetMonths"][0].categories.filter(
+      let latestMonthData = CACHE[CacheValue.BudgetMonths][0].categories.filter(
         (cat) => {
           return (
             cat.category_group_id == categories[i].category_group_id &&
@@ -319,16 +337,16 @@ export async function GetCategoryGroups(params) {
 }
 
 export async function GetBudget(params) {
-  let response = await SendYNABRequest(
-    "GetBudget",
-    get,
-    API_BASE_URL + "/budgets/" + params.budgetID,
-    params
-  );
+  // let response = await SendYNABRequest(
+  //   "GetBudget",
+  //   get,
+  //   API_BASE_URL + "/budgets/" + params.budgetID,
+  //   params
+  // );
 
-  const budgetData = response.data.data.budget;
-  const categories = budgetData.categories;
-  let categoryGroups = budgetData.category_groups;
+  // const budgetData = response.data.data.budget;
+  const categories = CACHE[CacheValue.Categories]; //budgetData.categories;
+  let categoryGroups = CACHE[CacheValue.CategoryGroups]; //budgetData.category_groups;
   categoryGroups = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
@@ -351,7 +369,9 @@ export async function GetBudget(params) {
       });
     }
   }
-  return GetResponseWithTokenDetails(categoryDetails, response);
+  return GetResponseWithTokenDetails(categoryDetails, {
+    newTokenDetails: null,
+  });
 }
 
 export async function GetBudgetMonths(params) {
@@ -364,7 +384,7 @@ export async function GetBudgetMonths(params) {
 
   // let budgetMonthData = response.data.data.budget;
 
-  let budgetCatGroups = CACHE["CategoryGroups"]; //budgetMonthData.category_groups;
+  let budgetCatGroups = CACHE[CacheValue.CategoryGroups]; //budgetMonthData.category_groups;
 
   let categoryGroups = budgetCatGroups.filter((catGroup) => {
     if (
@@ -389,7 +409,7 @@ export async function GetBudgetMonths(params) {
   let myBudgetMonths = [];
   let myCategories = [];
   let currCategory = {};
-  let budgetMonths = CACHE["BudgetMonths"]; //budgetMonthData.months;
+  let budgetMonths = CACHE[CacheValue.BudgetMonths]; //budgetMonthData.months;
   for (let i = budgetMonths.length - 1; i >= 0; i--) {
     let ynMonth = parseISO(budgetMonths[i].month);
     if (

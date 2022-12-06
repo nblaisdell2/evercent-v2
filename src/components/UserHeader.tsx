@@ -11,7 +11,7 @@ function UserHeader({
   refetchUser: () => Promise<void>;
 }) {
   return (
-    <div className="bg-[#F6F9FA] flex justify-between px-2 sm:px-10 py-1 w-full">
+    <div className="bg-[#F6F9FA] border-b border-black flex justify-between px-2 sm:px-10 py-1 w-full">
       <div className="hidden sm:flex">
         <YNABConnection userData={userData} refetchUser={refetchUser} />
       </div>

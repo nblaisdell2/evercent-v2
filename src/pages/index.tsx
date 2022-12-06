@@ -109,30 +109,32 @@ const Home: NextPage = () => {
         modalIsShowing && "overflow-y-hidden"
       }`}
     >
-      <Header />
-      {userEmail && (
-        <>
+      <div className="sticky top-0 left-0 z-10">
+        <Header />
+        {userEmail && (
           <UserHeader userData={data.userData} refetchUser={refetchUser} />
+        )}
+      </div>
 
-          <div className="flex flex-grow justify-center items-center">
-            {!data?.userData.tokenDetails.accessToken ? (
-              <div className="sm:hidden">
-                <YNABConnection
-                  userData={data.userData}
-                  refetchUser={refetchUser}
-                />
-              </div>
-            ) : (
-              <MainContent
+      {userEmail && (
+        <div className="flex flex-grow justify-center items-center">
+          {!data?.userData.tokenDetails.accessToken ? (
+            <div className="sm:hidden">
+              <YNABConnection
                 userData={data.userData}
-                categories={dataCategories?.categories}
-                refetchCategories={refetchCategories}
-                budgetMonths={dataCategories?.budgetMonths}
-                setModalIsShowing={setModalIsShowing}
+                refetchUser={refetchUser}
               />
-            )}
-          </div>
-        </>
+            </div>
+          ) : (
+            <MainContent
+              userData={data.userData}
+              categories={dataCategories?.categories}
+              refetchCategories={refetchCategories}
+              budgetMonths={dataCategories?.budgetMonths}
+              setModalIsShowing={setModalIsShowing}
+            />
+          )}
+        </div>
       )}
     </div>
   );

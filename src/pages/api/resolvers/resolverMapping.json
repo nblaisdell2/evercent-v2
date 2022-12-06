@@ -20,6 +20,7 @@
     "MUTATION_UPDATE_BUDGET_ID": "spEV_UpdateUserDefaultBudgetID",
     "MUTATION_UPDATE_MONTHS_AHEAD_TARGET": "spEV_UpdateUserMonthsAheadTarget",
     "MUTATION_REFRESH_CATEGORIES": "spEV_RefreshCategoryDetails",
+    "MUTATION_UPDATE_INITIAL_YNAB_DATA": "spEV_UpdateInitialYNABDetails",
     "MUTATION_UPDATE_CATEGORIES": "spEV_UpdateCategoryDetails",
     "MUTATION_UPDATE_CATEGORY_INCLUSION": "spEV_UpdateCategoryInclusionList",
     "MUTATION_TOGGLE_CATEGORY_INCLUSION": "spEV_UpdateCategoryInclusion",

@@ -197,21 +197,6 @@ export const resolvers = {
         expirationDate: details.ExpirationDate || strRightNow,
       });
 
-      console.log("returning", {
-        userID: details.UserID,
-        budgetID: details.DefaultBudgetID,
-        budgetName: budgetName.data,
-        monthlyIncome: details.MonthlyIncome || 0,
-        monthsAheadTarget: details.MonthsAheadTarget || 6,
-        payFrequency: details.PayFrequency || "Weekly",
-        nextPaydate: details.NextPaydate || strRightNow,
-        tokenDetails: {
-          accessToken: details.AccessToken || "",
-          refreshToken: details.RefreshToken || "",
-          expirationDate: details.ExpirationDate || strRightNow,
-        },
-      });
-
       return {
         userID: details.UserID,
         budgetID: details.DefaultBudgetID,
@@ -609,7 +594,6 @@ export const resolvers = {
       // connecting to YNAB for the first time
       const tokenDetails = await GetNewAccessToken(args);
       saveNewYNABTokens(args.userID, tokenDetails);
-      console.log("TOKEN DETAILS", tokenDetails);
 
       // Then, get the user's default BudgetID for the budget they
       // selected. Then, save that to the database.
@@ -618,12 +602,6 @@ export const resolvers = {
         accessToken: tokenDetails.accessToken,
         refreshToken: tokenDetails.refreshToken,
       });
-
-      await getAPIData(
-        Queries.MUTATION_UPDATE_BUDGET_ID,
-        { userID: args.userID, budgetID: budgetID.data },
-        true
-      );
 
       // Then, get the user's budget categories, and save them to the
       // database, as well. That way, when the page re-loads, we can pull
@@ -651,9 +629,8 @@ export const resolvers = {
         details: budgetDetails,
       };
 
-      // Save the category details to the database.
       await getAPIData(
-        Queries.MUTATION_UPDATE_CATEGORIES,
+        Queries.MUTATION_UPDATE_INITIAL_YNAB_DATA,
         {
           userID: args.userID,
           budgetID: budgetID.data,
