@@ -65,6 +65,7 @@ function BudgetHelperCharts({
     chartType: string,
     other?: string
   ) => {
+    // console.log("category list in charts", categoryList);
     let myChartData;
     if (chartType == "group") {
       if (other && other == "pie") {
@@ -77,7 +78,7 @@ function BudgetHelperCharts({
       } else {
         myChartData = categoryList.reduce(
           (prev, curr) => {
-            if (curr.adjustedAmtPlusExtra > 0) {
+            if (curr?.adjustedAmtPlusExtra > 0) {
               prev[0] = [...prev[0], curr.groupName];
               prev[1] = [...prev[1], curr.adjustedAmtPlusExtra];
             }
@@ -92,7 +93,7 @@ function BudgetHelperCharts({
       ).reduce(
         (prev, curr) => {
           if (
-            curr.adjustedAmtPlusExtra > 0 &&
+            curr?.adjustedAmtPlusExtra > 0 &&
             (selectedGroup.groupID == "" ||
               curr.categoryGroupID == selectedGroup.groupID)
           ) {

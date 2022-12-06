@@ -109,6 +109,9 @@ function AllCategoriesEditable({
 
   if (loading) return <div></div>;
 
+  console.log(error);
+  console.log("data for all categories", data);
+
   return (
     <div className="relative flex flex-col items-center text-center h-full">
       <div className="font-extrabold text-3xl">All Categories</div>

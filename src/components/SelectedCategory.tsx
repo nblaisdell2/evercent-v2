@@ -42,7 +42,9 @@ function SelectedCategory({
   updateSelectedCategory,
 }: Props) {
   const toggleOptions = (checked: boolean, option: string) => {
+    console.log("initial", initialCategory);
     let newCategory = { ...initialCategory };
+    console.log("newCategory", newCategory);
 
     newCategory.isRegularExpense =
       option == "Regular Expense" ? checked : false;
@@ -50,14 +52,17 @@ function SelectedCategory({
       newCategory.isRegularExpense &&
       !newCategory.regularExpenseDetails.repeatFreqType
     ) {
-      // Set regular expense defaults here
-      newCategory.regularExpenseDetails.isMonthly = true;
-      newCategory.regularExpenseDetails.nextDueDate = nextPaydate;
-      newCategory.regularExpenseDetails.monthsDivisor = 1;
-      newCategory.regularExpenseDetails.repeatFreqNum = 1;
-      newCategory.regularExpenseDetails.repeatFreqType = "Months";
-      newCategory.regularExpenseDetails.includeOnChart = true;
-      newCategory.regularExpenseDetails.multipleTransactions = false;
+      // // Set regular expense defaults here
+      newCategory.regularExpenseDetails = {
+        ...newCategory.regularExpenseDetails,
+        isMonthly: true,
+        nextDueDate: nextPaydate,
+        monthsDivisor: 1,
+        repeatFreqNum: 1,
+        repeatFreqType: "Months",
+        includeOnChart: true,
+        multipleTransactions: false,
+      };
     }
     newCategory.isUpcomingExpense =
       option == "Upcoming Expense" ? checked : false;

@@ -23,8 +23,6 @@ const Home: NextPage = () => {
   const [getYNABInitialDetails] = useMutation(GET_YNAB_INITIAL_DETAILS);
 
   const saveNewYNABTokens = async (authCode: string, userID: string) => {
-    console.log("saveNewYNABTokens", userID);
-
     if (userID) {
       await getYNABInitialDetails({ variables: { userID, authCode } });
 
@@ -44,7 +42,6 @@ const Home: NextPage = () => {
     variables: { userEmail },
     skip: !userEmail,
     onCompleted: (data) => {
-      console.log("onCompleted data", data);
       if (router.query?.code) {
         saveNewYNABTokens(router.query?.code as string, data.userData.userID);
       }
@@ -99,6 +96,7 @@ const Home: NextPage = () => {
     console.log(error);
     console.log(errorID);
     console.log(errorCategories);
+
     return <p>Error :(</p>;
   }
 

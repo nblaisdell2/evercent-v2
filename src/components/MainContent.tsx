@@ -128,44 +128,54 @@ function MainContent({
         updateCategoriesInput: input,
       },
       update: (cache, { data: { updateCategories } }) => {
-        let newList = newCategories.reduce((prev: any, curr) => {
-          let catList = curr.categories.map((cat) => {
-            return {
-              __typename: "Category",
-              amount: cat.amount,
-              categoryGroupID: cat.categoryGroupID,
-              categoryGroupName: cat.groupName,
-              categoryID: cat.categoryID,
-              categoryName: cat.name,
-              extraAmount: cat.extraAmount,
-              guid: cat.guid,
-              isRegularExpense: cat.isRegularExpense,
-              isUpcomingExpense: cat.isUpcomingExpense,
-              regularExpenseDetails: {
-                __typename: "RegularExpenseDetails",
-                includeOnChart: cat?.regularExpenseDetails?.includeOnChart,
-                isMonthly: cat?.regularExpenseDetails?.isMonthly,
-                monthsDivisor: cat?.regularExpenseDetails?.monthsDivisor,
-                multipleTransactions:
-                  cat?.regularExpenseDetails?.multipleTransactions,
-                nextDueDate: cat?.regularExpenseDetails?.nextDueDate,
-                repeatFreqNum: cat?.regularExpenseDetails?.repeatFreqNum,
-                repeatFreqType: cat?.regularExpenseDetails?.repeatFreqType,
-              },
-              upcomingDetails: {
-                __typename: "UpcomingDetails",
-                expenseAmount: cat?.upcomingDetails?.expenseAmount,
-              },
-              budgetAmounts: {
-                __typename: "BudgetAmounts",
-                budgeted: cat?.budgetAmounts?.budgeted,
-                activity: cat?.budgetAmounts?.activity,
-                available: cat?.budgetAmounts?.available,
-              },
-            };
-          });
-          return [...prev, ...catList];
-        }, []);
+        let newList = newCategories.reduce(
+          (prev: CategoryListGroup[], curr) => {
+            let catList = curr.categories.map((cat) => {
+              return {
+                __typename: "Category",
+                amount: cat.amount,
+                categoryGroupID: cat.categoryGroupID,
+                groupName: cat.groupName,
+                categoryID: cat.categoryID,
+                name: cat.name,
+                extraAmount: cat.extraAmount,
+                adjustedAmt: cat.adjustedAmt,
+                adjustedAmtPlusExtra: cat.adjustedAmtPlusExtra,
+                percentIncome: cat.percentIncome,
+                guid: cat.guid,
+                isRegularExpense: cat.isRegularExpense,
+                isUpcomingExpense: cat.isUpcomingExpense,
+                regularExpenseDetails: {
+                  __typename: "RegularExpenseDetails",
+                  guid: cat.guid,
+                  includeOnChart: cat?.regularExpenseDetails?.includeOnChart,
+                  isMonthly: cat?.regularExpenseDetails?.isMonthly,
+                  monthsDivisor: cat?.regularExpenseDetails?.monthsDivisor,
+                  multipleTransactions:
+                    cat?.regularExpenseDetails?.multipleTransactions,
+                  nextDueDate: cat?.regularExpenseDetails?.nextDueDate,
+                  repeatFreqNum: cat?.regularExpenseDetails?.repeatFreqNum,
+                  repeatFreqType: cat?.regularExpenseDetails?.repeatFreqType,
+                },
+                upcomingDetails: {
+                  __typename: "UpcomingDetails",
+                  guid: cat.guid,
+                  expenseAmount: cat?.upcomingDetails?.expenseAmount,
+                },
+                budgetAmounts: {
+                  __typename: "BudgetAmounts",
+                  budgeted: cat?.budgetAmounts?.budgeted,
+                  activity: cat?.budgetAmounts?.activity,
+                  available: cat?.budgetAmounts?.available,
+                },
+              };
+            });
+
+            curr = { ...curr, categories: catList };
+            return prev.concat(curr);
+          },
+          []
+        );
 
         cache.writeQuery({
           query: GET_BUDGET_HELPER_DETAILS,
@@ -245,7 +255,7 @@ function MainContent({
   };
 
   return (
-    <div className="w-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
+    <div className="w-full h-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
       <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full h-full sm:w-[80%]">
         {/* Box 1 - Budget Helper */}
         {widgetBox(
