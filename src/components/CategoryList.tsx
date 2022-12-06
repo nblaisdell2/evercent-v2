@@ -10,8 +10,8 @@ import {
   getCategoriesCount,
   CategoryListGroup,
   CategoryListItem,
+  UserData,
 } from "../utils/evercent";
-import { UserData } from "../pages";
 import Card from "./elements/Card";
 import Label from "./elements/Label";
 
@@ -23,7 +23,10 @@ type Props = {
   userData: UserData;
   refetchCategories: () => Promise<void>;
   categoryList: CategoryListGroup[];
-  onSave: () => void;
+  setCategoryList: (newList: CategoryListGroup[]) => void;
+  expandedGroups: string[];
+  setExpandedGroups: (newGroups: string[]) => void;
+  onSave: (newCategories: CategoryListGroup[]) => void;
   selectCategory: (item: CategoryListItem) => void;
 };
 
@@ -31,11 +34,13 @@ function CategoryList({
   userData,
   refetchCategories,
   categoryList,
+  setCategoryList,
+  expandedGroups,
+  setExpandedGroups,
   onSave,
   selectCategory,
 }: Props) {
   const { isOpen, showModal, closeModal } = useModal();
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const groupIsExpanded = (grp: CategoryListGroup): boolean => {
     return expandedGroups.includes(grp.groupName);
@@ -146,7 +151,7 @@ function CategoryList({
         </div>
         <div className="block sm:hidden">
           <button
-            onClick={onSave}
+            onClick={() => onSave(categoryList)}
             className={`h-8 w-[120px] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div className="flex justify-center items-center">
@@ -206,7 +211,7 @@ function CategoryList({
           </div>
 
           <button
-            onClick={onSave}
+            onClick={() => onSave(categoryList)}
             className={`h-8 w-[95%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div className="flex justify-center items-center">

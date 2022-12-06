@@ -1,8 +1,5 @@
 import React from "react";
 
-import { useQuery } from "@apollo/client";
-import { GET_USER_DETAILS } from "../graphql/queries";
-
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import { differenceInDays, startOfToday } from "date-fns";
@@ -12,28 +9,18 @@ import Label from "./elements/Label";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
 import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
+import { UserData } from "../utils/evercent";
 
 function UserDetails({
-  userID,
-  budgetID,
+  userData,
+  refetchUser,
 }: {
-  userID: string;
-  budgetID: string;
+  userData: UserData;
+  refetchUser: () => Promise<void>;
 }) {
   const { isOpen, showModal, closeModal } = useModal();
 
-  const { loading, error, data, refetch } = useQuery(GET_USER_DETAILS, {
-    variables: {
-      userBudgetInput: {
-        userID: userID,
-        budgetID: budgetID,
-      },
-    },
-  });
-
-  if (loading) return null;
-
-  const { monthlyIncome, nextPaydate, payFrequency } = data.user;
+  const { monthlyIncome, nextPaydate, payFrequency } = userData;
   const daysAway = differenceInDays(parseDate(nextPaydate), startOfToday());
 
   return (
@@ -44,12 +31,12 @@ function UserDetails({
           onClose={closeModal}
         >
           <UpdateUserDetailsModal
-            userID={userID}
-            budgetID={budgetID}
+            userID={userData.userID}
+            budgetID={userData.budgetID}
             monthlyIncome={monthlyIncome}
             payFrequency={payFrequency}
             nextPaydate={nextPaydate}
-            refetchUserDetails={refetch}
+            refetchUserDetails={refetchUser}
             closeModal={closeModal}
           />
         </ModalContent>

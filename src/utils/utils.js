@@ -67,6 +67,8 @@ export async function getAPIData(storedProcName, params, isMutation) {
     })
     .catch((err) => {
       console.log("error in getAPIData");
+      console.log(err.response);
+      console.log(err.response.data);
       console.log(err.response.data.errMsg);
     });
 }

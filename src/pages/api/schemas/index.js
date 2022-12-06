@@ -7,13 +7,18 @@ export const typeDefs = gql`
   type UserData {
     userID: ID!
     budgetID: ID
+    budgetName: String
+    monthlyIncome: Int!
+    monthsAheadTarget: Int!
+    payFrequency: String!
+    nextPaydate: String!
     tokenDetails: YNABConnection
   }
 
-  type UserID {
-    id: ID!
-    defaultBudgetID: ID
-  }
+  # type UserID {
+  #   id: ID!
+  #   defaultBudgetID: ID
+  # }
 
   type User {
     id: ID!
@@ -262,7 +267,7 @@ export const typeDefs = gql`
   # ===========
   type Query {
     userData(userEmail: String!): UserData!
-    userID(userEmail: String!): UserID!
+    userID(userEmail: String!): ID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
     getInitialYNABDetails(userID: ID!, authCode: String!): YNABInitialData

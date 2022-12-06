@@ -5,6 +5,11 @@ export const GET_USER_DATA = gql`
     userData(userEmail: $userEmail) {
       userID
       budgetID
+      budgetName
+      monthlyIncome
+      monthsAheadTarget
+      payFrequency
+      nextPaydate
       tokenDetails {
         accessToken
         refreshToken
@@ -225,11 +230,11 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
     $accessToken: String!
     $refreshToken: String!
   ) {
-    user(userBudgetInput: $userBudgetInput) {
-      monthlyIncome
-      payFrequency
-      nextPaydate
-    }
+    # user(userBudgetInput: $userBudgetInput) {
+    #   monthlyIncome
+    #   payFrequency
+    #   nextPaydate
+    # }
     categories(
       userBudgetInput: $userBudgetInput
       accessToken: $accessToken

@@ -3,6 +3,7 @@
     "QUERY_USER": "spEV_GetUser",
     "QUERY_YNAB_CONN_DETAILS": "spEV_YNAB_GetConnectionDetails",
     "QUERY_EXCLUDED_CATEGORIES": "spEV_GetExcludedCategories",
+    "QUERY_CATEGORIES_INITIAL": "spEV_GetInitialCategoryData",
     "QUERY_CATEGORIES": "spEV_GetAllCategories",
     "QUERY_CATEGORY": "spEV_GetAllCategories",
     "QUERY_REGULAR_EXPENSES": "spEV_GetRegularExpenses",

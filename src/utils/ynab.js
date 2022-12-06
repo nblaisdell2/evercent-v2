@@ -17,6 +17,8 @@ const IGNORED_CATEGORY_GROUPS = [
   "Hidden Categories", // Any categories hidden by the user in their budget, don't include them
 ];
 
+let CACHE = {};
+
 // ### PRIVATE FUNCTIONS ###
 function isOverRateLimitThreshold(response) {
   let rateLim = response.headers["x-rate-limit"];
@@ -47,8 +49,8 @@ async function GetResponseWithTokenDetails(data, response) {
   };
 }
 
-async function SendYNABRequest(method, uri, params, postData) {
-  console.log("Inside 'SendYNABRequest'");
+async function SendYNABRequest(origin, method, uri, params, postData) {
+  console.log("Inside 'SendYNABRequest' - " + origin);
 
   // console.log("  method", method);
   console.log("  uri", uri);
@@ -168,13 +170,18 @@ export function GetURL_YNABBudget(budgetID) {
 }
 
 export async function GetNewAccessToken({ userID, authCode }) {
-  return await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    redirect_uri: REDIRECT_URI,
-    grant_type: "authorization_code",
-    code: authCode,
-  }).then(async (response) => await FormatAccessTokenDetails(response.data));
+  return await SendYNABRequest(
+    "GetNewAccessToken",
+    post,
+    OAUTH_BASE_URL + "/token",
+    {
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: REDIRECT_URI,
+      grant_type: "authorization_code",
+      code: authCode,
+    }
+  ).then(async (response) => await FormatAccessTokenDetails(response.data));
 }
 
 export async function GetNewAccessTokenRefresh({
@@ -184,12 +191,17 @@ export async function GetNewAccessTokenRefresh({
   console.log("did I get the refresh token?", refreshToken);
   console.log("did I get the expiration Date?", expirationDate);
 
-  let response = await SendYNABRequest(post, OAUTH_BASE_URL + "/token", {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    grant_type: "refresh_token",
-    refresh_token: refreshToken,
-  });
+  let response = await SendYNABRequest(
+    "GetNewAccessTokenRefresh",
+    post,
+    OAUTH_BASE_URL + "/token",
+    {
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }
+  );
   let formatted = await FormatAccessTokenDetails(response.data);
 
   return {
@@ -201,6 +213,7 @@ export async function GetNewAccessTokenRefresh({
 export async function GetDefaultBudgetID(params) {
   console.log("getting default budget id");
   let response = await SendYNABRequest(
+    "GetDefaultBudgetID",
     get,
     API_BASE_URL + "/budgets/default",
     params
@@ -214,7 +227,12 @@ export async function GetDefaultBudgetID(params) {
 }
 
 export async function GetBudgets(params) {
-  let response = await SendYNABRequest(get, API_BASE_URL + "/budgets", params);
+  let response = await SendYNABRequest(
+    "GetBudgets",
+    get,
+    API_BASE_URL + "/budgets",
+    params
+  );
   let budgetData = response.data.data.budgets;
 
   let myBudgetData = [];
@@ -230,24 +248,35 @@ export async function GetBudgets(params) {
 
 export async function GetBudgetName(params) {
   let response = await SendYNABRequest(
+    "GetBudgetName",
     get,
     API_BASE_URL + "/budgets/" + params.budgetID,
     params
   );
+
+  CACHE = {
+    CategoryGroups: response.data.data.budget.category_groups,
+    Categories: response.data.data.budget.categories,
+    BudgetMonths: response.data.data.budget.months,
+  };
 
   return GetResponseWithTokenDetails(response.data.data.budget.name, response);
 }
 
 export async function GetCategoryGroups(params) {
-  let response = await SendYNABRequest(
-    get,
-    API_BASE_URL + "/budgets/" + params.budgetID,
-    params
-  );
+  // let response = await SendYNABRequest(
+  //   "GetCategoryGroups",
+  //   get,
+  //   API_BASE_URL + "/budgets/" + params.budgetID,
+  //   params
+  // );
 
-  const budgetData = response.data.data.budget;
-  const categories = budgetData.categories; //budgetData.months[0].categories; //
-  let categoryGroups = budgetData.category_groups;
+  // const budgetData = response.data.data.budget;
+  // const categories = budgetData.categories; //budgetData.months[0].categories; //
+  // let categoryGroups = budgetData.category_groups;
+
+  const categories = CACHE["Categories"]; //budgetData.months[0].categories; //
+  let categoryGroups = CACHE["CategoryGroups"];
   categoryGroups = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
@@ -259,12 +288,14 @@ export async function GetCategoryGroups(params) {
       return grp.id == categories[i].category_group_id;
     });
     if (currGroup && !categories[i].hidden && !categories[i].deleted) {
-      let latestMonthData = budgetData.months[0].categories.filter((cat) => {
-        return (
-          cat.category_group_id == categories[i].category_group_id &&
-          cat.id == categories[i].id
-        );
-      })[0];
+      let latestMonthData = CACHE["BudgetMonths"][0].categories.filter(
+        (cat) => {
+          return (
+            cat.category_group_id == categories[i].category_group_id &&
+            cat.id == categories[i].id
+          );
+        }
+      )[0];
       categoryDetails.push({
         categoryGroupID: categories[i].category_group_id,
         categoryID: categories[i].id,
@@ -283,6 +314,7 @@ export async function GetCategoryGroups(params) {
 
 export async function GetBudget(params) {
   let response = await SendYNABRequest(
+    "GetBudget",
     get,
     API_BASE_URL + "/budgets/" + params.budgetID,
     params
@@ -317,15 +349,17 @@ export async function GetBudget(params) {
 }
 
 export async function GetBudgetMonths(params) {
-  let response = await SendYNABRequest(
-    get,
-    API_BASE_URL + "/budgets/" + params.budgetID,
-    params
-  );
+  // let response = await SendYNABRequest(
+  //   "GetBudgetMonths",
+  //   get,
+  //   API_BASE_URL + "/budgets/" + params.budgetID,
+  //   params
+  // );
 
-  let budgetMonthData = response.data.data.budget;
+  // let budgetMonthData = response.data.data.budget;
 
-  let budgetCatGroups = budgetMonthData.category_groups;
+  let budgetCatGroups = CACHE["CategoryGroups"]; //budgetMonthData.category_groups;
+
   let categoryGroups = budgetCatGroups.filter((catGroup) => {
     if (
       !catGroup.hidden &&
@@ -349,7 +383,7 @@ export async function GetBudgetMonths(params) {
   let myBudgetMonths = [];
   let myCategories = [];
   let currCategory = {};
-  let budgetMonths = budgetMonthData.months;
+  let budgetMonths = CACHE["BudgetMonths"]; //budgetMonthData.months;
   for (let i = budgetMonths.length - 1; i >= 0; i--) {
     let ynMonth = parseISO(budgetMonths[i].month);
     if (
@@ -399,7 +433,7 @@ export async function GetBudgetMonths(params) {
     }
   }
 
-  return GetResponseWithTokenDetails(myBudgetMonths, response);
+  return GetResponseWithTokenDetails(myBudgetMonths, { newTokenDetails: null });
 }
 
 export async function PostCategoryMonth(params) {
@@ -418,7 +452,13 @@ export async function PostCategoryMonth(params) {
     },
   };
 
-  let response = await SendYNABRequest(patch, ynabURI, params, postData);
+  let response = await SendYNABRequest(
+    "PostCategoryMonth",
+    patch,
+    ynabURI,
+    params,
+    postData
+  );
   console.log("Category Name: " + response.data.data.category.name);
 
   let postedDataDetails = {

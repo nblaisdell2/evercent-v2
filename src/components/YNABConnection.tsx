@@ -7,8 +7,8 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
-import { GET_BUDGET_NAME, GET_YNAB_INITIAL_DETAILS } from "../graphql/queries";
+import { useLazyQuery, useMutation } from "@apollo/client";
+import { GET_YNAB_INITIAL_DETAILS } from "../graphql/queries";
 import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
 
 import { parseDate, ModalType } from "../utils/utils";
@@ -16,9 +16,9 @@ import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 
 import Label from "./elements/Label";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
-import { UserData } from "../pages";
 import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
+import { UserData } from "../utils/evercent";
 
 function YNABConnection({
   userData,
@@ -33,19 +33,6 @@ function YNABConnection({
 
   const [getYNABInitialDetails] = useLazyQuery(GET_YNAB_INITIAL_DETAILS);
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
-
-  const {
-    loading: loadingName,
-    error: errorName,
-    data: budgetName,
-  } = useQuery(GET_BUDGET_NAME, {
-    variables: {
-      userID: userData.userID,
-      accessToken: userData.tokenDetails.accessToken,
-      refreshToken: userData.tokenDetails.refreshToken,
-      budgetID: userData.budgetID,
-    },
-  });
 
   const saveNewYNABTokens = async (authCode: string) => {
     let response = await getYNABInitialDetails({
@@ -98,9 +85,9 @@ function YNABConnection({
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
   const ynabBudgetURL = GetURL_YNABBudget(userData.budgetID);
 
-  if (loadingName) {
-    return <div>Still Loading...</div>;
-  }
+  // if (loadingName) {
+  //   return <div>Still Loading...</div>;
+  // }
 
   return (
     <>
@@ -135,7 +122,7 @@ function YNABConnection({
             <div className="text-center ml-4">
               <Label label={"Current Budget"} />
               <div className="flex justify-center space-x-1">
-                <div className=" font-bold">{budgetName?.budgetName}</div>
+                <div className=" font-bold">{userData.budgetName}</div>
                 <PencilSquareIcon
                   className="h-6 w-6 stroke-2 hover:cursor-pointer"
                   onClick={showModal}

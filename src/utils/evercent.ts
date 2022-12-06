@@ -1,6 +1,23 @@
 import { addDays, addMonths, addWeeks, differenceInMonths } from "date-fns";
 import { getSQLDate, parseDate } from "./utils";
 
+export type UserData = {
+  userID: string;
+  budgetID: string;
+  budgetName: string;
+  monthlyIncome: number;
+  monthsAheadTarget: number;
+  payFrequency: string;
+  nextPaydate: string;
+  tokenDetails: TokenDetails;
+};
+
+export type TokenDetails = {
+  accessToken: string;
+  refreshToken: string;
+  expirationDate: string;
+};
+
 export type CategoryListGroup = {
   groupName: string;
   amount: number;
@@ -56,13 +73,28 @@ export type PostingMonth = {
   amount: number;
 };
 
-export const getCategoriesCount = (categoryList) => {
+export type BudgetMonth = {
+  month: string;
+  categories: BudgetMonthCategory[];
+};
+
+export type BudgetMonthCategory = {
+  categoryGroupID: string;
+  categoryGroupName: string;
+  categoryID: string;
+  name: string;
+  budgeted: number;
+  activity: number;
+  available: number;
+};
+
+export const getCategoriesCount = (categoryList: CategoryListGroup[]) => {
   return categoryList.reduce((prev, curr) => {
     return prev + curr.categories.length;
   }, 0);
 };
 
-export const getTotalAmountUsed = (categoryList) => {
+export const getTotalAmountUsed = (categoryList: CategoryListGroup[]) => {
   return categoryList.reduce((prev, curr) => {
     return prev + curr.adjustedAmtPlusExtra;
   }, 0);
@@ -146,7 +178,7 @@ export const getAdjustedAmountPlusExtra = (category: CategoryListItem) => {
 export const getAdjustedAmount = (
   category: CategoryListItem,
   budgetMonths: BudgetMonth[],
-  nextPaydate
+  nextPaydate: string
 ) => {
   let adjustedAmt = category.amount;
 

@@ -154,13 +154,13 @@ function BudgetHelperCharts({
             };
           });
 
-          console.log("You selected:", {
-            row,
-            column,
-            colName: colName,
-            colID: colID,
-            value: dataTable?.getValue(row, column),
-          });
+          // console.log("You selected:", {
+          //   row,
+          //   column,
+          //   colName: colName,
+          //   colID: colID,
+          //   value: dataTable?.getValue(row, column),
+          // });
         }
       },
     },

@@ -156,34 +156,58 @@ function createRunsToLock(runsData) {
 export const resolvers = {
   Query: {
     userData: async (_, args) => {
+      const strRightNow = new Date().toISOString();
+
       if (!args.userEmail) {
         return {
           userID: "",
           budgetID: "",
+          monthlyIncome: 0,
+          monthsAheadTarget: 6,
+          payFrequency: "Weekly",
+          nextPaydate: strRightNow,
           tokenDetails: {
             accessToken: "",
             refreshToken: "",
-            expirationDate: new Date().toISOString(),
+            expirationDate: strRightNow,
           },
         };
       }
-      const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
-      const userData = queryData[0][0];
 
-      const queryDataTokens = await getAPIData(
-        Queries.QUERY_YNAB_CONN_DETAILS,
-        { userID: userData?.UserID },
+      // 1. Get the UserID/BudgetID for the given email
+      const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
+      const { UserID, DefaultBudgetID } = queryData[0][0];
+
+      // 2. Query the user's details using those IDs above
+      //      - User Data (monthly income, pay freq, etc)
+      //      - Categories
+      const queryDataUser = await getAPIData(
+        Queries.QUERY_USER,
+        { userID: UserID, budgetID: DefaultBudgetID },
         false
       );
-      const details = queryDataTokens[0][0];
+      const details = queryDataUser[0][0];
+
+      // 3. Get the budget name from YNAB, so we can
+      //    already have it by the time the page loads
+      const budgetName = await GetBudgetName({
+        budgetID: DefaultBudgetID,
+        accessToken: details.AccessToken || "",
+        refreshToken: details.RefreshToken || "",
+      });
 
       return {
-        userID: userData?.UserID,
-        budgetID: userData?.DefaultBudgetID,
+        userID: details.UserID,
+        budgetID: details.DefaultBudgetID,
+        budgetName: budgetName.data,
+        monthlyIncome: details.MonthlyIncome || 0,
+        monthsAheadTarget: details.MonthsAheadTarget || 6,
+        payFrequency: details.PayFrequency || "Weekly",
+        nextPaydate: details.NextPaydate || strRightNow,
         tokenDetails: {
-          accessToken: details?.AccessToken || "",
-          refreshToken: details?.RefreshToken || "",
-          expirationDate: details?.ExpirationDate || new Date().toISOString(),
+          accessToken: details.AccessToken || "",
+          refreshToken: details.RefreshToken || "",
+          expirationDate: details.ExpirationDate || strRightNow,
         },
       };
     },
@@ -238,6 +262,7 @@ export const resolvers = {
         accessToken: tokenDetails.accessToken,
         refreshToken: tokenDetails.refreshToken,
       });
+
       await getAPIData(
         Queries.MUTATION_UPDATE_BUDGET_ID,
         { userID: args.userID, budgetID: budgetID.data },
@@ -298,16 +323,11 @@ export const resolvers = {
       );
       const details = queryData[0];
 
-      console.log("details", details);
-
       for (let i = 0; i < catGroups.length; i++) {
         catGroups[i].included = !details.some((d) => {
           return d.CategoryID.toLowerCase() == catGroups[i].categoryID;
         });
       }
-
-      console.log("catGroups");
-      console.log(catGroups);
 
       return catGroups;
     },
@@ -359,25 +379,15 @@ export const resolvers = {
       return budgetMonths.data;
     },
     categories: async (_, args) => {
-      console.log("Inside the categories resolver");
-
       const queryData = await getAPIData(
-        Queries.QUERY_CATEGORIES,
-        {
-          userID: args.userBudgetInput.userID,
-          budgetID: args.userBudgetInput.budgetID,
-        },
-        false
-      );
-      const categoryData = queryData[0];
-      // console.log("categoryData", categoryData);
-
-      const userQueryData = await getAPIData(
-        Queries.QUERY_USER,
+        Queries.QUERY_CATEGORIES_INITIAL,
         { userBudgetInput: args.userBudgetInput },
         false
       );
-      const user = userQueryData[0][0];
+
+      const categoryData = queryData[0];
+      const user = queryData[1][0];
+      const excludedCategories = queryData[2];
 
       let { userID, budgetID } = args.userBudgetInput;
       delete args.userBudgetInput;
@@ -385,7 +395,6 @@ export const resolvers = {
       const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
       const budgetMonths = await GetBudgetMonths({ ...args, userID, budgetID });
       const bm = budgetMonths.data;
-      console.log("catGroups", catGroups);
 
       // ======================================
       // If we have any in catGroups (YNAB) that aren't in categoryData (database),
@@ -398,12 +407,6 @@ export const resolvers = {
       //   been deleted from YNAB, so we should delete it from categoryData, as well,
       //   and run a query to remove it from the database at the same time, similar
       //   to the steps above.
-      const queryDataExc = await getAPIData(
-        Queries.QUERY_EXCLUDED_CATEGORIES,
-        { userID, budgetID },
-        false
-      );
-      const details = queryDataExc[0];
 
       let newResults = [];
       for (let i = 0; i < catGroups.length; i++) {
@@ -415,7 +418,7 @@ export const resolvers = {
               cat.CategoryID.toLowerCase() == catGroups[i].categoryID
             );
           }) &&
-          !details.some((cat) => {
+          !excludedCategories.some((cat) => {
             return (
               cat.CategoryGroupID.toLowerCase() ==
                 catGroups[i].categoryGroupID &&
@@ -496,8 +499,6 @@ export const resolvers = {
       }
       // ======================================
 
-      console.log("user data", user);
-      // console.log("categoryData", categoryData);
       // By mapping over the "catGroups" returned by the YNAB API
       // for each object in the database, we can ensure that the
       // data returned to the client will match the same order that the
@@ -506,7 +507,6 @@ export const resolvers = {
       let cats = [];
       let currGroup = "";
       for (let i = 0; i < catGroups.length; i++) {
-        console.log("currGroup", catGroups[i]);
         let catDB = categoryData.find((data) => {
           return (
             data.CategoryGroupID.toLowerCase() ==
@@ -514,7 +514,6 @@ export const resolvers = {
             data.CategoryID.toLowerCase() == catGroups[i].categoryID
           );
         });
-        console.log("catDB", catDB);
 
         if (currGroup !== catGroups[i].categoryGroupName) {
           if (currGroup !== "") {
@@ -538,12 +537,6 @@ export const resolvers = {
             name: catGroups[i].categoryName,
             amount: catDB.CategoryAmount,
             extraAmount: catDB.ExtraAmount,
-            // adjustedAmt: adjAmt,
-            // adjustedAmtPlusExtra: adjAmt + categoryData[i].extraAmount,
-            // percentIncome: calculatePercentage(
-            //   adjAmt + categoryData[i].extraAmount,
-            //   user.MonthlyIncome // NEED INCOME
-            // ),
             isRegularExpense: catDB.IsRegularExpense,
             isUpcomingExpense: catDB.IsUpcomingExpense,
             regularExpenseDetails: {
@@ -584,29 +577,6 @@ export const resolvers = {
         categories: cats,
         ...getGroupAmounts(cats),
       });
-
-      console.log("temp list", categoryListTemp);
-
-      // const categories = catGroups.reduce((curr, grp) => {
-      //   let cat = categoryData.find((data) => {
-      //     return (
-      //       data.CategoryGroupID.toLowerCase() == grp.categoryGroupID &&
-      //       data.CategoryID.toLowerCase() == grp.categoryID
-      //     );
-      //   });
-
-      //   if (cat) {
-      //     cat.CategoryGroupName = grp.categoryGroupName;
-      //     cat.CategoryName = grp.categoryName;
-      //     cat.BudgetAmountBudgeted = grp.budgeted;
-      //     cat.BudgetAmountActivity = grp.activity;
-      //     cat.BudgetAmountAvailable = grp.available;
-
-      //     curr.push(createCategory(cat));
-      //   }
-
-      //   return curr;
-      // }, []);
 
       return categoryListTemp;
     },

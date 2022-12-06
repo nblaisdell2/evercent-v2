@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ModalType } from "../utils/utils";
 
 import BudgetHelperFull from "./BudgetHelperFull";
@@ -9,21 +9,26 @@ import RegularExpensesFull from "./RegularExpensesFull";
 import RegularExpensesWidget from "./RegularExpensesWidget";
 import UpcomingExpensesFull from "./UpcomingExpensesFull";
 import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
-import { UserData } from "../pages";
 import ModalContent from "./modal/ModalContent";
 import useModal from "./hooks/useModal";
 
-import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { UPDATE_CATEGORIES } from "../graphql/mutations";
-import { CategoryListGroup } from "../utils/evercent";
+import { BudgetMonth, CategoryListGroup, UserData } from "../utils/evercent";
 import UnsavedChangesModal from "./modal/UnsavedChangesModal";
+import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
 
 function MainContent({
   userData,
+  categories,
+  refetchCategories,
+  budgetMonths,
   setModalIsShowing,
 }: {
   userData: UserData;
+  categories: CategoryListGroup[];
+  refetchCategories: () => Promise<void>;
+  budgetMonths: BudgetMonth[];
   setModalIsShowing: (newShow: boolean) => void;
 }) {
   const {
@@ -52,29 +57,18 @@ function MainContent({
     closeModal: closeModalUE,
   } = useModal(setModalIsShowing);
 
-  const [categoryList, setCategoryList] = useState<CategoryListGroup[]>([]);
-  const [changesMade, setChangesMade] = useState(false);
+  const [categoryList, setCategoryList] =
+    useState<CategoryListGroup[]>(categories);
 
-  const { loading, error, data, refetch } = useQuery(
-    GET_BUDGET_HELPER_DETAILS,
-    {
-      variables: {
-        userBudgetInput: {
-          userID: userData.userID,
-          budgetID: userData.budgetID,
-        },
-        accessToken: userData.tokenDetails.accessToken,
-        refreshToken: userData.tokenDetails.refreshToken,
-      },
-      onCompleted(data) {
-        setCategoryList(data.categories);
-      },
-    }
-  );
+  const [changesMade, setChangesMade] = useState(false);
 
   const [updateCategories] = useMutation(UPDATE_CATEGORIES);
 
-  const onSave = () => {
+  useEffect(() => {
+    setCategoryList(categories);
+  }, [categories]);
+
+  const onSave = (newCategories: CategoryListGroup[]) => {
     if (!changesMade) {
       console.log("NO CHANGES!");
       return;
@@ -88,9 +82,9 @@ function MainContent({
       upcoming: [],
     };
 
-    for (let i = 0; i < categoryList.length; i++) {
-      for (let j = 0; j < categoryList[i].categories.length; j++) {
-        let currCat = categoryList[i].categories[j];
+    for (let i = 0; i < newCategories.length; i++) {
+      for (let j = 0; j < newCategories[i].categories.length; j++) {
+        let currCat = newCategories[i].categories[j];
         input.details.push({
           guid: currCat.guid,
           categoryGroupID: currCat.categoryGroupID,
@@ -134,7 +128,7 @@ function MainContent({
         updateCategoriesInput: input,
       },
       update: (cache, { data: { updateCategories } }) => {
-        let newList = categoryList.reduce((prev: any, curr) => {
+        let newList = newCategories.reduce((prev: any, curr) => {
           let catList = curr.categories.map((cat) => {
             return {
               __typename: "Category",
@@ -175,11 +169,12 @@ function MainContent({
 
         cache.writeQuery({
           query: GET_BUDGET_HELPER_DETAILS,
-          data: { ...data, categories: newList },
+          data: { budgetMonths: budgetMonths, categories: newList },
         });
 
         // Finally, refetch the data and return back to the Budget Helper screen
-        refetch();
+        refetchCategories();
+        setCategoryList(newList);
       },
     });
 
@@ -233,13 +228,13 @@ function MainContent({
       case "discard":
         setChangesMade(false);
         // reset the category list to before we entered the widget, using the existing data
-        setCategoryList(data?.categories);
+        setCategoryList(categories);
         closeModalBHWarning();
         closeModalBH();
         break;
 
       case "save":
-        onSave();
+        onSave(categoryList);
         closeModalBHWarning();
         closeModalBH();
         break;
@@ -248,12 +243,6 @@ function MainContent({
         break;
     }
   };
-
-  if (loading || !data) {
-    return <div></div>;
-  }
-
-  console.log("data", data);
 
   return (
     <div className="w-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
@@ -265,17 +254,15 @@ function MainContent({
           ModalType.BUDGET_HELPER,
           <BudgetHelperFull
             userData={userData}
-            setChangesMade={setChangesMade}
             categoryList={categoryList}
             setCategoryList={setCategoryList}
-            budgetMonths={data.budgetMonths}
-            monthlyIncome={data.user.monthlyIncome}
-            payFrequency={data.user.payFrequency}
-            nextPaydate={data.user.nextPaydate}
-            refetchCategories={async () => {
-              await refetch();
-            }}
+            budgetMonths={budgetMonths}
+            monthlyIncome={userData.monthlyIncome}
+            payFrequency={userData.payFrequency}
+            nextPaydate={userData.nextPaydate}
+            refetchCategories={refetchCategories}
             onSave={onSave}
+            setChangesMade={setChangesMade}
           />,
           isOpenBH,
           showModalBH,

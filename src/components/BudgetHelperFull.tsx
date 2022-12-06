@@ -5,12 +5,12 @@ import BudgetHelperCharts from "./BudgetHelperCharts";
 import CategoryList from "./CategoryList";
 import SelectedCategory from "./SelectedCategory";
 
-import type { UserData } from "../pages";
 import {
   CategoryListGroup,
   CategoryListItem,
   getGroupAmounts,
   getTotalAmountUsed,
+  UserData,
 } from "../utils/evercent";
 
 function BudgetHelperFull({
@@ -33,9 +33,10 @@ function BudgetHelperFull({
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
   setChangesMade: (newChanges: boolean) => void;
-  onSave: () => void;
+  onSave: (newCategories: CategoryListGroup[]) => void;
   refetchCategories: () => Promise<void>;
 }) {
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryListItem | null>();
 
@@ -68,9 +69,6 @@ function BudgetHelperFull({
     setSelectedCategory(item);
   };
 
-  if (!categoryList) return <div></div>;
-  console.log("list", categoryList);
-
   const amtUsed = getTotalAmountUsed(categoryList);
 
   return (
@@ -88,6 +86,9 @@ function BudgetHelperFull({
           userData={userData}
           refetchCategories={refetchCategories}
           categoryList={categoryList}
+          setCategoryList={setCategoryList}
+          expandedGroups={expandedGroups}
+          setExpandedGroups={setExpandedGroups}
           onSave={onSave}
           selectCategory={setSelectedCategory}
         />

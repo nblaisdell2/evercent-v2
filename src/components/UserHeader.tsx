@@ -1,7 +1,7 @@
 import React from "react";
+import { UserData } from "../utils/evercent";
 import UserDetails from "./UserDetails";
 import YNABConnection from "./YNABConnection";
-import type { UserData } from "../pages";
 
 function UserHeader({
   userData,
@@ -15,7 +15,7 @@ function UserHeader({
       <div className="hidden sm:flex">
         <YNABConnection userData={userData} refetchUser={refetchUser} />
       </div>
-      <UserDetails userID={userData.userID} budgetID={userData.budgetID} />
+      <UserDetails userData={userData} refetchUser={refetchUser} />
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import React, { useState, useEffect } from "react";
 import { UPDATE_CATEGORY_INCLUSION } from "../../graphql/mutations";
 import { GET_CATEGORY_GROUPS } from "../../graphql/queries";
-import { UserData } from "../../pages";
+import { UserData } from "../../utils/evercent";
 import Card from "../elements/Card";
 import CheckBoxGroup, { CheckboxItem } from "../elements/CheckBoxGroup";
 

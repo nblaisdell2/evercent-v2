@@ -18,7 +18,7 @@ type Props = {
   monthlyIncome: number;
   payFrequency: string;
   nextPaydate: string;
-  refetchUserDetails: () => void;
+  refetchUserDetails: () => Promise<void>;
   closeModal: () => void;
 };
 
@@ -47,8 +47,6 @@ function UpdateUserDetailsModal({
       payFrequency !== newPayFrequency ||
       nextPaydate !== newNextPaydate
     ) {
-      closeModal();
-
       await updateDetails({
         variables: {
           userBudgetInput: {
@@ -60,7 +58,9 @@ function UpdateUserDetailsModal({
           nextPaydate: newNextPaydate,
         },
       });
-      refetchUserDetails();
+      await refetchUserDetails();
+
+      closeModal();
     }
   };
 
