@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { useRouter } from "next/router";
 import { useInterval } from "usehooks-ts";
 
 import {
@@ -7,8 +6,7 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import { useLazyQuery, useMutation } from "@apollo/client";
-import { GET_YNAB_INITIAL_DETAILS } from "../graphql/queries";
+import { useMutation } from "@apollo/client";
 import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
 
 import { parseDate, ModalType } from "../utils/utils";
@@ -29,24 +27,7 @@ function YNABConnection({
 }) {
   const { isOpen, showModal, closeModal } = useModal();
 
-  const router = useRouter();
-
-  const [getYNABInitialDetails] = useLazyQuery(GET_YNAB_INITIAL_DETAILS);
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
-
-  const saveNewYNABTokens = async (authCode: string) => {
-    let response = await getYNABInitialDetails({
-      variables: { userID: userData.userID, authCode: authCode },
-    });
-    // console.log("response", response);
-    // let initialDetails = response.data.getInitialYNABDetails;
-    // console.log("initial", initialDetails);
-
-    delete router.query.code;
-    router.push(router);
-
-    await refetchUser();
-  };
 
   const refreshYNABTokens = async (newTime: Date) => {
     if (
@@ -68,12 +49,6 @@ function YNABConnection({
   };
 
   useEffect(() => {
-    if (router.query?.code) {
-      saveNewYNABTokens(router.query.code as string);
-    }
-  }, [router.query?.code]);
-
-  useEffect(() => {
     refreshYNABTokens(new Date());
   }, []);
 
@@ -81,13 +56,9 @@ function YNABConnection({
     refreshYNABTokens(new Date());
   }, 60000);
 
-  const budgetIDFound = !!userData.budgetID;
+  const budgetIDFound = !!userData.budgetName;
   const ynabAuthURL = GetURL_YNABAuthorizationPage();
   const ynabBudgetURL = GetURL_YNABBudget(userData.budgetID);
-
-  // if (loadingName) {
-  //   return <div>Still Loading...</div>;
-  // }
 
   return (
     <>
@@ -106,7 +77,7 @@ function YNABConnection({
       )}
 
       <div className="flex">
-        <div className="text-center mr-4">
+        <div className="hidden sm:block text-center mr-4">
           <Label label={"API Connection"} />
           <div
             className={`${
@@ -141,11 +112,22 @@ function YNABConnection({
             </div>
           </>
         ) : (
-          <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row items-center">
+            <div className="block sm:hidden text-center font-semibold text-xl">
+              <div className="mb-4 px-6">
+                Please click the button below to connect Evercent to your YNAB
+                Budget account.
+              </div>
+              <div className="mb-4 px-6">
+                This will allow Evercent to pull in all of the categories from
+                your budget for planning, automation, etc.
+              </div>
+            </div>
+
             <a href={ynabAuthURL}>
-              <div className="ml-4 flex space-x-1 hover:underline hover:cursor-pointer hover:text-blue-400">
-                <div className="font-bold">Connect to YNAB</div>
-                <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2" />
+              <div className="ml-0 sm:ml-2 flex items-center space-x-1 underline sm:no-underline hover:underline hover:cursor-pointer hover:text-blue-400">
+                <div className="font-bold text-3xl">Connect to YNAB</div>
+                <ArrowTopRightOnSquareIcon className="h-12 sm:h-6 w-12 sm:w-6 stroke-2" />
               </div>
             </a>
           </div>

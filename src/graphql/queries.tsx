@@ -80,28 +80,6 @@ export const GET_YNAB_CONN_DETAILS = gql`
   }
 `;
 
-export const GET_YNAB_INITIAL_DETAILS = gql`
-  query GetYNABInitialDetails($userID: ID!, $authCode: String!) {
-    getInitialYNABDetails(userID: $userID, authCode: $authCode) {
-      defaultBudgetID
-      tokenDetails {
-        accessToken
-        refreshToken
-        expirationDate
-      }
-      categories {
-        categoryGroupID
-        categoryID
-        categoryGroupName
-        name
-        budgeted
-        activity
-        available
-      }
-    }
-  }
-`;
-
 export const GET_NEW_ACCESS_TOKEN = gql`
   query GetNewAccessToken($userID: ID!, $authCode: String!) {
     getNewAccessToken(userID: $userID, authCode: $authCode) {

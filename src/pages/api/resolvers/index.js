@@ -194,6 +194,22 @@ export const resolvers = {
         budgetID: DefaultBudgetID,
         accessToken: details.AccessToken || "",
         refreshToken: details.RefreshToken || "",
+        expirationDate: details.ExpirationDate || strRightNow,
+      });
+
+      console.log("returning", {
+        userID: details.UserID,
+        budgetID: details.DefaultBudgetID,
+        budgetName: budgetName.data,
+        monthlyIncome: details.MonthlyIncome || 0,
+        monthsAheadTarget: details.MonthsAheadTarget || 6,
+        payFrequency: details.PayFrequency || "Weekly",
+        nextPaydate: details.NextPaydate || strRightNow,
+        tokenDetails: {
+          accessToken: details.AccessToken || "",
+          refreshToken: details.RefreshToken || "",
+          expirationDate: details.ExpirationDate || strRightNow,
+        },
       });
 
       return {
@@ -247,70 +263,6 @@ export const resolvers = {
         accessToken: details?.AccessToken || "",
         refreshToken: details?.RefreshToken || "",
         expirationDate: details?.ExpirationDate || new Date().toISOString(),
-      };
-    },
-    getInitialYNABDetails: async (_, args) => {
-      // Get a new set of accessToken/refreshTokens for this user
-      // connecting to YNAB for the first time
-      const tokenDetails = await GetNewAccessToken(args);
-      saveNewYNABTokens(args.userID, tokenDetails);
-
-      // Then, get the user's default BudgetID for the budget they
-      // selected. Then, save that to the database.
-      const budgetID = await GetDefaultBudgetID({
-        ...args,
-        accessToken: tokenDetails.accessToken,
-        refreshToken: tokenDetails.refreshToken,
-      });
-
-      await getAPIData(
-        Queries.MUTATION_UPDATE_BUDGET_ID,
-        { userID: args.userID, budgetID: budgetID.data },
-        true
-      );
-
-      // Then, get the user's budget categories, and save them to the
-      // database, as well. That way, when the page re-loads, we can pull
-      // them in.
-      const budgetData = await GetBudget({
-        ...args,
-        accessToken: tokenDetails.accessToken,
-        refreshToken: tokenDetails.refreshToken,
-        budgetID: budgetID.data,
-      });
-
-      // Format the data properly so that it can be accepted by the stored procedure
-      let budgetDetails = budgetData.data.map((bd) => {
-        return {
-          guid: generateUUID(),
-          categoryGroupID: bd.categoryGroupID,
-          categoryID: bd.categoryID,
-          amount: 0,
-          extraAmount: 0,
-          isRegularExpense: false,
-          isUpcomingExpense: false,
-        };
-      });
-      budgetDetails = {
-        details: budgetDetails,
-      };
-
-      // Save the category details to the database.
-      await getAPIData(
-        Queries.MUTATION_UPDATE_CATEGORIES,
-        {
-          userID: args.userID,
-          budgetID: budgetID.data,
-          updateCategoriesInput: budgetDetails,
-        },
-        true
-      );
-
-      // Return all 3 sets of data retrieved back to the user/client
-      return {
-        defaultBudgetID: budgetID.data,
-        tokenDetails: tokenDetails,
-        categories: budgetData.data,
       };
     },
     getCategoryGroups: async (_, args) => {
@@ -652,6 +604,67 @@ export const resolvers = {
     },
   },
   Mutation: {
+    getInitialYNABDetails: async (_, args) => {
+      // Get a new set of accessToken/refreshTokens for this user
+      // connecting to YNAB for the first time
+      const tokenDetails = await GetNewAccessToken(args);
+      saveNewYNABTokens(args.userID, tokenDetails);
+      console.log("TOKEN DETAILS", tokenDetails);
+
+      // Then, get the user's default BudgetID for the budget they
+      // selected. Then, save that to the database.
+      const budgetID = await GetDefaultBudgetID({
+        ...args,
+        accessToken: tokenDetails.accessToken,
+        refreshToken: tokenDetails.refreshToken,
+      });
+
+      await getAPIData(
+        Queries.MUTATION_UPDATE_BUDGET_ID,
+        { userID: args.userID, budgetID: budgetID.data },
+        true
+      );
+
+      // Then, get the user's budget categories, and save them to the
+      // database, as well. That way, when the page re-loads, we can pull
+      // them in.
+      const budgetData = await GetBudget({
+        ...args,
+        accessToken: tokenDetails.accessToken,
+        refreshToken: tokenDetails.refreshToken,
+        budgetID: budgetID.data,
+      });
+
+      // Format the data properly so that it can be accepted by the stored procedure
+      let budgetDetails = budgetData.data.map((bd) => {
+        return {
+          guid: generateUUID(),
+          categoryGroupID: bd.categoryGroupID,
+          categoryID: bd.categoryID,
+          amount: 0,
+          extraAmount: 0,
+          isRegularExpense: false,
+          isUpcomingExpense: false,
+        };
+      });
+      budgetDetails = {
+        details: budgetDetails,
+      };
+
+      // Save the category details to the database.
+      await getAPIData(
+        Queries.MUTATION_UPDATE_CATEGORIES,
+        {
+          userID: args.userID,
+          budgetID: budgetID.data,
+          updateCategoriesInput: budgetDetails,
+        },
+        true
+      );
+
+      // Return all 3 sets of data retrieved back to the user/client
+      return "Query Successful";
+    },
     saveYNABTokens: async (_, args) => {
       const result = await getAPIData(
         Queries.MUTATION_SAVE_YNAB_TOKENS,

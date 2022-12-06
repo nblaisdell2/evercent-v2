@@ -1,19 +1,39 @@
 import type { NextPage } from "next";
 import { useUser } from "@auth0/nextjs-auth0";
 
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { GET_BUDGET_HELPER_DETAILS, GET_USER_DATA } from "../graphql/queries";
 
 import Header from "../components/Header";
 import UserHeader from "../components/UserHeader";
 import MainContent from "../components/MainContent";
 import { useState } from "react";
+import YNABConnection from "../components/YNABConnection";
+import { useRouter } from "next/router";
+import { GET_YNAB_INITIAL_DETAILS } from "../graphql/mutations";
 
 const Home: NextPage = () => {
+  const router = useRouter();
+
   const { user, isLoading, error } = useUser();
   const userEmail = user ? user.email : "";
 
   const [modalIsShowing, setModalIsShowing] = useState(false);
+
+  const [getYNABInitialDetails] = useMutation(GET_YNAB_INITIAL_DETAILS);
+
+  const saveNewYNABTokens = async (authCode: string, userID: string) => {
+    console.log("saveNewYNABTokens", userID);
+
+    if (userID) {
+      await getYNABInitialDetails({ variables: { userID, authCode } });
+
+      delete router.query.code;
+      router.push(router);
+
+      await refetchUser();
+    }
+  };
 
   const {
     loading,
@@ -22,6 +42,13 @@ const Home: NextPage = () => {
     refetch,
   } = useQuery(GET_USER_DATA, {
     variables: { userEmail },
+    skip: !userEmail,
+    onCompleted: (data) => {
+      console.log("onCompleted data", data);
+      if (router.query?.code) {
+        saveNewYNABTokens(router.query?.code as string, data.userData.userID);
+      }
+    },
   });
 
   const {
@@ -38,10 +65,11 @@ const Home: NextPage = () => {
       accessToken: data?.userData.tokenDetails.accessToken,
       refreshToken: data?.userData.tokenDetails.refreshToken,
     },
-    skip: loading || isLoading || !userEmail,
-    // onCompleted(data) {
-    //   setCategoryList(data.categories);
-    // },
+    skip:
+      loading ||
+      isLoading ||
+      !userEmail ||
+      !data?.userData.tokenDetails.accessToken,
   });
 
   const refetchUser = async () => {
@@ -59,12 +87,13 @@ const Home: NextPage = () => {
     });
   };
 
-  if (loading || loadingCategories || isLoading)
+  if (loading || loadingCategories || isLoading || router?.query?.code) {
     return (
       <div className="bg-[#D1F5FF] h-screen w-screen flex justify-center items-center">
         <div className="text-3xl font-bold">Loading...</div>
       </div>
     );
+  }
 
   if (error || errorID || errorCategories) {
     console.log(error);
@@ -87,14 +116,23 @@ const Home: NextPage = () => {
         <>
           <UserHeader userData={data.userData} refetchUser={refetchUser} />
 
-          <div className="flex flex-grow">
-            <MainContent
-              userData={data.userData}
-              categories={dataCategories.categories}
-              refetchCategories={refetchCategories}
-              budgetMonths={dataCategories.budgetMonths}
-              setModalIsShowing={setModalIsShowing}
-            />
+          <div className="flex flex-grow justify-center items-center">
+            {!data?.userData.tokenDetails.accessToken ? (
+              <div className="sm:hidden">
+                <YNABConnection
+                  userData={data.userData}
+                  refetchUser={refetchUser}
+                />
+              </div>
+            ) : (
+              <MainContent
+                userData={data.userData}
+                categories={dataCategories?.categories}
+                refetchCategories={refetchCategories}
+                budgetMonths={dataCategories?.budgetMonths}
+                setModalIsShowing={setModalIsShowing}
+              />
+            )}
           </div>
         </>
       )}

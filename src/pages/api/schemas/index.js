@@ -270,7 +270,6 @@ export const typeDefs = gql`
     userID(userEmail: String!): ID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
-    getInitialYNABDetails(userID: ID!, authCode: String!): YNABInitialData
     getNewAccessToken(userID: ID!, authCode: String!): YNABConnection
     getDefaultBudgetID(
       userID: ID!
@@ -332,6 +331,7 @@ export const typeDefs = gql`
   #  MUTATIONS
   # ===========
   type Mutation {
+    getInitialYNABDetails(userID: ID!, authCode: String!): String!
     saveYNABTokens(
       userID: ID!
       accessToken: String!

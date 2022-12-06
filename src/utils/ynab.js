@@ -80,9 +80,10 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
     if (now >= dtExpirationDateEarly) {
       console.log("Attempting to refresh access tokens");
       let newTokenDetails = await GetNewAccessTokenRefresh(params);
+      console.log("newTokenDetails?", newTokenDetails);
 
-      details.newTokenDetails = newTokenDetails;
-      params.accessToken = newTokenDetails.accessToken;
+      details.newTokenDetails = newTokenDetails.data;
+      params.accessToken = { ...params, ...newTokenDetails.data }; //.accessToken;
     }
   }
 
@@ -144,8 +145,8 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
     .catch((e) => {
       console.log("ERROR FROM YNAB");
       // console.log(e);
-      console.log("Error Message: " + e.response.data.error_description);
-      console.log("Error Message: " + e.response.data.error);
+      console.log("Error Message: ", e.response.data.error_description);
+      console.log("Error Message: ", e.response.data.error);
 
       return e;
     });
@@ -202,6 +203,7 @@ export async function GetNewAccessTokenRefresh({
       refresh_token: refreshToken,
     }
   );
+  console.log("token refresh response", response);
   let formatted = await FormatAccessTokenDetails(response.data);
 
   return {
@@ -247,6 +249,10 @@ export async function GetBudgets(params) {
 }
 
 export async function GetBudgetName(params) {
+  if (!params.accessToken) {
+    return GetResponseWithTokenDetails(null, { newTokenDetails: null });
+  }
+
   let response = await SendYNABRequest(
     "GetBudgetName",
     get,

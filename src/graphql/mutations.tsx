@@ -16,6 +16,12 @@ export const SAVE_YNAB_TOKENS = gql`
   }
 `;
 
+export const GET_YNAB_INITIAL_DETAILS = gql`
+  mutation GetYNABInitialDetails($userID: ID!, $authCode: String!) {
+    getInitialYNABDetails(userID: $userID, authCode: $authCode)
+  }
+`;
+
 export const REFRESH_YNAB_TOKENS = gql`
   mutation RefreshYNABTokens(
     $userID: ID!
