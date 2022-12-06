@@ -38,7 +38,7 @@ const Home: NextPage = () => {
       accessToken: data?.userData.tokenDetails.accessToken,
       refreshToken: data?.userData.tokenDetails.refreshToken,
     },
-    skip: loading || isLoading,
+    skip: loading || isLoading || !userEmail,
     // onCompleted(data) {
     //   setCategoryList(data.categories);
     // },
