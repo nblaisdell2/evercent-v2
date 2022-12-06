@@ -9,7 +9,6 @@ import {
   CategoryListGroup,
   CategoryListItem,
   getGroupAmounts,
-  getTotalAmountUsed,
   UserData,
 } from "../utils/evercent";
 
@@ -69,16 +68,18 @@ function BudgetHelperFull({
     setSelectedCategory(item);
   };
 
-  const amtUsed = getTotalAmountUsed(categoryList);
-
   return (
     <div className="h-full mx-4 flex flex-col">
-      <Amounts monthlyIncome={monthlyIncome} amountUsed={amtUsed} />
+      <Amounts
+        monthlyIncome={monthlyIncome}
+        categoryList={categoryList}
+        type="full"
+      />
 
       <BudgetHelperCharts
         monthlyIncome={monthlyIncome}
         categoryList={categoryList}
-        amountUsed={amtUsed}
+        type="full"
       />
 
       {!selectedCategory ? (

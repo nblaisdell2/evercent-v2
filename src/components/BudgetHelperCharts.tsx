@@ -4,12 +4,16 @@ import Chart, {
   ReactGoogleChartEvent,
 } from "react-google-charts";
 import { merge } from "../utils/utils";
-import { CategoryListGroup, CategoryListItem } from "../utils/evercent";
+import {
+  CategoryListGroup,
+  CategoryListItem,
+  getTotalAmountUsed,
+} from "../utils/evercent";
 
 type Props = {
   monthlyIncome: number;
   categoryList: CategoryListGroup[];
-  amountUsed: number;
+  type: string;
 };
 
 const CHART_COLORS = [
@@ -46,11 +50,7 @@ const CHART_COLORS = [
   "#743411",
 ];
 
-function BudgetHelperCharts({
-  monthlyIncome,
-  categoryList,
-  amountUsed,
-}: Props) {
+function BudgetHelperCharts({ monthlyIncome, categoryList, type }: Props) {
   const [selectedGroup, setSelectedGroup] = useState<{
     groupID: string;
     groupName: string;
@@ -71,7 +71,10 @@ function BudgetHelperCharts({
       if (other && other == "pie") {
         myChartData = categoryList.reduce(
           (prev: any, curr: any) => {
-            return [...prev, [curr.groupName, curr.adjustedAmtPlusExtra]];
+            if (curr.adjustedAmtPlusExtra > 0) {
+              return [...prev, [curr.groupName, curr.adjustedAmtPlusExtra]];
+            }
+            return prev;
           },
           [["Category Group", "Amount Used"] as string[]]
         );
@@ -106,7 +109,7 @@ function BudgetHelperCharts({
       );
     }
 
-    let remainder = monthlyIncome - amountUsed;
+    let remainder = monthlyIncome - getTotalAmountUsed(categoryList);
     if (other == "pie") {
       myChartData.push(["Unused", remainder]);
     } else {
@@ -221,11 +224,15 @@ function BudgetHelperCharts({
   }
   groupColors.push(!selectedGroup.groupID ? "#A0A0A0" : "#C0C0C0");
 
+  console.log("pie data", chartDataGroupPie);
+
   return (
     <>
       <div className="hidden sm:block">
         <div>
-          <div className="p-1 font-bold">By Category Group</div>
+          {type == "full" && (
+            <div className="p-1 font-bold">By Category Group</div>
+          )}
           <Chart
             chartType="BarChart"
             width={"100%"}
@@ -238,25 +245,27 @@ function BudgetHelperCharts({
             chartEvents={chartEvents}
           />
         </div>
-        <div>
-          <div className="p-1 font-bold">
-            By Category{" "}
-            {selectedGroup.groupName && " - " + selectedGroup.groupName}
+        {type == "full" && (
+          <div>
+            <div className="p-1 font-bold">
+              By Category{" "}
+              {selectedGroup.groupName && " - " + selectedGroup.groupName}
+            </div>
+            <Chart
+              chartType="BarChart"
+              width={"100%"}
+              height={"115px"}
+              data={chartDataCategory}
+              options={{
+                ...chartOptions,
+                colors: [
+                  ...CHART_COLORS.slice(0, chartDataCategory[0].length - 2),
+                  "#A0A0A0",
+                ],
+              }}
+            />
           </div>
-          <Chart
-            chartType="BarChart"
-            width={"100%"}
-            height={"115px"}
-            data={chartDataCategory}
-            options={{
-              ...chartOptions,
-              colors: [
-                ...CHART_COLORS.slice(0, chartDataCategory[0].length - 2),
-                "#A0A0A0",
-              ],
-            }}
-          />
-        </div>
+        )}
       </div>
       <div className="block sm:hidden">
         <div>

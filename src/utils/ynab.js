@@ -35,6 +35,10 @@ function cacheYNABData(budgetData) {
   CACHE[CacheValue.BudgetName] = budgetData.name;
 }
 
+export function clearYNABCache() {
+  CACHE = {};
+}
+
 // ### PRIVATE FUNCTIONS ###
 function isOverRateLimitThreshold(response) {
   let rateLim = response.headers["x-rate-limit"];
@@ -99,7 +103,7 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
       console.log("newTokenDetails?", newTokenDetails);
 
       details.newTokenDetails = newTokenDetails.data;
-      params.accessToken = { ...params, ...newTokenDetails.data }; //.accessToken;
+      params.accessToken = newTokenDetails.data.accessToken;
     }
   }
 
@@ -270,11 +274,11 @@ export async function GetBudgetName(params) {
     return GetResponseWithTokenDetails(null, { newTokenDetails: null });
   }
 
-  if (CacheValue.BudgetName in CACHE) {
-    return GetResponseWithTokenDetails(CACHE[CacheValue.BudgetName], {
-      newTokenDetails: null,
-    });
-  }
+  // if (CacheValue.BudgetName in CACHE) {
+  //   return GetResponseWithTokenDetails(CACHE[CacheValue.BudgetName], {
+  //     newTokenDetails: null,
+  //   });
+  // }
 
   let response = await SendYNABRequest(
     "GetBudgetName",

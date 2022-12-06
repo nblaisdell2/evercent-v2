@@ -203,7 +203,7 @@ function MainContent({
     return (
       <>
         <div
-          className="flex flex-col items-center basis-0 sm:basis-[49%] bg-[#F6F9FA] border border-[#ACACAC] rounded-lg shadow-md m-1 p-1 hover:cursor-pointer hover:blur-[2px] h-[250px] sm:h-auto"
+          className="flex flex-col items-center basis-0 sm:basis-[49%] bg-[#F6F9FA] border border-[#ACACAC] rounded-lg shadow-md m-1 p-1 hover:cursor-pointer hover:blur-[2px] h-[250px] sm:h-[49%]"
           onClick={() => showModalFn()}
         >
           <div className="font-cinzel text-3xl">{title}</div>
@@ -260,7 +260,10 @@ function MainContent({
         {/* Box 1 - Budget Helper */}
         {widgetBox(
           "Budget Helper",
-          <BudgetHelperWidget />,
+          <BudgetHelperWidget
+            monthlyIncome={userData.monthlyIncome}
+            categoryList={categoryList}
+          />,
           ModalType.BUDGET_HELPER,
           <BudgetHelperFull
             userData={userData}

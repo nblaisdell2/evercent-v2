@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { UPDATE_CATEGORY_INCLUSION } from "../../graphql/mutations";
 import { GET_CATEGORY_GROUPS } from "../../graphql/queries";
 import { UserData } from "../../utils/evercent";
+import { clearYNABCache } from "../../utils/ynab";
 import Card from "../elements/Card";
 import CheckBoxGroup, { CheckboxItem } from "../elements/CheckBoxGroup";
 
@@ -60,6 +61,8 @@ function AllCategoriesEditable({
         },
       },
     });
+
+    clearYNABCache();
 
     // Refetch the data on this modal, as well as the categories
     // on the main Budget Helper section

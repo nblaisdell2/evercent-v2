@@ -197,6 +197,8 @@ export const resolvers = {
         expirationDate: details.ExpirationDate || strRightNow,
       });
 
+      console.log("BUDGET NAME", budgetName.data);
+
       return {
         userID: details.UserID,
         budgetID: details.DefaultBudgetID,
@@ -453,7 +455,7 @@ export const resolvers = {
         });
 
         if (currGroup !== catGroups[i].categoryGroupName) {
-          if (currGroup !== "") {
+          if (currGroup !== "" && cats.length > 0) {
             categoryListTemp.push({
               groupName: currGroup,
               categories: cats,
@@ -509,11 +511,13 @@ export const resolvers = {
           cats.push(currCat);
         }
       }
-      categoryListTemp.push({
-        groupName: currGroup,
-        categories: cats,
-        ...getGroupAmounts(cats),
-      });
+      if (cats.length > 0) {
+        categoryListTemp.push({
+          groupName: currGroup,
+          categories: cats,
+          ...getGroupAmounts(cats),
+        });
+      }
 
       return categoryListTemp;
     },

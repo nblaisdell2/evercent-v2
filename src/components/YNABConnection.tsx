@@ -126,7 +126,9 @@ function YNABConnection({
 
             <a href={ynabAuthURL}>
               <div className="ml-0 sm:ml-2 flex items-center space-x-1 underline sm:no-underline hover:underline hover:cursor-pointer hover:text-blue-400">
-                <div className="font-bold text-3xl">Connect to YNAB</div>
+                <div className="font-bold text-3xl sm:text-base">
+                  Connect to YNAB
+                </div>
                 <ArrowTopRightOnSquareIcon className="h-12 sm:h-6 w-12 sm:w-6 stroke-2" />
               </div>
             </a>
