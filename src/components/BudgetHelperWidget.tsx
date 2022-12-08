@@ -44,46 +44,50 @@ const CHART_COLORS = [
 ];
 
 function BudgetHelperWidget({ monthlyIncome, categoryList }: Props) {
-  const numCols = Math.floor(categoryList.length / 6) + 1;
-  const gridCols = "grid-rows-" + numCols;
+  const getLegendGrid = (catList: CategoryListGroup[], numRows: number) => {
+    catList = catList.filter((grp) => grp.adjustedAmtPlusExtra > 0);
 
-  const percUnused = categoryList.reduce((prev, curr) => {
-    return prev + curr.percentIncome;
-  }, 0);
-  const strPercUnused = getPercentString(1 - percUnused, 0);
+    let idx = 0;
 
-  let idx = 0;
-  return (
-    <div className="h-full pt-2 flex flex-col space-y-6">
-      <Amounts
-        monthlyIncome={monthlyIncome}
-        categoryList={categoryList}
-        type="widget"
-      />
+    const percUnused = catList.reduce((prev, curr) => {
+      return prev + curr.percentIncome;
+    }, 0);
 
-      <div className="hidden sm:block">
-        <BudgetHelperCharts
-          monthlyIncome={monthlyIncome}
-          categoryList={categoryList}
-          type="widget"
-        />
-      </div>
+    let numCols = Math.floor((catList.length + 1) / numRows) + 1;
+    console.log("numCols", numCols);
 
-      <div className={`grid grid-flow-col auto-rows-auto ${gridCols}`}>
-        {categoryList.map((grp) => {
+    let myPaddingLeft = "0";
+    switch (numCols) {
+      case 1:
+        myPaddingLeft = "35%";
+        break;
+      case 2:
+        myPaddingLeft = "20%";
+        break;
+      case 3:
+        myPaddingLeft = "12%";
+        break;
+    }
+
+    return (
+      <>
+        {catList.map((grp) => {
           if (grp.adjustedAmtPlusExtra == 0) return null;
           return (
             <div
-              className="flex items-center ml-4 sm:ml-10"
-              key={grp.groupName}
+              className="flex items-center"
+              key={idx}
+              style={{
+                paddingLeft: myPaddingLeft,
+              }}
             >
               <div
-                className="h-2 w-2 rounded-full"
+                className="h-2 w-2 rounded-full "
                 style={{
                   backgroundColor: CHART_COLORS[idx++],
                 }}
               ></div>
-              <div className="font-semibold text-sm ml-1">
+              <div className="font-semibold ml-1 text-[0.65rem] sm:text-sm whitespace-nowrap">
                 {"(" +
                   getPercentString(grp.percentIncome, 0) +
                   ") " +
@@ -92,15 +96,57 @@ function BudgetHelperWidget({ monthlyIncome, categoryList }: Props) {
             </div>
           );
         })}
-        <div className="flex items-center ml-4 sm:ml-10">
+        <div
+          className="flex items-center"
+          style={{
+            paddingLeft: myPaddingLeft,
+          }}
+        >
           <div
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: "#A0A0A0" }}
           ></div>
-          <div className="font-semibold text-sm ml-1">
-            {"(" + strPercUnused + ") Unused"}
+          <div className="font-semibold ml-1 text-[0.65rem] sm:text-sm">
+            {"(" + getPercentString(1 - percUnused, 0) + ") Unused"}
           </div>
         </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="h-full w-full pt-2 flex flex-col">
+      <div className="sm:mb-1">
+        <Amounts
+          monthlyIncome={monthlyIncome}
+          categoryList={categoryList}
+          type="widget"
+        />
+      </div>
+      <div className="hidden sm:block sm:my-1">
+        <BudgetHelperCharts
+          monthlyIncome={monthlyIncome}
+          categoryList={categoryList}
+          type="widget"
+        />
+      </div>
+
+      <div
+        className={`p-1 h-full hidden sm:grid grid-flow-col`}
+        style={{
+          gridTemplateRows: "repeat(8, minmax(0, 1fr))",
+        }}
+      >
+        {getLegendGrid(categoryList, 8)}
+      </div>
+
+      <div
+        className={`p-1 h-full sm:hidden grid grid-flow-col`}
+        style={{
+          gridTemplateRows: "repeat(5, minmax(0, 1fr))",
+        }}
+      >
+        {getLegendGrid(categoryList, 5)}
       </div>
     </div>
   );

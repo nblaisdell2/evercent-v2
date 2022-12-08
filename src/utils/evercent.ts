@@ -1,5 +1,6 @@
 import { addDays, addMonths, addWeeks, differenceInMonths } from "date-fns";
 import { getSQLDate, parseDate } from "./utils";
+import { today, getLocalTimeZone } from "@internationalized/date";
 
 export type UserData = {
   userID: string;
@@ -125,9 +126,26 @@ export const getUpcomingPaydate = (
     return null;
   }
 
+  // Determine the '# of Paychecks' that will need to be saved for in order
+  // to purchase the 'Upcoming Expense'.
+  //   1. Determine how much can be saved per paycheck (payFreq)
   const amtPerPaycheck = getAdjustedAmtByFrequency(adjustedAmt, payFreq);
-  const numPaychecks = Math.ceil(purchaseAmt / amtPerPaycheck);
 
+  //   3. TODO: Figure out how much the user already has saved in their budget
+  //            for this purchase/category
+  //   4. TODO: Subtract that currently saved amount from the total purchase amount
+  //            to the the NEW total purchase amount
+
+  //   5. Take the total purchase amount / amount saved per paycheck
+  //   6. If we're currently on the user's next paydate (it's payday today),
+  //      don't count today's paydate, since the money was likely already used. (-1).
+  const nextPaydateIsToday =
+    today(getLocalTimeZone()).toDate(getLocalTimeZone()).toISOString() !=
+    nextPaydate;
+  const numPaychecks =
+    Math.ceil(purchaseAmt / amtPerPaycheck) - (nextPaydateIsToday ? 0 : 1);
+
+  //   7. Add the appropriate # of weeks/months to the user's next paydate and return it
   let newPaydate = parseDate(nextPaydate);
   switch (payFreq) {
     case "Weekly":

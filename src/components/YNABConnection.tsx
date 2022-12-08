@@ -112,7 +112,7 @@ function YNABConnection({
             </div>
           </>
         ) : (
-          <div className="flex flex-col sm:flex-row items-center">
+          <div className="flex flex-col sm:flex-row items-center ">
             <div className="block sm:hidden text-center font-semibold text-xl">
               <div className="mb-4 px-6">
                 Please click the button below to connect Evercent to your YNAB

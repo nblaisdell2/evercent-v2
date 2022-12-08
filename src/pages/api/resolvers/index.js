@@ -253,7 +253,9 @@ export const resolvers = {
       };
     },
     getCategoryGroups: async (_, args) => {
+      // console.log("category groups resolver");
       const catGroups = await GetCategoryGroups(args);
+      // console.log("catGroups", catGroups);
 
       const queryData = await getAPIData(
         Queries.QUERY_EXCLUDED_CATEGORIES,
@@ -318,11 +320,13 @@ export const resolvers = {
       return budgetMonths.data;
     },
     categories: async (_, args) => {
+      console.log("CATEGORIES RESOLVER");
       const queryData = await getAPIData(
         Queries.QUERY_CATEGORIES_INITIAL,
         { userBudgetInput: args.userBudgetInput },
         false
       );
+      console.log("Got Query DAta!");
 
       const categoryData = queryData[0];
       const user = queryData[1][0];
@@ -490,7 +494,7 @@ export const resolvers = {
             },
             upcomingDetails: {
               guid: catDB.CategoryGUID,
-              totalExpenseAmount: catDB.TotalExpenseAmount,
+              expenseAmount: catDB.TotalExpenseAmount,
             },
             budgetAmounts: {
               budgeted: catGroups[i].budgeted,

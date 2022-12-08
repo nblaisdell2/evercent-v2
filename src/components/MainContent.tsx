@@ -254,74 +254,82 @@ function MainContent({
     }
   };
 
+  if (!categoryList) {
+    return <div className="hidden sm:block bg-[#D1F5FF] h-full w-full"></div>;
+  }
+
   return (
     <div className="w-full h-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
       <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full h-full sm:w-[80%]">
-        {/* Box 1 - Budget Helper */}
-        {widgetBox(
-          "Budget Helper",
-          <BudgetHelperWidget
-            monthlyIncome={userData.monthlyIncome}
-            categoryList={categoryList}
-          />,
-          ModalType.BUDGET_HELPER,
-          <BudgetHelperFull
-            userData={userData}
-            categoryList={categoryList}
-            setCategoryList={setCategoryList}
-            budgetMonths={budgetMonths}
-            monthlyIncome={userData.monthlyIncome}
-            payFrequency={userData.payFrequency}
-            nextPaydate={userData.nextPaydate}
-            refetchCategories={refetchCategories}
-            onSave={onSave}
-            setChangesMade={setChangesMade}
-          />,
-          isOpenBH,
-          showModalBH,
-          closeModalBH
-        )}
+        {categoryList && (
+          <>
+            {/* Box 1 - Budget Helper */}
+            {widgetBox(
+              "Budget Helper",
+              <BudgetHelperWidget
+                monthlyIncome={userData.monthlyIncome}
+                categoryList={categoryList}
+              />,
+              ModalType.BUDGET_HELPER,
+              <BudgetHelperFull
+                userData={userData}
+                categoryList={categoryList}
+                setCategoryList={setCategoryList}
+                budgetMonths={budgetMonths}
+                monthlyIncome={userData.monthlyIncome}
+                payFrequency={userData.payFrequency}
+                nextPaydate={userData.nextPaydate}
+                refetchCategories={refetchCategories}
+                onSave={onSave}
+                setChangesMade={setChangesMade}
+              />,
+              isOpenBH,
+              showModalBH,
+              closeModalBH
+            )}
 
-        {/* Box 2 - Budget Automation */}
-        {widgetBox(
-          "Budget Automation",
-          <BudgetAutomationWidget />,
-          ModalType.BUDGET_AUTOMATION,
-          <BudgetAutomationFull />,
-          isOpenBA,
-          showModalBA,
-          closeModalBA
-        )}
+            {/* Box 2 - Budget Automation */}
+            {widgetBox(
+              "Budget Automation",
+              <BudgetAutomationWidget />,
+              ModalType.BUDGET_AUTOMATION,
+              <BudgetAutomationFull />,
+              isOpenBA,
+              showModalBA,
+              closeModalBA
+            )}
 
-        {/* Box 3 - Regular Expenses */}
-        {widgetBox(
-          "Regular Expenses",
-          <RegularExpensesWidget />,
-          ModalType.REGULAR_EXPENSES,
-          <RegularExpensesFull />,
-          isOpenRE,
-          showModalRE,
-          closeModalRE
-        )}
+            {/* Box 3 - Regular Expenses */}
+            {widgetBox(
+              "Regular Expenses",
+              <RegularExpensesWidget />,
+              ModalType.REGULAR_EXPENSES,
+              <RegularExpensesFull />,
+              isOpenRE,
+              showModalRE,
+              closeModalRE
+            )}
 
-        {/* Box 4 - Upcoming Expenses */}
-        {widgetBox(
-          "Upcoming Expenses",
-          <UpcomingExpensesWidget />,
-          ModalType.UPCOMING_EXPENSES,
-          <UpcomingExpensesFull />,
-          isOpenUE,
-          showModalUE,
-          closeModalUE
-        )}
+            {/* Box 4 - Upcoming Expenses */}
+            {widgetBox(
+              "Upcoming Expenses",
+              <UpcomingExpensesWidget />,
+              ModalType.UPCOMING_EXPENSES,
+              <UpcomingExpensesFull />,
+              isOpenUE,
+              showModalUE,
+              closeModalUE
+            )}
 
-        {isOpenBHWarning && (
-          <ModalContent
-            modalContentID={ModalType.BUDGET_HELPER_CHECK}
-            onClose={closeModalBHWarning}
-          >
-            <UnsavedChangesModal onExit={onExit} />
-          </ModalContent>
+            {isOpenBHWarning && (
+              <ModalContent
+                modalContentID={ModalType.BUDGET_HELPER_CHECK}
+                onClose={closeModalBHWarning}
+              >
+                <UnsavedChangesModal onExit={onExit} />
+              </ModalContent>
+            )}
+          </>
         )}
       </div>
     </div>

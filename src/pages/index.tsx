@@ -116,26 +116,23 @@ const Home: NextPage = () => {
         )}
       </div>
 
-      {userEmail && (
-        <div className="flex flex-grow justify-center items-center">
-          {!data?.userData.tokenDetails.accessToken ? (
-            <div className="sm:hidden">
-              <YNABConnection
-                userData={data.userData}
-                refetchUser={refetchUser}
-              />
-            </div>
-          ) : (
-            <MainContent
+      <div className="flex flex-grow justify-center items-center">
+        <div className="sm:hidden bg-[#D1F5FF] h-full flex items-center">
+          {!data?.userData.tokenDetails.accessToken && (
+            <YNABConnection
               userData={data.userData}
-              categories={dataCategories?.categories}
-              refetchCategories={refetchCategories}
-              budgetMonths={dataCategories?.budgetMonths}
-              setModalIsShowing={setModalIsShowing}
+              refetchUser={refetchUser}
             />
           )}
         </div>
-      )}
+        <MainContent
+          userData={data.userData}
+          categories={dataCategories?.categories}
+          refetchCategories={refetchCategories}
+          budgetMonths={dataCategories?.budgetMonths}
+          setModalIsShowing={setModalIsShowing}
+        />
+      </div>
     </div>
   );
 };

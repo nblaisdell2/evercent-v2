@@ -95,6 +95,8 @@ function SelectedCategory({
 
   const postingMonths = getPostingMonthAmounts();
 
+  console.log("category before upcoming paydate", initialCategory);
+
   const upcomingPaydate = getUpcomingPaydate(
     initialCategory.upcomingDetails.expenseAmount,
     initialCategory.adjustedAmtPlusExtra,
