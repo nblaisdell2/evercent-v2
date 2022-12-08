@@ -159,9 +159,11 @@ export const resolvers = {
       const strRightNow = new Date().toISOString();
 
       if (!args.userEmail) {
+        console.log("no user email");
         return {
           userID: "",
           budgetID: "",
+          budgetName: "",
           monthlyIncome: 0,
           monthsAheadTarget: 6,
           payFrequency: "Weekly",

@@ -112,27 +112,31 @@ const Home: NextPage = () => {
       <div className="sticky top-0 left-0 z-10">
         <Header />
         {userEmail && (
-          <UserHeader userData={data.userData} refetchUser={refetchUser} />
+          <UserHeader userData={data?.userData} refetchUser={refetchUser} />
         )}
       </div>
 
-      <div className="flex flex-grow justify-center items-center">
-        <div className="sm:hidden bg-[#D1F5FF] h-full flex items-center">
-          {!data?.userData.tokenDetails.accessToken && (
-            <YNABConnection
-              userData={data.userData}
-              refetchUser={refetchUser}
-            />
-          )}
+      {!userEmail ? (
+        <div className="h-full w-full bg-[#D1F5FF]"></div>
+      ) : (
+        <div className="flex flex-grow justify-center items-center">
+          <div className="sm:hidden bg-[#D1F5FF] h-full flex items-center">
+            {!data?.userData.tokenDetails.accessToken && (
+              <YNABConnection
+                userData={data.userData}
+                refetchUser={refetchUser}
+              />
+            )}
+          </div>
+          <MainContent
+            userData={data.userData}
+            categories={dataCategories?.categories}
+            refetchCategories={refetchCategories}
+            budgetMonths={dataCategories?.budgetMonths}
+            setModalIsShowing={setModalIsShowing}
+          />
         </div>
-        <MainContent
-          userData={data.userData}
-          categories={dataCategories?.categories}
-          refetchCategories={refetchCategories}
-          budgetMonths={dataCategories?.budgetMonths}
-          setModalIsShowing={setModalIsShowing}
-        />
-      </div>
+      )}
     </div>
   );
 };
