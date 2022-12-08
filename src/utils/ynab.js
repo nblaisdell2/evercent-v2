@@ -119,17 +119,6 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
     };
   }
 
-  // const foundAuthCode = Object.keys(params).includes("code");
-  // if (foundAuthCode) {
-  //   console.log("found auth code: " + params.code);
-  //   if (params.headers) {
-  //     params.headers["Access-Control-Allow-Origin"] = "*";
-  //   } else {
-  //     params.headers = {
-  //       "Access-Control-Allow-Origin": "*",
-  //     };
-  //   }
-  // }
   console.log("  new params", params);
 
   // Run the request and get the response

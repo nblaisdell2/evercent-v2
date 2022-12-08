@@ -348,11 +348,15 @@ export const resolvers = {
         { userBudgetInput: args.userBudgetInput },
         false
       );
-      console.log("Got Query DAta!");
+      console.log("Got Query Data!", queryData);
 
       const categoryData = queryData[0];
+      console.log("Got Query Data 2!");
       const user = queryData[1][0];
+      console.log("Got Query Data 3!");
       const excludedCategories = queryData[2];
+
+      console.log("excluded", excludedCategories);
 
       let { userID, budgetID } = args.userBudgetInput;
       delete args.userBudgetInput;
@@ -493,7 +497,14 @@ export const resolvers = {
           currGroup = catGroups[i].categoryGroupName;
         }
 
-        if (catDB) {
+        if (
+          catDB &&
+          !excludedCategories.find(
+            (exc) =>
+              exc.CategoryGroupID == catDB.CategoryGroupID &&
+              exc.CategoryID == catDB.CategoryID
+          )
+        ) {
           let currCat = {
             guid: catDB.CategoryGUID,
             categoryGroupID: catGroups[i].categoryGroupID,

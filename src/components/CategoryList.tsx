@@ -107,12 +107,12 @@ function CategoryList({
         <div className="w-[50%] sm:w-[26%] text-left pl-4 sm:pl-6">
           {category.name}
         </div>
-        <div className="hidden sm:block sm:w-[10%] justify-center">
+        <div className="hidden sm:flex sm:w-[10%] justify-center">
           {category.isRegularExpense && (
             <CheckIcon className="h-6 w-6 text-green-600 stroke-2" />
           )}
         </div>
-        <div className="hidden sm:block sm:w-[10%] justify-center">
+        <div className="hidden sm:flex sm:w-[10%] justify-center">
           {category.isUpcomingExpense && (
             <CheckIcon className="h-6 w-6 text-green-600 stroke-2" />
           )}
