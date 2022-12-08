@@ -49,6 +49,7 @@ function isOverRateLimitThreshold(response) {
 }
 
 async function FormatAccessTokenDetails(response) {
+  console.log("need to format", response);
   let accToken = response.access_token;
   let refToken = response.refresh_token;
 
@@ -223,7 +224,7 @@ export async function GetNewAccessTokenRefresh({
       refresh_token: refreshToken,
     }
   );
-  console.log("token refresh response", response);
+  // console.log("token refresh response", response);
   let formatted = await FormatAccessTokenDetails(response.data);
 
   return {

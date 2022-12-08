@@ -198,8 +198,28 @@ export const resolvers = {
         refreshToken: details.RefreshToken || "",
         expirationDate: details.ExpirationDate || strRightNow,
       });
+      saveNewYNABTokens(UserID, budgetName.connDetails);
+      if (budgetName.connDetails?.accessToken) {
+        details.AccessToken = budgetName.connDetails.accessToken;
+        details.RefreshToken = budgetName.connDetails.refreshToken;
+        details.ExpirationDate = budgetName.connDetails.expirationDate;
+      }
 
       console.log("BUDGET NAME", budgetName.data);
+      console.log("USER DATA", {
+        userID: details.UserID,
+        budgetID: details.DefaultBudgetID,
+        budgetName: budgetName.data,
+        monthlyIncome: details.MonthlyIncome || 0,
+        monthsAheadTarget: details.MonthsAheadTarget || 6,
+        payFrequency: details.PayFrequency || "Weekly",
+        nextPaydate: details.NextPaydate || strRightNow,
+        tokenDetails: {
+          accessToken: details.AccessToken || "",
+          refreshToken: details.RefreshToken || "",
+          expirationDate: details.ExpirationDate || strRightNow,
+        },
+      });
 
       return {
         userID: details.UserID,
