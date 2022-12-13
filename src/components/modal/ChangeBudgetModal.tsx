@@ -1,62 +1,38 @@
-import { useMutation, useQuery } from "@apollo/client";
 import React, { useState } from "react";
+import { useQuery } from "@apollo/client";
 import { GET_BUDGETS } from "../../graphql/queries";
-import Label from "../elements/Label";
+
 import { CheckIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/router";
-import { UPDATE_DEFAULT_BUDGET_ID } from "../../graphql/mutations";
+
+import Label from "../elements/Label";
 import Card from "../elements/Card";
 
-type Props = {
-  currBudgetID: string;
-  userID: string;
-  accessToken: string;
-  refreshToken: string;
-};
-
-type YNABBudget = {
-  id: string;
-  name: string;
-};
+import { UserData, YNABBudget } from "../../utils/evercent";
 
 function ChangeBudgetModal({
-  currBudgetID,
-  userID,
-  accessToken,
-  refreshToken,
-}: Props) {
-  const router = useRouter();
+  userData,
+  updateDefaultBudgetID,
+}: {
+  userData: UserData;
+  updateDefaultBudgetID?: (
+    newBudget: YNABBudget,
+    userID: string
+  ) => Promise<void>;
+}) {
   const [newBudget, setNewBudget] = useState<YNABBudget>();
 
   const { loading, error, data } = useQuery(GET_BUDGETS, {
     variables: {
-      userID: userID,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
+      userID: userData.userID,
+      accessToken: userData.tokenDetails.accessToken,
+      refreshToken: userData.tokenDetails.refreshToken,
     },
   });
-
-  const [updateBudgetID] = useMutation(UPDATE_DEFAULT_BUDGET_ID);
-
-  const switchBudget = async () => {
-    if (newBudget && newBudget.name !== currBudgetName) {
-      // Run the "UpdateBudgetID" query/mutation
-      await updateBudgetID({
-        variables: {
-          userID: userID,
-          newBudgetID: newBudget.id,
-        },
-      });
-
-      // Reload the entire page
-      router.reload();
-    }
-  };
 
   if (loading) return null;
 
   const currBudgetName: string = data.budgets.find(
-    (x: YNABBudget) => x.id == currBudgetID.toLowerCase()
+    (x: YNABBudget) => x.id == userData.budgetID.toLowerCase()
   )?.name;
 
   return (
@@ -68,9 +44,9 @@ function ChangeBudgetModal({
 
       {/* Table of Budget Names */}
       <div
-        className={`absolute top-36 ${
+        className={`absolute top-36 w-full flex flex-col ${
           !newBudget ? "bottom-0" : "bottom-12"
-        } w-full flex flex-col`}
+        }`}
       >
         <Card className="text-left flex-grow overflow-y-auto">
           {data.budgets.map((budget: YNABBudget) => {
@@ -95,7 +71,15 @@ function ChangeBudgetModal({
 
       {newBudget && (
         <button
-          onClick={switchBudget}
+          onClick={async () => {
+            if (
+              updateDefaultBudgetID &&
+              newBudget &&
+              newBudget.name !== currBudgetName
+            ) {
+              await updateDefaultBudgetID(newBudget, userData.userID);
+            }
+          }}
           className={`absolute bottom-0 inset-x-0 h-8 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white ${
             newBudget.name == currBudgetName && "hover:cursor-not-allowed"
           }`}

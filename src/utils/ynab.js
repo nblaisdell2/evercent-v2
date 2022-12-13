@@ -49,7 +49,7 @@ function isOverRateLimitThreshold(response) {
 }
 
 async function FormatAccessTokenDetails(response) {
-  console.log("need to format", response);
+  // console.log("need to format", response);
   let accToken = response.access_token;
   let refToken = response.refresh_token;
 
@@ -66,7 +66,7 @@ async function FormatAccessTokenDetails(response) {
 async function GetResponseWithTokenDetails(data, response) {
   return {
     data: data,
-    connDetails: response.newTokenDetails,
+    connDetails: response?.newTokenDetails,
   };
 }
 
@@ -223,14 +223,14 @@ export async function GetNewAccessTokenRefresh({
 }
 
 export async function GetDefaultBudgetID(params) {
-  console.log("getting default budget id");
+  console.log("YNAB: getting default budget id");
   let response = await SendYNABRequest(
     "GetDefaultBudgetID",
     get,
     API_BASE_URL + "/budgets/default",
     params
   );
-  console.log("ynab repsnose", response);
+  // console.log("ynab response", response);
 
   let budgetData = response.data.data.budget;
   cacheYNABData(budgetData);

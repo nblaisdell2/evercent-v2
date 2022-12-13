@@ -6,54 +6,49 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import { useMutation } from "@apollo/client";
-import { REFRESH_YNAB_TOKENS } from "../graphql/mutations";
-
-import { parseDate, ModalType } from "../utils/utils";
+import { ModalType } from "../utils/utils";
 import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
 
 import Label from "./elements/Label";
-import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
-import { UserData } from "../utils/evercent";
+import ChangeBudgetModal from "./modal/ChangeBudgetModal";
+import { UserData, YNABBudget } from "../utils/evercent";
 
 function YNABConnection({
   userData,
-  refetchUser,
+  refreshYNABTokens,
+  updateDefaultBudgetID,
 }: {
   userData: UserData;
-  refetchUser: () => Promise<void>;
+  refreshYNABTokens?: (
+    userID: string,
+    refreshToken: string,
+    expirationDate: string
+  ) => Promise<void>;
+  updateDefaultBudgetID?: (
+    newBudget: YNABBudget,
+    userID: string
+  ) => Promise<void>;
 }) {
   const { isOpen, showModal, closeModal } = useModal();
 
-  const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
-
-  const refreshYNABTokens = async (newTime: Date) => {
-    if (
-      newTime > parseDate(userData.tokenDetails.expirationDate) &&
-      userData.tokenDetails.refreshToken
-    ) {
-      console.log("Refreshing Tokens");
-
-      await refreshTokens({
-        variables: {
-          userID: userData.userID,
-          refreshToken: userData.tokenDetails.refreshToken,
-          expirationDate: userData.tokenDetails.expirationDate,
-        },
-      });
-
-      await refetchUser();
-    }
-  };
-
   useEffect(() => {
-    refreshYNABTokens(new Date());
+    if (refreshYNABTokens)
+      refreshYNABTokens(
+        userData.userID,
+        userData.tokenDetails.refreshToken,
+        userData.tokenDetails.expirationDate
+      );
   }, []);
 
   useInterval(() => {
-    refreshYNABTokens(new Date());
+    if (refreshYNABTokens)
+      refreshYNABTokens(
+        userData.userID,
+        userData.tokenDetails.refreshToken,
+        userData.tokenDetails.expirationDate
+      );
   }, 60000);
 
   const budgetIDFound = !!userData.budgetName;
@@ -68,10 +63,8 @@ function YNABConnection({
           onClose={closeModal}
         >
           <ChangeBudgetModal
-            currBudgetID={userData.budgetID}
-            accessToken={userData.tokenDetails.accessToken}
-            refreshToken={userData.tokenDetails.refreshToken}
-            userID={userData.userID}
+            userData={userData}
+            updateDefaultBudgetID={updateDefaultBudgetID}
           />
         </ModalContent>
       )}
@@ -112,7 +105,7 @@ function YNABConnection({
             </div>
           </>
         ) : (
-          <div className="flex flex-col sm:flex-row items-center ">
+          <div className="flex flex-col sm:flex-row items-center">
             <div className="block sm:hidden text-center font-semibold text-xl">
               <div className="mb-4 px-6">
                 Please click the button below to connect Evercent to your YNAB

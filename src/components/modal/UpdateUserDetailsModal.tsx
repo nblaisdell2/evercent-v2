@@ -11,54 +11,43 @@ import Label from "../elements/Label";
 import MyDatePicker from "../elements/MyDatePicker";
 import RadioButtonGroup from "../elements/RadioButtonGroup";
 import { getMoneyString } from "../../utils/utils";
+import { UserData } from "../../utils/evercent";
 
 type Props = {
-  userID: string;
-  budgetID: string;
-  monthlyIncome: number;
-  payFrequency: string;
-  nextPaydate: string;
-  refetchUserDetails: () => Promise<void>;
+  userData: UserData;
+  updateUserData: (newUserData: UserData) => Promise<void>;
   closeModal: () => void;
 };
 
 function UpdateUserDetailsModal({
-  userID,
-  budgetID,
-  monthlyIncome,
-  payFrequency,
-  nextPaydate,
-  refetchUserDetails,
+  userData,
+  updateUserData,
   closeModal,
 }: Props) {
-  const [newMonthlyIncome, setNewMonthlyIncome] = useState(monthlyIncome || 0);
+  const [newMonthlyIncome, setNewMonthlyIncome] = useState(
+    userData.monthlyIncome || 0
+  );
   const [newPayFrequency, setNewPayFrequency] = useState(
-    payFrequency || "Every 2 Weeks"
+    userData.payFrequency || "Every 2 Weeks"
   );
   const [newNextPaydate, setNewNextPaydate] = useState(
-    nextPaydate || new Date().toISOString()
+    userData.nextPaydate || new Date().toISOString()
   );
 
-  const [updateDetails] = useMutation(UPDATE_USER_DETAILS);
+  const [updateUserDetails] = useMutation(UPDATE_USER_DETAILS);
 
   const saveNewUserDetails = async () => {
     if (
-      monthlyIncome !== newMonthlyIncome ||
-      payFrequency !== newPayFrequency ||
-      nextPaydate !== newNextPaydate
+      userData.monthlyIncome !== newMonthlyIncome ||
+      userData.payFrequency !== newPayFrequency ||
+      userData.nextPaydate !== newNextPaydate
     ) {
-      await updateDetails({
-        variables: {
-          userBudgetInput: {
-            userID: userID,
-            budgetID: budgetID,
-          },
-          newMonthlyIncome: newMonthlyIncome,
-          payFreq: newPayFrequency,
-          nextPaydate: newNextPaydate,
-        },
+      await updateUserData({
+        ...userData,
+        monthlyIncome: newMonthlyIncome,
+        payFrequency: newPayFrequency,
+        nextPaydate: newNextPaydate,
       });
-      await refetchUserDetails();
 
       closeModal();
     }

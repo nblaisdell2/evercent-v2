@@ -11,49 +11,48 @@ import {
   getGroupAmounts,
   UserData,
 } from "../utils/evercent";
+import { CheckboxItem } from "./elements/CheckBoxGroup";
 
 function BudgetHelperFull({
   userData,
-  monthlyIncome,
-  payFrequency,
-  nextPaydate,
   budgetMonths,
   categoryList,
   setCategoryList,
   setChangesMade,
   onSave,
-  refetchCategories,
+  saveNewExcludedCategories,
 }: {
   userData: UserData;
-  monthlyIncome: number;
-  payFrequency: string;
-  nextPaydate: string;
   budgetMonths: any[];
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
   setChangesMade: (newChanges: boolean) => void;
   onSave: (newCategories: CategoryListGroup[]) => void;
-  refetchCategories: () => Promise<void>;
+  saveNewExcludedCategories: (
+    userID: string,
+    budgetID: string,
+    itemsToUpdate: CheckboxItem[]
+  ) => Promise<CategoryListGroup[]>;
 }) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryListItem | null>();
 
-  const updateSelectedCategory = (item: CategoryListItem | null) => {
-    if (item) {
+  const updateSelectedCategory = (newCategory: CategoryListItem | null) => {
+    if (newCategory) {
       // REFACTOR
       // ==========================================
       let newCategoryList = [...categoryList];
       const groupIdx = newCategoryList.findIndex((grp) => {
-        return grp.groupName == item.groupName;
+        return grp.groupName == newCategory.groupName;
       });
       const newGroup = { ...newCategoryList[groupIdx] };
       const catIdx = newGroup.categories.findIndex((cat) => {
-        return cat.name == item.name;
+        return cat.name == newCategory.name;
       });
       let newCats = [...newGroup.categories];
 
-      newCats[catIdx] = { ...newCats[catIdx], ...item };
+      newCats[catIdx] = { ...newCats[catIdx], ...newCategory };
       newCategoryList[groupIdx] = {
         ...newCategoryList[groupIdx],
         categories: newCats,
@@ -65,19 +64,19 @@ function BudgetHelperFull({
       setChangesMade(true);
     }
 
-    setSelectedCategory(item);
+    setSelectedCategory(newCategory);
   };
 
   return (
     <div className="h-full mx-4 flex flex-col">
       <Amounts
-        monthlyIncome={monthlyIncome}
+        monthlyIncome={userData.monthlyIncome}
         categoryList={categoryList}
         type="full"
       />
 
       <BudgetHelperCharts
-        monthlyIncome={monthlyIncome}
+        monthlyIncome={userData.monthlyIncome}
         categoryList={categoryList}
         type="full"
       />
@@ -85,20 +84,20 @@ function BudgetHelperFull({
       {!selectedCategory ? (
         <CategoryList
           userData={userData}
-          refetchCategories={refetchCategories}
           categoryList={categoryList}
           setCategoryList={setCategoryList}
           expandedGroups={expandedGroups}
           setExpandedGroups={setExpandedGroups}
           onSave={onSave}
+          saveNewExcludedCategories={saveNewExcludedCategories}
           selectCategory={setSelectedCategory}
         />
       ) : (
         <SelectedCategory
           initialCategory={selectedCategory}
-          monthlyIncome={monthlyIncome}
-          payFrequency={payFrequency}
-          nextPaydate={nextPaydate}
+          monthlyIncome={userData.monthlyIncome}
+          payFrequency={userData.payFrequency}
+          nextPaydate={userData.nextPaydate}
           budgetMonths={budgetMonths}
           updateSelectedCategory={updateSelectedCategory}
         />

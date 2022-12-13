@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 export const GET_USER_DATA = gql`
-  query GetUserData($userEmail: String!) {
-    userData(userEmail: $userEmail) {
+  query GetUserData($userEmail: String!, $authCode: String) {
+    userData(userEmail: $userEmail, authCode: $authCode) {
       userID
       budgetID
       budgetName
@@ -218,6 +218,7 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
       accessToken: $accessToken
       refreshToken: $refreshToken
     ) {
+      groupID
       groupName
       amount
       extraAmount

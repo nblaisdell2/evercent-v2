@@ -72,6 +72,7 @@ export const typeDefs = gql`
   }
 
   type CategoryGroup {
+    groupID: String!
     groupName: String!
     amount: Float!
     extraAmount: Float!
@@ -266,7 +267,7 @@ export const typeDefs = gql`
   #  QUERIES
   # ===========
   type Query {
-    userData(userEmail: String!): UserData!
+    userData(userEmail: String!, authCode: String): UserData!
     userID(userEmail: String!): ID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection

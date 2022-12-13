@@ -10,12 +10,6 @@ import {
   getTotalAmountUsed,
 } from "../utils/evercent";
 
-type Props = {
-  monthlyIncome: number;
-  categoryList: CategoryListGroup[];
-  type: string;
-};
-
 const CHART_COLORS = [
   "#3366cc",
   "#dc3912",
@@ -50,7 +44,15 @@ const CHART_COLORS = [
   "#743411",
 ];
 
-function BudgetHelperCharts({ monthlyIncome, categoryList, type }: Props) {
+function BudgetHelperCharts({
+  monthlyIncome,
+  categoryList,
+  type,
+}: {
+  monthlyIncome: number;
+  categoryList: CategoryListGroup[];
+  type: string;
+}) {
   const [selectedGroup, setSelectedGroup] = useState<{
     groupID: string;
     groupName: string;
@@ -65,7 +67,6 @@ function BudgetHelperCharts({ monthlyIncome, categoryList, type }: Props) {
     chartType: string,
     other?: string
   ) => {
-    // console.log("category list in charts", categoryList);
     let myChartData;
     if (chartType == "group") {
       if (other && other == "pie") {
@@ -223,8 +224,6 @@ function BudgetHelperCharts({ monthlyIncome, categoryList, type }: Props) {
     );
   }
   groupColors.push(!selectedGroup.groupID ? "#A0A0A0" : "#C0C0C0");
-
-  console.log("pie data", chartDataGroupPie);
 
   return (
     <>

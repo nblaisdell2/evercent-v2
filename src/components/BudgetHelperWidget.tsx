@@ -4,11 +4,6 @@ import { getPercentString } from "../utils/utils";
 import Amounts from "./Amounts";
 import BudgetHelperCharts from "./BudgetHelperCharts";
 
-type Props = {
-  monthlyIncome: number;
-  categoryList: CategoryListGroup[];
-};
-
 const CHART_COLORS = [
   "#3366cc",
   "#dc3912",
@@ -43,18 +38,24 @@ const CHART_COLORS = [
   "#743411",
 ];
 
-function BudgetHelperWidget({ monthlyIncome, categoryList }: Props) {
+function BudgetHelperWidget({
+  monthlyIncome,
+  categoryList,
+}: {
+  monthlyIncome: number;
+  categoryList: CategoryListGroup[];
+}) {
   const getLegendGrid = (catList: CategoryListGroup[], numRows: number) => {
-    catList = catList.filter((grp) => grp.adjustedAmtPlusExtra > 0);
+    const categoriesWithAmounts = catList.filter(
+      (grp) => grp.adjustedAmtPlusExtra > 0
+    );
 
-    let idx = 0;
-
-    const percUnused = catList.reduce((prev, curr) => {
+    const percUnused = categoriesWithAmounts.reduce((prev, curr) => {
       return prev + curr.percentIncome;
     }, 0);
 
-    let numCols = Math.floor((catList.length + 1) / numRows) + 1;
-    console.log("numCols", numCols);
+    const numCols =
+      Math.floor((categoriesWithAmounts.length + 1) / numRows) + 1;
 
     let myPaddingLeft = "0";
     switch (numCols) {
@@ -71,12 +72,12 @@ function BudgetHelperWidget({ monthlyIncome, categoryList }: Props) {
 
     return (
       <>
-        {catList.map((grp) => {
+        {categoriesWithAmounts.map((grp, i) => {
           if (grp.adjustedAmtPlusExtra == 0) return null;
           return (
             <div
               className="flex items-center"
-              key={idx}
+              key={grp.groupName}
               style={{
                 paddingLeft: myPaddingLeft,
               }}
@@ -84,7 +85,7 @@ function BudgetHelperWidget({ monthlyIncome, categoryList }: Props) {
               <div
                 className="h-2 w-2 rounded-full "
                 style={{
-                  backgroundColor: CHART_COLORS[idx++],
+                  backgroundColor: CHART_COLORS[i],
                 }}
               ></div>
               <div className="font-semibold ml-1 text-[0.65rem] sm:text-sm whitespace-nowrap">

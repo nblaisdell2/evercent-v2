@@ -20,6 +20,8 @@ export type TokenDetails = {
 };
 
 export type CategoryListGroup = {
+  __typename: string;
+  groupID: string;
   groupName: string;
   amount: number;
   extraAmount: number;
@@ -30,6 +32,7 @@ export type CategoryListGroup = {
 };
 
 export type CategoryListItem = {
+  __typename: string;
   guid: string;
   categoryGroupID: string;
   categoryID: string;
@@ -48,6 +51,7 @@ export type CategoryListItem = {
 };
 
 export type RegularExpenseDetails = {
+  __typename: string;
   guid: string;
   isMonthly: boolean;
   nextDueDate: string;
@@ -59,14 +63,21 @@ export type RegularExpenseDetails = {
 };
 
 export type UpcomingDetails = {
+  __typename: string;
   guid: string;
   expenseAmount: number;
 };
 
 export type BudgetAmounts = {
+  __typename: string;
   budgeted: number;
   activity: number;
   available: number;
+};
+
+export type YNABBudget = {
+  id: string;
+  name: string;
 };
 
 export type PostingMonth = {
@@ -285,4 +296,54 @@ export const getPostingMonthAmounts = (): PostingMonth[] => {
     { month: "Oct 2022", amount: 10 },
     { month: "Nov 2022", amount: 10 },
   ];
+};
+
+export const getInput_UpdateCategories = (
+  newCategories: CategoryListGroup[]
+) => {
+  // Format the categoryList into the format needed for the stored procedure
+  // for updating the database.
+  let input: { details: any[]; expense: any[]; upcoming: any[] } = {
+    details: [],
+    expense: [],
+    upcoming: [],
+  };
+
+  for (let i = 0; i < newCategories.length; i++) {
+    for (let j = 0; j < newCategories[i].categories.length; j++) {
+      let currCat = newCategories[i].categories[j];
+      input.details.push({
+        guid: currCat.guid,
+        categoryGroupID: currCat.categoryGroupID,
+        categoryID: currCat.categoryID,
+        amount: currCat.amount,
+        extraAmount: currCat.extraAmount,
+        isRegularExpense: currCat.isRegularExpense,
+        isUpcomingExpense: currCat.isUpcomingExpense,
+      });
+
+      if (currCat.isRegularExpense) {
+        input.expense.push({
+          guid: currCat.guid,
+          isMonthly: currCat.regularExpenseDetails.isMonthly,
+          nextDueDate: currCat.regularExpenseDetails.nextDueDate,
+          expenseMonthsDivisor: currCat.regularExpenseDetails.monthsDivisor,
+          repeatFreqNum: currCat.regularExpenseDetails.repeatFreqNum,
+          repeatFreqType: currCat.regularExpenseDetails.repeatFreqType,
+          includeOnChart: currCat.regularExpenseDetails.includeOnChart,
+          multipleTransactions:
+            currCat.regularExpenseDetails.multipleTransactions,
+        });
+      }
+
+      if (currCat.isUpcomingExpense) {
+        input.upcoming.push({
+          guid: currCat.guid,
+          totalExpenseAmount: currCat.upcomingDetails.expenseAmount,
+        });
+      }
+    }
+  }
+
+  return input;
 };

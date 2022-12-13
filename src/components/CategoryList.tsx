@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   CheckIcon,
   ChevronDownIcon,
@@ -18,26 +18,31 @@ import Label from "./elements/Label";
 import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
 import AllCategoriesEditable from "./modal/AllCategoriesEditable";
+import { CheckboxItem } from "./elements/CheckBoxGroup";
 
 type Props = {
   userData: UserData;
-  refetchCategories: () => Promise<void>;
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
   expandedGroups: string[];
   setExpandedGroups: (newGroups: string[]) => void;
   onSave: (newCategories: CategoryListGroup[]) => void;
+  saveNewExcludedCategories: (
+    userID: string,
+    budgetID: string,
+    itemsToUpdate: CheckboxItem[]
+  ) => Promise<CategoryListGroup[]>;
   selectCategory: (item: CategoryListItem) => void;
 };
 
 function CategoryList({
   userData,
-  refetchCategories,
   categoryList,
   setCategoryList,
   expandedGroups,
   setExpandedGroups,
   onSave,
+  saveNewExcludedCategories,
   selectCategory,
 }: Props) {
   const { isOpen, showModal, closeModal } = useModal();
@@ -58,7 +63,7 @@ function CategoryList({
     setExpandedGroups(newGroups);
   };
 
-  const groupRow = (grp: CategoryListGroup) => {
+  const createGroupRow = (grp: CategoryListGroup) => {
     return (
       <div
         key={grp.groupName}
@@ -94,7 +99,7 @@ function CategoryList({
     );
   };
 
-  const categoryRow = (category: CategoryListItem) => {
+  const createCategoryRow = (category: CategoryListItem) => {
     return (
       <div
         key={category.name}
@@ -177,11 +182,11 @@ function CategoryList({
           <div className="w-full h-[2px] bg-black"></div>
           <div className="h-[375px] overflow-y-auto no-scrollbar">
             {categoryList.map((category) => {
-              const gRow = groupRow(category);
+              const gRow = createGroupRow(category);
               let cRows;
               if (category.categories.length > 0 && groupIsExpanded(category)) {
                 cRows = category.categories.map((indCat) => {
-                  return categoryRow(indCat);
+                  return createCategoryRow(indCat);
                 });
               }
               return (
@@ -229,7 +234,8 @@ function CategoryList({
         >
           <AllCategoriesEditable
             userData={userData}
-            refetchCategories={refetchCategories}
+            saveNewExcludedCategories={saveNewExcludedCategories}
+            setCategoryList={setCategoryList}
             closeModal={closeModal}
           />
         </ModalContent>

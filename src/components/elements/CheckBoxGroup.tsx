@@ -29,19 +29,6 @@ function CheckBoxGroup({ items, setItems }: Props) {
     return [...new Set([...ids])];
   };
 
-  //   const getMainParentID = (item: CheckboxItem) => {
-  //     let currItem: CheckboxItem = item;
-  //     // console.log("  currItem", currItem);
-  //     while (currItem.parentId != "") {
-  //       currItem = items.filter((itm) => {
-  //         return itm.id == currItem.parentId;
-  //       })[0];
-  //       //   console.log("  currItem again", currItem);
-  //     }
-  //     // console.log("returning", currItem.parentId);
-  //     return currItem.id == item.id ? "" : currItem.id;
-  //   };
-
   const toggleSelected = (item: CheckboxItem, on: boolean, idx: number) => {
     let newItems = [...items];
     for (let i = 0; i < newItems.length; i++) {

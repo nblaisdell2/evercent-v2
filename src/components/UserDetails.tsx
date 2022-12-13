@@ -3,7 +3,12 @@ import React from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import { differenceInDays, startOfToday } from "date-fns";
-import { parseDate, formatDate, ModalType } from "../utils/utils";
+import {
+  parseDate,
+  formatDate,
+  ModalType,
+  getMoneyString,
+} from "../utils/utils";
 
 import Label from "./elements/Label";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
@@ -13,15 +18,18 @@ import { UserData } from "../utils/evercent";
 
 function UserDetails({
   userData,
-  refetchUser,
+  updateUserData,
 }: {
   userData: UserData;
-  refetchUser: () => Promise<void>;
+  updateUserData: (newUserData: UserData) => Promise<void>;
 }) {
   const { isOpen, showModal, closeModal } = useModal();
 
   const { monthlyIncome, nextPaydate, payFrequency } = userData;
-  const daysAway = differenceInDays(parseDate(nextPaydate), startOfToday());
+  const daysAwayFromPayday = differenceInDays(
+    parseDate(nextPaydate),
+    startOfToday()
+  );
 
   return (
     <>
@@ -31,12 +39,8 @@ function UserDetails({
           onClose={closeModal}
         >
           <UpdateUserDetailsModal
-            userID={userData.userID}
-            budgetID={userData.budgetID}
-            monthlyIncome={monthlyIncome}
-            payFrequency={payFrequency}
-            nextPaydate={nextPaydate}
-            refetchUserDetails={refetchUser}
+            userData={userData}
+            updateUserData={updateUserData}
             closeModal={closeModal}
           />
         </ModalContent>
@@ -46,7 +50,7 @@ function UserDetails({
         <div className="flex flex-col items-center h-full justify-start">
           <Label label="Monthly Income" className="text-sm" />
           <div className="text-green-500 font-bold text-base sm:text-xl">
-            {"$" + monthlyIncome.toString()}
+            {getMoneyString(monthlyIncome)}
           </div>
         </div>
 
@@ -70,7 +74,12 @@ function UserDetails({
           <div className="hidden sm:block font-bold text-sm sm:text-base">
             {monthlyIncome == 0
               ? "----"
-              : formatDate(parseDate(nextPaydate)) + " (" + daysAway + " days)"}
+              : formatDate(parseDate(nextPaydate)) +
+                " (" +
+                daysAwayFromPayday +
+                " " +
+                (daysAwayFromPayday == 1 ? "day" : "days") +
+                ")"}
           </div>
           <div className="block sm:hidden font-bold text-sm sm:text-base">
             {monthlyIncome == 0 ? (
@@ -79,7 +88,7 @@ function UserDetails({
               <div>
                 <div>{formatDate(parseDate(nextPaydate))}</div>
                 <div className="text-xs sm:text-base -mt-1 sm:mt-0">
-                  {"(" + daysAway + " days)"}
+                  {"(" + daysAwayFromPayday + " days)"}
                 </div>
               </div>
             )}

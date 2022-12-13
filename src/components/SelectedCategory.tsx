@@ -30,7 +30,7 @@ type Props = {
   payFrequency: string;
   nextPaydate: string;
   budgetMonths: any[];
-  updateSelectedCategory: (item: CategoryListItem | null) => void;
+  updateSelectedCategory: (newCategory: CategoryListItem | null) => void;
 };
 
 function SelectedCategory({
@@ -42,9 +42,7 @@ function SelectedCategory({
   updateSelectedCategory,
 }: Props) {
   const toggleOptions = (checked: boolean, option: string) => {
-    console.log("initial", initialCategory);
     let newCategory = { ...initialCategory };
-    console.log("newCategory", newCategory);
 
     newCategory.isRegularExpense =
       option == "Regular Expense" ? checked : false;
@@ -94,9 +92,6 @@ function SelectedCategory({
   };
 
   const postingMonths = getPostingMonthAmounts();
-
-  console.log("category before upcoming paydate", initialCategory);
-
   const upcomingPaydate = getUpcomingPaydate(
     initialCategory.upcomingDetails.expenseAmount,
     initialCategory.adjustedAmtPlusExtra,

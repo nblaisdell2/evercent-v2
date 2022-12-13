@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { ModalType } from "../utils/utils";
 
 import BudgetHelperFull from "./BudgetHelperFull";
 import BudgetHelperWidget from "./BudgetHelperWidget";
@@ -9,26 +8,36 @@ import RegularExpensesFull from "./RegularExpensesFull";
 import RegularExpensesWidget from "./RegularExpensesWidget";
 import UpcomingExpensesFull from "./UpcomingExpensesFull";
 import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
-import ModalContent from "./modal/ModalContent";
-import useModal from "./hooks/useModal";
 
-import { useMutation } from "@apollo/client";
-import { UPDATE_CATEGORIES } from "../graphql/mutations";
-import { BudgetMonth, CategoryListGroup, UserData } from "../utils/evercent";
+import useModal from "./hooks/useModal";
+import ModalContent from "./modal/ModalContent";
 import UnsavedChangesModal from "./modal/UnsavedChangesModal";
-import { GET_BUDGET_HELPER_DETAILS } from "../graphql/queries";
+
+import { ModalType } from "../utils/utils";
+import { BudgetMonth, CategoryListGroup, UserData } from "../utils/evercent";
+import { CheckboxItem } from "./elements/CheckBoxGroup";
 
 function MainContent({
   userData,
   categories,
-  refetchCategories,
   budgetMonths,
+  updateCategories,
+  saveNewExcludedCategories,
   setModalIsShowing,
 }: {
   userData: UserData;
   categories: CategoryListGroup[];
-  refetchCategories: () => Promise<void>;
   budgetMonths: BudgetMonth[];
+  updateCategories: (
+    userID: string,
+    budgetID: string,
+    categories: CategoryListGroup[]
+  ) => CategoryListGroup[];
+  saveNewExcludedCategories: (
+    userID: string,
+    budgetID: string,
+    itemsToUpdate: CheckboxItem[]
+  ) => Promise<CategoryListGroup[]>;
   setModalIsShowing: (newShow: boolean) => void;
 }) {
   const {
@@ -62,131 +71,18 @@ function MainContent({
 
   const [changesMade, setChangesMade] = useState(false);
 
-  const [updateCategories] = useMutation(UPDATE_CATEGORIES);
-
-  useEffect(() => {
-    setCategoryList(categories);
-  }, [categories]);
-
   const onSave = (newCategories: CategoryListGroup[]) => {
     if (!changesMade) {
       console.log("NO CHANGES!");
       return;
     }
 
-    // Format the categoryList into the format needed for the stored procedure
-    // for updating the database.
-    let input: { details: any[]; expense: any[]; upcoming: any[] } = {
-      details: [],
-      expense: [],
-      upcoming: [],
-    };
-
-    for (let i = 0; i < newCategories.length; i++) {
-      for (let j = 0; j < newCategories[i].categories.length; j++) {
-        let currCat = newCategories[i].categories[j];
-        input.details.push({
-          guid: currCat.guid,
-          categoryGroupID: currCat.categoryGroupID,
-          categoryID: currCat.categoryID,
-          amount: currCat.amount,
-          extraAmount: currCat.extraAmount,
-          isRegularExpense: currCat.isRegularExpense,
-          isUpcomingExpense: currCat.isUpcomingExpense,
-        });
-
-        if (currCat.isRegularExpense) {
-          input.expense.push({
-            guid: currCat.guid,
-            isMonthly: currCat.regularExpenseDetails.isMonthly,
-            nextDueDate: currCat.regularExpenseDetails.nextDueDate,
-            expenseMonthsDivisor: currCat.regularExpenseDetails.monthsDivisor,
-            repeatFreqNum: currCat.regularExpenseDetails.repeatFreqNum,
-            repeatFreqType: currCat.regularExpenseDetails.repeatFreqType,
-            includeOnChart: currCat.regularExpenseDetails.includeOnChart,
-            multipleTransactions:
-              currCat.regularExpenseDetails.multipleTransactions,
-          });
-        }
-
-        if (currCat.isUpcomingExpense) {
-          input.upcoming.push({
-            guid: currCat.guid,
-            totalExpenseAmount: currCat.upcomingDetails.expenseAmount,
-          });
-        }
-      }
-    }
-
-    // Then, run the query/mutation to update the database.
-    updateCategories({
-      variables: {
-        userBudgetInput: {
-          userID: userData.userID,
-          budgetID: userData.budgetID,
-        },
-        updateCategoriesInput: input,
-      },
-      update: (cache, { data: { updateCategories } }) => {
-        let newList = newCategories.reduce(
-          (prev: CategoryListGroup[], curr) => {
-            let catList = curr.categories.map((cat) => {
-              return {
-                __typename: "Category",
-                amount: cat.amount,
-                categoryGroupID: cat.categoryGroupID,
-                groupName: cat.groupName,
-                categoryID: cat.categoryID,
-                name: cat.name,
-                extraAmount: cat.extraAmount,
-                adjustedAmt: cat.adjustedAmt,
-                adjustedAmtPlusExtra: cat.adjustedAmtPlusExtra,
-                percentIncome: cat.percentIncome,
-                guid: cat.guid,
-                isRegularExpense: cat.isRegularExpense,
-                isUpcomingExpense: cat.isUpcomingExpense,
-                regularExpenseDetails: {
-                  __typename: "RegularExpenseDetails",
-                  guid: cat.guid,
-                  includeOnChart: cat?.regularExpenseDetails?.includeOnChart,
-                  isMonthly: cat?.regularExpenseDetails?.isMonthly,
-                  monthsDivisor: cat?.regularExpenseDetails?.monthsDivisor,
-                  multipleTransactions:
-                    cat?.regularExpenseDetails?.multipleTransactions,
-                  nextDueDate: cat?.regularExpenseDetails?.nextDueDate,
-                  repeatFreqNum: cat?.regularExpenseDetails?.repeatFreqNum,
-                  repeatFreqType: cat?.regularExpenseDetails?.repeatFreqType,
-                },
-                upcomingDetails: {
-                  __typename: "UpcomingDetails",
-                  guid: cat.guid,
-                  expenseAmount: cat?.upcomingDetails?.expenseAmount,
-                },
-                budgetAmounts: {
-                  __typename: "BudgetAmounts",
-                  budgeted: cat?.budgetAmounts?.budgeted,
-                  activity: cat?.budgetAmounts?.activity,
-                  available: cat?.budgetAmounts?.available,
-                },
-              };
-            });
-
-            curr = { ...curr, categories: catList };
-            return prev.concat(curr);
-          },
-          []
-        );
-
-        cache.writeQuery({
-          query: GET_BUDGET_HELPER_DETAILS,
-          data: { budgetMonths: budgetMonths, categories: newList },
-        });
-
-        // Finally, refetch the data and return back to the Budget Helper screen
-        refetchCategories();
-        setCategoryList(newList);
-      },
-    });
+    const newList = updateCategories(
+      userData.userID,
+      userData.budgetID,
+      newCategories
+    );
+    setCategoryList(newList);
 
     setChangesMade(false);
   };
@@ -276,10 +172,7 @@ function MainContent({
                 categoryList={categoryList}
                 setCategoryList={setCategoryList}
                 budgetMonths={budgetMonths}
-                monthlyIncome={userData.monthlyIncome}
-                payFrequency={userData.payFrequency}
-                nextPaydate={userData.nextPaydate}
-                refetchCategories={refetchCategories}
+                saveNewExcludedCategories={saveNewExcludedCategories}
                 onSave={onSave}
                 setChangesMade={setChangesMade}
               />,
