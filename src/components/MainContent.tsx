@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 import BudgetHelperFull from "./BudgetHelperFull";
 import BudgetHelperWidget from "./BudgetHelperWidget";
@@ -10,11 +10,15 @@ import UpcomingExpensesFull from "./UpcomingExpensesFull";
 import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
 
 import useModal from "./hooks/useModal";
+import { ModalType } from "../utils/utils";
 import ModalContent from "./modal/ModalContent";
 import UnsavedChangesModal from "./modal/UnsavedChangesModal";
 
-import { ModalType } from "../utils/utils";
-import { BudgetMonth, CategoryListGroup, UserData } from "../utils/evercent";
+import {
+  YNABBugdetMonth,
+  CategoryListGroup,
+  UserData,
+} from "../utils/evercent";
 import { CheckboxItem } from "./elements/CheckBoxGroup";
 
 function MainContent({
@@ -27,12 +31,12 @@ function MainContent({
 }: {
   userData: UserData;
   categories: CategoryListGroup[];
-  budgetMonths: BudgetMonth[];
+  budgetMonths: YNABBugdetMonth[];
   updateCategories: (
     userID: string,
     budgetID: string,
     categories: CategoryListGroup[]
-  ) => CategoryListGroup[];
+  ) => Promise<CategoryListGroup[]>;
   saveNewExcludedCategories: (
     userID: string,
     budgetID: string,
@@ -71,13 +75,13 @@ function MainContent({
 
   const [changesMade, setChangesMade] = useState(false);
 
-  const onSave = (newCategories: CategoryListGroup[]) => {
+  const onSave = async (newCategories: CategoryListGroup[]) => {
     if (!changesMade) {
       console.log("NO CHANGES!");
       return;
     }
 
-    const newList = updateCategories(
+    const newList = await updateCategories(
       userData.userID,
       userData.budgetID,
       newCategories

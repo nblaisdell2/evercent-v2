@@ -26,7 +26,7 @@ type Props = {
   setCategoryList: (newList: CategoryListGroup[]) => void;
   expandedGroups: string[];
   setExpandedGroups: (newGroups: string[]) => void;
-  onSave: (newCategories: CategoryListGroup[]) => void;
+  onSave: (newCategories: CategoryListGroup[]) => Promise<void>;
   saveNewExcludedCategories: (
     userID: string,
     budgetID: string,

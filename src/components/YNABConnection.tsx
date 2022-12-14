@@ -14,6 +14,7 @@ import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
 import ChangeBudgetModal from "./modal/ChangeBudgetModal";
 import { UserData, YNABBudget } from "../utils/evercent";
+import LabelAndValue from "./elements/LabelAndValue";
 
 function YNABConnection({
   userData,
@@ -71,20 +72,24 @@ function YNABConnection({
 
       <div className="flex">
         <div className="hidden sm:block text-center mr-4">
-          <Label label={"API Connection"} />
-          <div
-            className={`${
-              !budgetIDFound ? "bg-[#E48E0C]" : "bg-green-600"
-            } text-white font-semibold rounded-full`}
-          >
-            {!budgetIDFound ? "Disconnected" : "Connected"}
-          </div>
+          <LabelAndValue
+            label={"API Connection"}
+            value={
+              <div
+                className={`${
+                  !budgetIDFound ? "bg-[#E48E0C]" : "bg-green-600"
+                } text-white font-semibold rounded-full px-4 mt-1`}
+              >
+                {!budgetIDFound ? "Disconnected" : "Connected"}
+              </div>
+            }
+          />
         </div>
 
         {budgetIDFound ? (
           <>
             <div className="text-center ml-4">
-              <Label label={"Current Budget"} />
+              <Label label={"Current Budget"} className={"text-lg"} />
               <div className="flex justify-center space-x-1">
                 <div className=" font-bold">{userData.budgetName}</div>
                 <PencilSquareIcon

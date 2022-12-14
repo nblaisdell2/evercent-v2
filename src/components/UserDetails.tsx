@@ -10,11 +10,11 @@ import {
   getMoneyString,
 } from "../utils/utils";
 
-import Label from "./elements/Label";
 import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
 import useModal from "./hooks/useModal";
 import ModalContent from "./modal/ModalContent";
 import { UserData } from "../utils/evercent";
+import LabelAndValue from "./elements/LabelAndValue";
 
 function UserDetails({
   userData,
@@ -47,52 +47,68 @@ function UserDetails({
       )}
       <div className="flex items-center justify-evenly w-full sm:w-auto sm:space-x-4 text-center">
         {/* Monthly Income */}
-        <div className="flex flex-col items-center h-full justify-start">
-          <Label label="Monthly Income" className="text-sm" />
-          <div className="text-green-500 font-bold text-base sm:text-xl">
-            {getMoneyString(monthlyIncome)}
-          </div>
+        <div className="flex flex-col items-center justify-start sm:justify-center h-full">
+          <LabelAndValue
+            label={"Monthly Income"}
+            value={getMoneyString(monthlyIncome)}
+            classNameLabel={"text-sm sm:text-md"}
+            classNameValue={"text-xl text-green-500"}
+          />
         </div>
 
         {/* Vertical Divider */}
         <div className="w-[1px] h-full bg-gray-400" />
 
         {/* Pay Frequency */}
-        <div className="flex flex-col items-center h-full justify-start">
-          <Label label="Pay Frequency" className="text-sm" />
-          <div className="font-bold text-sm sm:text-base">
-            {monthlyIncome == 0 ? "----" : payFrequency}
-          </div>
+        <div className="flex flex-col items-center h-full justify-start sm:justify-center">
+          <LabelAndValue
+            label={"Pay Frequency"}
+            value={monthlyIncome == 0 ? "----" : payFrequency}
+            classNameLabel={"text-sm sm:text-md"}
+            classNameValue={"text-md"}
+          />
         </div>
 
         {/* Vertical Divider */}
         <div className="w-[1px] h-full bg-gray-400" />
 
         {/* Next Paydate */}
-        <div className="flex flex-col items-center h-full justify-start">
-          <Label label="Next Paydate" className="text-sm" />
-          <div className="hidden sm:block font-bold text-sm sm:text-base">
-            {monthlyIncome == 0
-              ? "----"
-              : formatDate(parseDate(nextPaydate)) +
-                " (" +
-                daysAwayFromPayday +
-                " " +
-                (daysAwayFromPayday == 1 ? "day" : "days") +
-                ")"}
-          </div>
-          <div className="block sm:hidden font-bold text-sm sm:text-base">
-            {monthlyIncome == 0 ? (
-              "----"
-            ) : (
-              <div>
-                <div>{formatDate(parseDate(nextPaydate))}</div>
-                <div className="text-xs sm:text-base -mt-1 sm:mt-0">
-                  {"(" + daysAwayFromPayday + " days)"}
+        <div className="flex flex-col items-center h-full justify-start sm:justify-center">
+          <LabelAndValue
+            label={"Next Paydate"}
+            value={
+              <>
+                <div className="hidden sm:block font-bold text-sm sm:text-base">
+                  {monthlyIncome == 0
+                    ? "----"
+                    : formatDate(parseDate(nextPaydate)) +
+                      " (" +
+                      daysAwayFromPayday +
+                      " " +
+                      (daysAwayFromPayday == 1 ? "day" : "days") +
+                      ")"}
                 </div>
-              </div>
-            )}
-          </div>
+                <div className="block sm:hidden font-bold text-sm sm:text-base">
+                  {monthlyIncome == 0 ? (
+                    "----"
+                  ) : (
+                    <div>
+                      <div>{formatDate(parseDate(nextPaydate))}</div>
+                      <div className="text-xs sm:text-base -mt-1 sm:mt-0">
+                        {"(" +
+                          daysAwayFromPayday +
+                          " " +
+                          (daysAwayFromPayday == 1 ? "day" : "days") +
+                          ")"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            }
+            classNameLabel={"text-sm sm:text-md"}
+            classNameValue={"text-md"}
+          />
         </div>
 
         {/* Vertical Divider */}

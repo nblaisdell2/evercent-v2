@@ -1,4 +1,4 @@
-import { ApolloCache, useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
 import {
   REFRESH_YNAB_TOKENS,
@@ -32,7 +32,6 @@ function useEvercent(userEmail: string | null | undefined) {
     refetch,
   } = useQuery(GET_USER_DATA, {
     variables: { userEmail: userEmail, authCode: router?.query?.code },
-    // skip: !userEmail,
     onCompleted: () => {
       if (router.query?.code) {
         delete router.query.code;
@@ -47,7 +46,7 @@ function useEvercent(userEmail: string | null | undefined) {
     loading: loadingCategories,
     error: errorCategories,
     data: dataCategories,
-    refetch: refetchCats,
+    // refetch: refetchCats,
   } = useQuery(GET_BUDGET_HELPER_DETAILS, {
     variables: {
       userBudgetInput: {
@@ -64,16 +63,16 @@ function useEvercent(userEmail: string | null | undefined) {
     await refetch({ userEmail });
   };
 
-  const refetchCategories = async () => {
-    await refetchCats({
-      userBudgetInput: {
-        userID: data.userData.userID,
-        budgetID: data.userData.budgetID,
-      },
-      accessToken: data.userData.tokenDetails.accessToken,
-      refreshToken: data.userData.tokenDetails.refreshToken,
-    });
-  };
+  // const refetchCategories = async () => {
+  //   await refetchCats({
+  //     userBudgetInput: {
+  //       userID: data.userData.userID,
+  //       budgetID: data.userData.budgetID,
+  //     },
+  //     accessToken: data.userData.tokenDetails.accessToken,
+  //     refreshToken: data.userData.tokenDetails.refreshToken,
+  //   });
+  // };
 
   const [updateBudgetID] = useMutation(UPDATE_DEFAULT_BUDGET_ID);
   const updateDefaultBudgetID = async (
@@ -129,41 +128,22 @@ function useEvercent(userEmail: string | null | undefined) {
     }
   };
 
-  const updateCategoriesCache = (
-    cache: ApolloCache<any>,
-    categories: CategoryListGroup[]
-  ) => {
-    cache.writeQuery({
-      query: GET_BUDGET_HELPER_DETAILS,
-      data: {
-        budgetMonths: dataCategories?.budgetMonths,
-        categories,
-      },
-    });
-  };
-
   const [updateAllCategories] = useMutation(UPDATE_CATEGORIES);
-  const updateCategories = (
+  const updateCategories = async (
     userID: string,
     budgetID: string,
     categories: CategoryListGroup[]
-  ): CategoryListGroup[] => {
+  ): Promise<CategoryListGroup[]> => {
     const input = getInput_UpdateCategories(categories);
 
     // Then, run the query/mutation to update the database.
-    updateAllCategories({
+    await updateAllCategories({
       variables: {
         userBudgetInput: {
           userID,
           budgetID,
         },
         updateCategoriesInput: input,
-      },
-      update: (cache) => {
-        updateCategoriesCache(cache, categories);
-
-        // Finally, refetch the data and return back to the Budget Helper screen
-        refetchCategories();
       },
     });
 

@@ -27,7 +27,7 @@ function BudgetHelperFull({
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
   setChangesMade: (newChanges: boolean) => void;
-  onSave: (newCategories: CategoryListGroup[]) => void;
+  onSave: (newCategories: CategoryListGroup[]) => Promise<void>;
   saveNewExcludedCategories: (
     userID: string,
     budgetID: string,

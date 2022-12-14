@@ -80,17 +80,12 @@ export type YNABBudget = {
   name: string;
 };
 
-export type PostingMonth = {
+export type YNABBugdetMonth = {
   month: string;
-  amount: number;
+  categories: YNABBudgetMonthCategory[];
 };
 
-export type BudgetMonth = {
-  month: string;
-  categories: BudgetMonthCategory[];
-};
-
-export type BudgetMonthCategory = {
+export type YNABBudgetMonthCategory = {
   categoryGroupID: string;
   categoryGroupName: string;
   categoryID: string;
@@ -98,6 +93,12 @@ export type BudgetMonthCategory = {
   budgeted: number;
   activity: number;
   available: number;
+};
+
+export type PostingMonth = {
+  month: string;
+  amount: number;
+  percentAmount: number;
 };
 
 export const getCategoriesCount = (categoryList: CategoryListGroup[]) => {
@@ -194,19 +195,9 @@ export const getGroupAmounts = (categories: CategoryListItem[]) => {
   );
 };
 
-export const getAdjustedAmountPlusExtra = (category: CategoryListItem) => {
-  if (
-    category.isRegularExpense &&
-    !category.regularExpenseDetails.includeOnChart
-  ) {
-    return 0;
-  }
-  return category.adjustedAmt + category.extraAmount;
-};
-
 export const getAdjustedAmount = (
   category: CategoryListItem,
-  budgetMonths: BudgetMonth[],
+  budgetMonths: YNABBugdetMonth[],
   nextPaydate: string
 ) => {
   let adjustedAmt = category.amount;
@@ -281,20 +272,30 @@ export const getAdjustedAmount = (
   return adjustedAmt;
 };
 
+export const getAdjustedAmountPlusExtra = (category: CategoryListItem) => {
+  if (
+    category.isRegularExpense &&
+    !category.regularExpenseDetails.includeOnChart
+  ) {
+    return 0;
+  }
+  return category.adjustedAmt + category.extraAmount;
+};
+
 export const getPostingMonthAmounts = (): PostingMonth[] => {
   // TODO: This needs to calculate the real month/amounts
   return [
-    { month: "Jan 2022", amount: 10 },
-    { month: "Feb 2022", amount: 10 },
-    { month: "Mar 2022", amount: 10 },
-    { month: "Apr 2022", amount: 10 },
-    { month: "May 2022", amount: 10 },
-    { month: "Jun 2022", amount: 10 },
-    { month: "Jul 2022", amount: 10 },
-    { month: "Aug 2022", amount: 10 },
-    { month: "Sep 2022", amount: 10 },
-    { month: "Oct 2022", amount: 10 },
-    { month: "Nov 2022", amount: 10 },
+    { month: "Jan 2022", amount: 10, percentAmount: 10 },
+    { month: "Feb 2022", amount: 10, percentAmount: 10 },
+    { month: "Mar 2022", amount: 10, percentAmount: 10 },
+    { month: "Apr 2022", amount: 10, percentAmount: 10 },
+    { month: "May 2022", amount: 10, percentAmount: 10 },
+    { month: "Jun 2022", amount: 10, percentAmount: 10 },
+    { month: "Jul 2022", amount: 10, percentAmount: 10 },
+    { month: "Aug 2022", amount: 10, percentAmount: 10 },
+    { month: "Sep 2022", amount: 10, percentAmount: 10 },
+    { month: "Oct 2022", amount: 10, percentAmount: 10 },
+    { month: "Nov 2022", amount: 10, percentAmount: 10 },
   ];
 };
 
