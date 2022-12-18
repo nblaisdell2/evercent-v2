@@ -23,6 +23,7 @@ import {
   CategoryListItem,
   getAdjustedAmountPlusExtra,
 } from "../utils/evercent";
+import MyToggleButton from "./elements/MyToggleButton";
 
 type Props = {
   initialCategory: CategoryListItem;
@@ -604,42 +605,21 @@ function SelectedCategory({
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">Frequency</div>
-                      <div className="flex border-2 border-blue-900 rounded-md font-bold">
-                        <div
-                          className={`p-[3px] w-20 text-center hover:cursor-pointer ${
-                            initialCategory.regularExpenseDetails.isMonthly
-                              ? "bg-blue-900 hover:bg-blue-900 text-white hover:text-white font-bold hover:font-bold"
-                              : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
-                          }`}
-                          onClick={() => {
-                            updateCategory({
-                              regularExpenseDetails: {
-                                ...initialCategory.regularExpenseDetails,
-                                isMonthly: true,
-                              },
-                            });
-                          }}
-                        >
-                          Monthly
-                        </div>
-                        <div
-                          className={`p-[3px] w-20 text-center hover:cursor-pointer ${
-                            !initialCategory.regularExpenseDetails.isMonthly
-                              ? "bg-blue-900 hover:bg-blue-900 text-white hover:text-white font-bold hover:font-bold"
-                              : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
-                          }`}
-                          onClick={() => {
-                            updateCategory({
-                              regularExpenseDetails: {
-                                ...initialCategory.regularExpenseDetails,
-                                isMonthly: false,
-                              },
-                            });
-                          }}
-                        >
-                          By Date
-                        </div>
-                      </div>
+                      <MyToggleButton
+                        leftSideTrue={
+                          initialCategory.regularExpenseDetails.isMonthly
+                        }
+                        leftValue={"Monthly"}
+                        rightValue={"By Date"}
+                        onToggle={(toggleValue: boolean) => {
+                          updateCategory({
+                            regularExpenseDetails: {
+                              ...initialCategory.regularExpenseDetails,
+                              isMonthly: toggleValue,
+                            },
+                          });
+                        }}
+                      />
                     </div>
                     <div className="flex flex-col items-center">
                       <div className="font-semibold">Repeat Every?</div>

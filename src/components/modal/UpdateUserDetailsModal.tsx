@@ -81,6 +81,7 @@ function UpdateUserDetailsModal({
             onSelect={(button) => {
               setNewPayFrequency(button);
             }}
+            className={"w-full flex justify-around items-center mt-1"}
           />
         </div>
 

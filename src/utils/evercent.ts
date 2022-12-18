@@ -229,17 +229,22 @@ export const getAdjustedAmount = (
           cat.categoryID == category.categoryID.toLowerCase()
         );
       })[0];
-    // console.log("strDueDate    ", strDueDate);
-    // console.log("strNextPaydate", strNextPaydate);
-    // console.log("strToday      ", strToday);
+    console.log("strDueDate    ", strDueDate);
+    console.log("strNextPaydate", strNextPaydate);
+    console.log("strToday      ", strToday);
     // console.log("bmCat", bmCat);
 
     // Check "budgetMonths" for this category on the month of the nextDueDate
     // to see if the amount needed for the category has already been met
     //   If it has, the number of months should be calculated from the repeatFreqNum/repeatFreqType
     //   If it hasn't, the number of months should be calculated from the user's nextPayDate to the nextDueDate
-    let amountNeeded = category.amount - bmCat.available;
-    // console.log("amountNeeded", amountNeeded);
+    let availableInBudget = bmCat.available;
+    if (availableInBudget < 0) {
+      availableInBudget = 0;
+    }
+    let amountNeeded = category.amount - availableInBudget;
+    console.log("category.amount", category.amount);
+    console.log("amountNeeded", amountNeeded);
     let numMonths = 1;
     if (amountNeeded <= 0) {
       numMonths =
@@ -249,8 +254,8 @@ export const getAdjustedAmount = (
     } else {
       numMonths = differenceInMonths(dtNextDueDate, dtNextPaydate) + 1;
     }
-    // console.log("amountNeeded again", amountNeeded);
-    // console.log("numMonths", numMonths);
+    console.log("amountNeeded again", amountNeeded);
+    console.log("numMonths", numMonths);
 
     let sameMonth = strNextPaydate == strDueDate && strDueDate == strToday; // check if nextDueDate and today are the same month
     if (
@@ -260,7 +265,7 @@ export const getAdjustedAmount = (
     ) {
       numMonths -= 1;
     }
-    // console.log("numMonths again", numMonths);
+    console.log("numMonths again", numMonths);
 
     adjustedAmt = amountNeeded / numMonths;
 

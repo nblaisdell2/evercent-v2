@@ -3,24 +3,11 @@ import { PostingMonth } from "../utils/evercent";
 import { getMoneyString, getPercentString } from "../utils/utils";
 import Label from "./elements/Label";
 import LabelAndValue from "./elements/LabelAndValue";
+import PostingMonthBreakdown from "./PostingMonthBreakdown";
 
-type Props = {};
+type Props = { months: PostingMonth[] };
 
-function BudgetAutomationWidget({}: Props) {
-  const months: PostingMonth[] = [
-    { month: "August 2022", amount: 160, percentAmount: 17 },
-    { month: "September 2022", amount: 160, percentAmount: 17 },
-    { month: "October 2022", amount: 160, percentAmount: 17 },
-    { month: "November 2022", amount: 160, percentAmount: 17 },
-    { month: "December 2022", amount: 160, percentAmount: 17 },
-    { month: "January 2023", amount: 160, percentAmount: 17 },
-  ];
-  months.push({
-    month: "Total",
-    amount: months.reduce((prev, curr) => prev + curr.amount, 0),
-    percentAmount: months.reduce((prev, curr) => prev + curr.percentAmount, 0),
-  });
-
+function BudgetAutomationWidget({ months }: Props) {
   return (
     <>
       {/* Web Version */}
@@ -30,17 +17,17 @@ function BudgetAutomationWidget({}: Props) {
             <LabelAndValue
               label={"Next Auto Run"}
               value={"08/04/2022"}
-              classNameValue={"text-2xl sm:text-3xl"}
+              classNameValue={"text-2xl"}
             />
             <LabelAndValue
               label={"Run Time"}
               value={"7:00AM"}
-              classNameValue={"text-2xl sm:text-3xl"}
+              classNameValue={"text-2xl"}
             />
             <LabelAndValue
               label={"Time Left"}
               value={"2 days 13 hours"}
-              classNameValue={"text-2xl sm:text-3xl"}
+              classNameValue={"text-2xl"}
             />
           </div>
           <div className="flex justify-around h-full mt-3">
@@ -63,24 +50,7 @@ function BudgetAutomationWidget({}: Props) {
                 label={"Posting Month Breakdown"}
                 className="text-sm sm:text-xl whitespace-pre-wrap text-center"
               />
-              {months.map((m) => {
-                return (
-                  <>
-                    {m.month == "Total" && <div className="h-[1px] bg-black" />}
-                    <div className="flex justify-between" key={m.month}>
-                      <div className="font-semibold text-xl flex-grow ">
-                        {m.month}
-                      </div>
-                      <div className="w-16 text-right font-semibold text-xl  text-green-500">
-                        {getMoneyString(m.amount)}
-                      </div>
-                      <div className="w-16 text-right font-semibold text-xl ">
-                        {getPercentString(m.percentAmount / 100)}
-                      </div>
-                    </div>
-                  </>
-                );
-              })}
+              <PostingMonthBreakdown months={months} />
             </div>
           </div>
         </div>

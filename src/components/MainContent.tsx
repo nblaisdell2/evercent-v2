@@ -18,6 +18,7 @@ import {
   YNABBugdetMonth,
   CategoryListGroup,
   UserData,
+  PostingMonth,
 } from "../utils/evercent";
 import { CheckboxItem } from "./elements/CheckBoxGroup";
 
@@ -154,6 +155,20 @@ function MainContent({
     }
   };
 
+  const months: PostingMonth[] = [
+    { month: "August 2022", amount: 160, percentAmount: 17 },
+    { month: "September 2022", amount: 160, percentAmount: 17 },
+    { month: "October 2022", amount: 160, percentAmount: 17 },
+    { month: "November 2022", amount: 160, percentAmount: 17 },
+    { month: "December 2022", amount: 160, percentAmount: 17 },
+    { month: "January 2023", amount: 160, percentAmount: 17 },
+  ];
+  months.push({
+    month: "Total",
+    amount: months.reduce((prev, curr) => prev + curr.amount, 0),
+    percentAmount: months.reduce((prev, curr) => prev + curr.percentAmount, 0),
+  });
+
   if (!categoryList) {
     return <div className="hidden sm:block bg-[#D1F5FF] h-full w-full"></div>;
   }
@@ -188,9 +203,12 @@ function MainContent({
             {/* Box 2 - Budget Automation */}
             {widgetBox(
               "Budget Automation",
-              <BudgetAutomationWidget />,
+              <BudgetAutomationWidget months={months} />,
               ModalType.BUDGET_AUTOMATION,
-              <BudgetAutomationFull />,
+              <BudgetAutomationFull
+                months={months}
+                closeModal={closeModalBA}
+              />,
               isOpenBA,
               showModalBA,
               closeModalBA

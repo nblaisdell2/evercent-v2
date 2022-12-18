@@ -102,7 +102,12 @@ function AllCategoriesEditable({
       <Card className="relative w-full my-2 h-full">
         {!loading && items && (
           <div className="absolute p-1 top-1 bottom-1 right-0 left-0 overflow-y-auto">
-            <CheckBoxGroup items={items} setItems={setItems} />
+            <CheckBoxGroup
+              items={items}
+              setItems={setItems}
+              getRowContent={(item: CheckboxItem) => <span>{item.name}</span>}
+              showCheckboxes={true}
+            />
           </div>
         )}
       </Card>

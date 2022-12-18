@@ -9,6 +9,7 @@ module.exports = {
         arima: ["Arima Madurai", "cursive"],
         anonymous: ["Anonymous Pro", "monospace"],
         cinzel: ["Cinzel", "serif"],
+        mplus: ["'M PLUS 1p'", "sans-serif"],
       },
     },
   },

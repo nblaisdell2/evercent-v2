@@ -11,9 +11,20 @@ export type CheckboxItem = {
 type Props = {
   items: CheckboxItem[];
   setItems: (newItems: CheckboxItem[]) => void;
+  getRowContent: (item: CheckboxItem, indent: number) => JSX.Element;
+  showCheckboxes: boolean;
+  onSelect?: (selectedItem: CheckboxItem, selectedIndex: number) => void;
+  selectedIndex?: number;
 };
 
-function CheckBoxGroup({ items, setItems }: Props) {
+function CheckBoxGroup({
+  items,
+  setItems,
+  getRowContent,
+  showCheckboxes,
+  onSelect,
+  selectedIndex,
+}: Props) {
   const [hoveredItems, setHoveredItems] = useState<string[]>([]);
 
   const getChildIDs = (item: CheckboxItem, includeSelf: boolean) => {
@@ -72,14 +83,31 @@ function CheckBoxGroup({ items, setItems }: Props) {
           return itm.selected;
         });
 
-    let parentIsHovered = hoveredItems.includes(item.id);
+    // console.log("checkbox", { item: item.name, isDet, isAll });
 
+    let parentIsHovered = hoveredItems.includes(item.id);
+    const itemIdx = items.findIndex((itm) => itm.id == item.id);
     return (
       <div
-        style={{ paddingLeft: (LEFT_MARGIN_PIXELS * indent).toString() + "px" }}
-        className={`cursor-pointer ${
-          isGroup && "font-bold"
-        } flex items-center group`}
+        style={{
+          paddingLeft: (LEFT_MARGIN_PIXELS * indent + 2).toString() + "px",
+        }}
+        className={`${
+          showCheckboxes ? "cursor-pointer" : "cursor-default"
+        } flex items-center group ${
+          !showCheckboxes && indent == 1 && "hover:cursor-pointer rounded-md"
+        } ${
+          !showCheckboxes &&
+          indent == 1 &&
+          selectedIndex != itemIdx &&
+          "hover:bg-gray-200"
+        }
+        } ${
+          !showCheckboxes &&
+          indent == 1 &&
+          selectedIndex == itemIdx &&
+          "bg-blue-900 text-white font-bold"
+        }`}
         onClick={() => {
           let newItems = [...items];
           let toggle = !item.selected;
@@ -110,6 +138,12 @@ function CheckBoxGroup({ items, setItems }: Props) {
           //     })
           //   );
           setItems(newItems);
+
+          if (indent == 1) {
+            console.log({ selectedIndex, itemIdx, item });
+            // setCategoryMonthListIndex(itemIdx);
+          }
+          if (onSelect) onSelect(item, itemIdx);
         }}
         onMouseEnter={() => {
           setHoveredItems(getChildIDs(item, true));
@@ -118,29 +152,28 @@ function CheckBoxGroup({ items, setItems }: Props) {
           setHoveredItems([]);
         }}
       >
-        <div
-          className={`flex justify-center items-center bg-blue-900 h-4 w-4 border border-gray-400 rounded-[4px] mr-1 ${
-            item.selected || isDet
-              ? "bg-opacity-100 text-white"
-              : parentIsHovered
-              ? "bg-opacity-50"
-              : "bg-opacity-0"
-          } ${
-            item.selected
-              ? "group-hover:bg-opacity-100"
-              : "group-hover:bg-opacity-50"
-          }`}
-        >
-          {isDet && !isAll && !parentIsHovered ? (
-            <MinusIcon className={`h-4 w-4 text-white stroke-2`} />
-          ) : (
-            <CheckIcon className={`h-4 w-4 text-white stroke-2`} />
-          )}
-        </div>
-        <span>
-          {"  "}
-          {item.name}
-        </span>
+        {showCheckboxes && (
+          <div
+            className={`flex justify-center items-center bg-blue-900 h-4 w-4 border border-gray-400 rounded-[4px] mr-1 ${
+              item.selected || isDet
+                ? "bg-opacity-100 text-white"
+                : parentIsHovered
+                ? "bg-opacity-50"
+                : "bg-opacity-0"
+            } ${
+              item.selected
+                ? "group-hover:bg-opacity-100"
+                : "group-hover:bg-opacity-50"
+            }`}
+          >
+            {isDet && !isAll && !parentIsHovered ? (
+              <MinusIcon className={`h-4 w-4 text-white stroke-2`} />
+            ) : (
+              <CheckIcon className={`h-4 w-4 text-white stroke-2`} />
+            )}
+          </div>
+        )}
+        {getRowContent(item, indent)}
       </div>
     );
   };

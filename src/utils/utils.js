@@ -22,6 +22,7 @@ export const ModalType = {
   REGULAR_EXPENSES: 7,
   UPCOMING_EXPENSES: 8,
   BUDGET_HELPER_CHECK: 9,
+  CHANGE_AUTOMATION_SCHEDULE: 10,
 };
 
 // ========================= //
@@ -137,10 +138,10 @@ export function calculatePercentage(numerator, denominator) {
 // ======== STRINGS ======== //
 // ========================= //
 export function getMoneyString(amount, digits = 0) {
-  if (amount % 1 > 0) {
-    return "$" + amount.toFixed(digits);
-  }
-  return "$" + amount.toFixed(0);
+  // if (amount % 1 > 0) {
+  //   return "$" + amount.toFixed(digits);
+  // }
+  return "$" + amount.toFixed(digits);
 }
 
 export function calculatePercentString(numerator, denominator, digits = 0) {
