@@ -8,7 +8,7 @@ function CancelAutomationModal({ closeModal }: Props) {
       <div className="text-center font-extrabold text-3xl mb-2">
         Cancel Automation?
       </div>
-      <div className="mb-8">
+      <div className="mb-8 text-sm sm:text-base">
         If you need to <span className="font-bold">turn off</span> the budget
         automation temporarily, you can cancel it with the button below. This
         will cancel any upcoming runs so that you can manually interact with
@@ -21,7 +21,7 @@ function CancelAutomationModal({ closeModal }: Props) {
       <div className="font-bold underline text-xl">
         Special Note about Locked Runs
       </div>
-      <div className="mb-4">
+      <div className="mb-4 text-sm sm:text-base">
         One hour before an automation run starts, the amount details will be
         locked, so any changes to the Budget Helper section won’t affect what
         gets posted.

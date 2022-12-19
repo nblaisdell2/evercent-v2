@@ -143,7 +143,7 @@ function CheckBoxGroup({
             console.log({ selectedIndex, itemIdx, item });
             // setCategoryMonthListIndex(itemIdx);
           }
-          if (onSelect) onSelect(item, itemIdx);
+          if (onSelect && indent == 1) onSelect(item, itemIdx);
         }}
         onMouseEnter={() => {
           setHoveredItems(getChildIDs(item, true));

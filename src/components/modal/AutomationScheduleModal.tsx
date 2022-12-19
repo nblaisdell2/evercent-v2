@@ -25,7 +25,7 @@ function AutomationScheduleModal({ closeModal }: Props) {
       <div className="flex flex-col justify-center space-y-10 flex-grow">
         <Label
           label={"What time on paydate should the automation run?"}
-          className={"text-xl"}
+          className={"text-lg sm:text-xl whitespace-pre-wrap"}
         />
         <div className="flex items-center justify-center">
           <MySelect
@@ -60,7 +60,7 @@ function AutomationScheduleModal({ closeModal }: Props) {
         <div className="flex justify-around">
           <button
             onClick={() => {}}
-            className={`inset-x-0 h-auto px-2 py-1 w-[35%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+            className={`px-2 py-1 w-[45%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div
               className="flex justify-center items-center"
@@ -78,7 +78,7 @@ function AutomationScheduleModal({ closeModal }: Props) {
           </button>
           <button
             onClick={() => {}}
-            className={`inset-x-0 h-auto px-2 py-1 w-[35%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+            className={`px-2 py-1 w-[45%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div
               className="flex justify-center items-center"

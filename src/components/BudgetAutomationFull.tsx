@@ -110,7 +110,8 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
 
   return (
     <>
-      <div className="h-full w-full ">
+      {/* Web Version */}
+      <div className="h-full w-full hidden sm:block">
         <div className="flex h-[25%]">
           {/* Top Left - Upcoming/Past */}
           <div className="w-[65%] flex flex-col p-2">
@@ -121,6 +122,10 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                 rightValue={"Past Runs"}
                 onToggle={(toggleValue: boolean) => {
                   setShowUpcoming(toggleValue);
+                  if (toggleValue) {
+                    setCategoryMonthListIndex(-1);
+                    setSelectedItem(null);
+                  }
                 }}
               />
               <div className="flex font-mplus text-sm italic h-10 w-96 items-end">
@@ -245,7 +250,7 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
           </div>
         </div>
         <div className="flex h-[75%]">
-          {/* Bottom Left */}
+          {/* Bottom Left - Amounts Posted to Budget */}
           <div className="flex flex-col space-y-2 w-[50%] p-2">
             <div className="text-center font-mplus text-3xl font-extrabold">
               Amounts Posted to Budget
@@ -279,14 +284,16 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                   selectedItem: CheckboxItem,
                   selectedIndex: number
                 ) => {
-                  setCategoryMonthListIndex(selectedIndex);
-                  setSelectedItem(selectedItem);
+                  if (!showUpcoming) {
+                    setCategoryMonthListIndex(selectedIndex);
+                    setSelectedItem(selectedItem);
+                  }
                 }}
                 selectedIndex={categoryMonthListIndex}
               />
             </Card>
           </div>
-          {/* Bottom Right */}
+          {/* Bottom Right - Overview Section */}
           <div className="flex flex-col space-y-2 w-[50%] p-2">
             <Card className="flex flex-col flex-grow p-2 overflow-y-auto">
               {!selectedItem ? (
@@ -408,6 +415,187 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Mobile Version */}
+      <div className="h-full w-full flex flex-col sm:hidden">
+        <div className="mt-2 border-b border-gray-400">
+          <div className="flex w-full items-center justify-center mb-1">
+            <div className="flex font-mplus text-2xl font-extrabold">
+              Schedule
+            </div>
+            <PencilSquareIcon
+              className="h-8 w-8 stroke-2 ml-1 hover:cursor-pointer"
+              onClick={() => {
+                showModalSchedule();
+              }}
+            />
+          </div>
+
+          <div className="flex justify-around">
+            <div className="w-[50%]">
+              <LabelAndValue
+                label={"Next Auto Run"}
+                value={"08/04/2022"}
+                classNameValue={"font-mplus text-lg"}
+              />
+            </div>
+            <div className="w-[50%]">
+              <LabelAndValue
+                label={"Run Time"}
+                value={"7:00AM"}
+                classNameValue={"font-mplus text-lg"}
+              />
+            </div>
+            <div className="w-[50%] text-center">
+              <LabelAndValue
+                label={"Time Left"}
+                value={
+                  <div>
+                    <div className="-mb-2">13 days</div>
+                    <div>13 hours</div>
+                  </div>
+                }
+                classNameValue={"font-mplus text-lg"}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col p-2">
+          <div className="flex items-center justify-around mb-2">
+            <MyToggleButton
+              leftSideTrue={showUpcoming}
+              leftValue={"Upcoming Runs"}
+              rightValue={"Past Runs"}
+              onToggle={(toggleValue: boolean) => {
+                setShowUpcoming(toggleValue);
+                if (toggleValue) {
+                  setCategoryMonthListIndex(-1);
+                  setSelectedItem(null);
+                }
+              }}
+            />
+            <div className="flex font-mplus text-xs italic h-12 w-96 items-center text-right">
+              {showUpcoming ? (
+                <div>Here are the next 10 upcoming paydates</div>
+              ) : (
+                <div>
+                  <span className="font-bold">Click</span> on a past paydate
+                  below to see what was posted to the budget
+                </div>
+              )}
+            </div>
+          </div>
+          <Card className="font-mplus flex flex-col w-full h-28 p-1 overflow-y-auto">
+            <div className="flex w-full justify-around font-bold border-b border-black">
+              <div className="w-full text-center">Date</div>
+              <div className="w-full text-center">Time</div>
+              {!showUpcoming && (
+                <div className="w-full text-center">Total Amount</div>
+              )}
+            </div>
+            <div className="overflow-y-auto no-scrollbar">
+              {runTimes.map((rt: any, i: number) => {
+                return (
+                  <div
+                    className={`flex w-full justify-around rounded-md ${
+                      i == (showUpcoming ? 0 : pastRunListIndex) && "font-bold"
+                    } ${
+                      !showUpcoming &&
+                      i == pastRunListIndex &&
+                      "bg-gray-200 hover:bg-gray-200"
+                    } ${!showUpcoming && "hover:cursor-pointer"} ${
+                      !showUpcoming &&
+                      i != pastRunListIndex &&
+                      "hover:bg-gray-100"
+                    }
+                    }`}
+                    key={i}
+                    onClick={() => setPastRunListIndex(i)}
+                  >
+                    <div className={`w-full text-center`}>08/07/2022</div>
+                    <div className={`w-full text-center`}>7:00AM</div>
+                    {!showUpcoming && (
+                      <div className="w-full text-center text-green-500">
+                        $960
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </div>
+
+        <div className="flex flex-col flex-grow overflow-y-auto space-y-2 p-2">
+          <div className="text-center font-mplus text-2xl font-extrabold">
+            Amounts Posted to Budget
+          </div>
+          <div className="flex justify-evenly">
+            <LabelAndValue
+              label={"Run Time"}
+              value={"08/07/2022 @ 7:00AM"}
+              classNameValue={"font-mplus text-base"}
+            />
+            <LabelAndValue
+              label={"Total"}
+              value={getMoneyString(960)}
+              classNameValue={"font-mplus text-base text-green-600"}
+            />
+            {showUpcoming && (
+              <LabelAndValue
+                label={"Locked?"}
+                value={"Yes"}
+                classNameValue={"font-mplus text-base"}
+              />
+            )}
+          </div>
+          <Card className="flex-grow p-2 overflow-y-auto no-scrollbar">
+            <CheckBoxGroup
+              items={monthList}
+              setItems={setMonthList}
+              getRowContent={getRowContent}
+              showCheckboxes={showUpcoming}
+              onSelect={(selectedItem: CheckboxItem, selectedIndex: number) => {
+                if (!showUpcoming) {
+                  setCategoryMonthListIndex(selectedIndex);
+                  setSelectedItem(selectedItem);
+                }
+              }}
+              selectedIndex={categoryMonthListIndex}
+            />
+          </Card>
+        </div>
+
+        <div className="flex space-x-4 justify-evenly w-full">
+          <button
+            onClick={() => {
+              closeModal();
+            }}
+            className={`inset-x-0 h-auto px-2 py-1 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+          >
+            <div className="flex justify-center items-center">
+              <CheckIcon className="h-10 w-10 text-green-600 stroke-2 mr-1" />
+              <div className="font-semibold text-sm">Save & Exit</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {}}
+            className={`inset-x-0 h-auto px-2 py-1 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+          >
+            <div
+              className="flex justify-center items-center"
+              onClick={() => {
+                showModalCancel();
+              }}
+            >
+              <MinusCircleIcon className="h-10 w-10 text-red-600 stroke-2 mr-1" />
+              <div className="font-semibold text-sm">Cancel Automation</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
       {isOpenCancel && (
         <ModalContent
           onClose={closeModalCancel}
@@ -416,6 +604,7 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
           <CancelAutomationModal closeModal={closeModalCancel} />
         </ModalContent>
       )}
+
       {isOpenSchedule && (
         <ModalContent
           onClose={closeModalSchedule}
