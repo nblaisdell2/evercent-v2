@@ -163,7 +163,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"Amount Saved"}
                     value={"$100"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-3xl"}
                   />
                 </Card>
                 <Card className="flex justify-center items-center w-[40%] h-24">
@@ -171,7 +171,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"Total Amount"}
                     value={"$500"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-3xl"}
                   />
                 </Card>
               </div>
@@ -181,7 +181,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"% Saved"}
                     value={"67%"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-3xl"}
                   />
                 </Card>
                 <Card className="flex justify-center items-center w-[40%] h-24">
@@ -189,7 +189,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"Purchase Date"}
                     value={"09/29/2022"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-xl"}
                   />
                 </Card>
               </div>
@@ -199,7 +199,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"Days Left"}
                     value={"44"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-3xl"}
                   />
                 </Card>
                 <Card className="flex justify-center items-center w-[40%] h-24">
@@ -207,7 +207,7 @@ function UpcomingExpensesFull({}: Props) {
                     label={"Paychecks Left"}
                     value={"3"}
                     classNameLabel={"text-lg"}
-                    classNameValue={"font-mplus text-2xl"}
+                    classNameValue={"font-mplus text-3xl"}
                   />
                 </Card>
               </div>
