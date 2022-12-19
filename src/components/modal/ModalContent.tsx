@@ -54,7 +54,7 @@ function ModalContent({
           </div>
           <XMarkIcon className="h-6 w-6 justify-center stroke-2 hover:cursor-pointer hover:text-red-600" />
         </div>
-        <div id="modalContent" className="relative h-[95%]">
+        <div id="modalContent" className="relative h-[94%]">
           {children}
         </div>
       </div>
