@@ -2,12 +2,22 @@ import React from "react";
 import { PostingMonth } from "../utils/evercent";
 import { getMoneyString, getPercentString } from "../utils/utils";
 
-type Props = { months: PostingMonth[]; showPercent: boolean };
+type Props = {
+  months: PostingMonth[];
+  showPercent: boolean;
+  showTotal?: boolean | undefined;
+};
 
-function PostingMonthBreakdown({ months, showPercent }: Props) {
+function PostingMonthBreakdown({ months, showPercent, showTotal }: Props) {
+  if (showTotal == undefined) {
+    showTotal = true;
+  }
+
+  const newMonths = months.filter((m) => m.month != (showTotal ? "" : "Total"));
+
   return (
     <>
-      {months.map((m) => {
+      {newMonths.map((m) => {
         return (
           <>
             {m.month == "Total" && <div className="h-[1px] bg-black" />}

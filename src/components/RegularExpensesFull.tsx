@@ -186,11 +186,12 @@ function RegularExpensesFull({}: Props) {
       case 0:
         return (
           <div
-            className={`flex flex-grow justify-between font-mplus py-[1px] font-extrabold ${
-              isCollapsible && "hover: hover:cursor-pointer rounded-lg"
+            className={`flex flex-grow justify-between font-mplus py-[1px] text-sm sm:text-base font-extrabold ${
+              isCollapsible &&
+              "hover:bg-gray-200 hover:cursor-pointer rounded-lg"
             }`}
           >
-            <div style={indentStyle} className="w-[50%] flex">
+            <div style={indentStyle} className="w-[50%] flex items-center">
               {isCollapsible &&
                 (item.expanded ? (
                   <ChevronDownIcon className="h-4 sm:h-6 w-4 sm:w-6" />
@@ -213,13 +214,13 @@ function RegularExpensesFull({}: Props) {
       case 1:
         return !isCollapsible || (isCollapsible && parentsAreExpanded(item)) ? (
           <div
-            className={`flex flex-grow justify-between font-mplus py-[1px] ${
+            className={`flex flex-grow justify-between font-mplus py-[1px] text-sm sm:text-base ${
               isCollapsible &&
               !hovered &&
-              "hover: hover:cursor-pointer rounded-lg"
+              "hover:bg-gray-200 hover:cursor-pointer rounded-lg"
             }`}
           >
-            <div style={indentStyle} className="w-[50%] flex">
+            <div style={indentStyle} className="w-[50%] flex items-center">
               {isCollapsible &&
                 (item.expanded ? (
                   <ChevronDownIcon className="h-4 sm:h-6 w-4 sm:w-6" />
@@ -232,7 +233,7 @@ function RegularExpensesFull({}: Props) {
               <div className="w-[17%]">
                 <div className="h-6 flex items-center border-2 border-blue-900 rounded-lg font-bold text-sm sm:text-base">
                   <div
-                    className={`flex-grow border-r border-blue-900 rounded-tr-none rounded-br-none rounded-lg text-center hover:cursor-pointer hover:bg-blue-900 ${
+                    className={`flex-grow border-r rounded-tl-md rounded-bl-md border-blue-900 text-center hover:cursor-pointer hover:bg-blue-900 ${
                       clicked?.id == item.id
                         ? "hover:opacity-100"
                         : "hover:opacity-60"
@@ -254,7 +255,7 @@ function RegularExpensesFull({}: Props) {
                     <div className="unselectable">-</div>
                   </div>
                   <div
-                    className={`flex-grow border-l border-blue-900 rounded-tl-none rounded-bl-none rounded-lg text-center hover:cursor-pointer hover:bg-blue-900 ${
+                    className={`flex-grow border-l border-blue-900 rounded-tr-md rounded-br-md text-center hover:cursor-pointer hover:bg-blue-900 ${
                       clicked?.id == item.id
                         ? "hover:opacity-100"
                         : "hover:opacity-60"
@@ -296,7 +297,7 @@ function RegularExpensesFull({}: Props) {
         );
       case 2:
         return !isCollapsible || (isCollapsible && parentsAreExpanded(item)) ? (
-          <div className="flex flex-grow justify-between font-mplus py-[1px] text-gray-400 text-sm">
+          <div className="flex flex-grow justify-between font-mplus py-[1px] text-gray-400 text-xs sm:text-sm">
             <div style={indentStyle} className="w-[50%] flex">
               <div className="pl-4">{item.name}</div>
             </div>
@@ -320,9 +321,9 @@ function RegularExpensesFull({}: Props) {
 
   return (
     <>
-      <div className="h-full flex font-mplus p-2 space-x-2">
+      <div className="h-full flex font-mplus p-2 space-x-0 sm:space-x-2">
         {/* Chart */}
-        <Card className="flex flex-col w-[60%] p-1">
+        <Card className="hidden sm:flex flex-col w-[60%] p-1">
           <div className="text-center font-bold text-3xl mb-2">
             Regular Expenses Progress
           </div>
@@ -568,16 +569,26 @@ function RegularExpensesFull({}: Props) {
         <div className="flex flex-col flex-grow space-y-2">
           {/* Overview */}
           <Card className="p-1">
-            <div className="text-center font-bold text-3xl mb-2">Overview</div>
+            <div className="text-center font-bold text-2xl sm:text-3xl mb-2">
+              Overview
+            </div>
             <div className="flex justify-around pb-1">
               <LabelAndValue
-                label={<div>Months Ahead Target</div>}
+                label={
+                  <div>
+                    Months Ahead
+                    <br />
+                    Target
+                  </div>
+                }
                 value={
                   !editingTarget ? (
                     <div className="flex items-center">
-                      <div className="text-3xl">{currentTarget}</div>
+                      <div className="text-2xl sm:text-3xl">
+                        {currentTarget}
+                      </div>
                       <PencilSquareIcon
-                        className="h-8 w-8 ml-1 hover:cursor-pointer"
+                        className="h-6 sm:h-8 w-6 sm:w-8 ml-1 hover:cursor-pointer"
                         onClick={() => {
                           setEditingTarget(true);
                         }}
@@ -631,13 +642,14 @@ function RegularExpensesFull({}: Props) {
               <LabelAndValue
                 label={
                   <div>
-                    # of Regular Expense
+                    # of Regular
                     <br />
-                    Categories
+                    Expense Categories
                   </div>
                 }
                 value={"28"}
-                classNameValue={"text-3xl"}
+                classNameLabel={"block"}
+                classNameValue={"text-2xl sm:text-3xl"}
               />
 
               {/* Vertical Divider */}
@@ -646,15 +658,15 @@ function RegularExpensesFull({}: Props) {
               <LabelAndValue
                 label={
                   <div>
-                    Regular Expenses w/
+                    Regular Expenses
                     <br />
-                    Target Met
+                    w/ Target Met
                   </div>
                 }
                 value={
                   <div className="flex items-center">
-                    <div className="text-3xl">16</div>
-                    <div className="text-lg ml-1">(57%)</div>
+                    <div className="text-2xl sm:text-3xl">16</div>
+                    <div className="text-base sm:text-lg ml-1">(57%)</div>
                   </div>
                 }
               />
@@ -665,84 +677,169 @@ function RegularExpensesFull({}: Props) {
           <Card className="flex flex-col h-full p-2 space-y-2">
             {!isPosting ? (
               <>
-                <div className="text-center font-bold text-3xl">Details</div>
-                <div className="flex justify-around items-center">
-                  {!resetProgress ? (
-                    <>
-                      <LabelAndValue
-                        label={
-                          <div className="leading-6">
-                            Total Saved for
-                            <br />
-                            Future Months
-                          </div>
-                        }
-                        value={"$160"}
-                        classNameLabel={"line"}
-                        classNameValue={"text-green-500 text-2xl"}
-                      />
-                      <LabelAndValue
-                        label={"Total Saved by Month"}
-                        value={
-                          <PostingMonthBreakdown
-                            months={months}
-                            showPercent={false}
-                          />
-                        }
-                        classNameValue={""}
-                      />
+                <div className="hidden sm:block">
+                  <div className="text-center font-bold text-3xl">Details</div>
+                  <div className="flex justify-around items-center">
+                    {!resetProgress ? (
+                      <>
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Total Saved for
+                              <br />
+                              Future Months
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameLabel={"line"}
+                          classNameValue={"text-green-500 text-2xl"}
+                        />
+                        <LabelAndValue
+                          label={"Total Saved by Month"}
+                          value={
+                            <PostingMonthBreakdown
+                              months={months}
+                              showPercent={false}
+                            />
+                          }
+                          classNameValue={""}
+                        />
 
-                      <button
-                        onClick={showModal}
-                        className={`px-2 py-1 h-fit bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-                      >
-                        <div className="flex justify-center items-center">
-                          <QuestionMarkCircleIcon className="h-10 w-10 text-purple-600 stroke-2 mr-1" />
-                          <div className="font-semibold text-base">
-                            Reset
-                            <br />
-                            Progress
+                        <button
+                          onClick={showModal}
+                          className={`px-2 py-1 h-fit bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                        >
+                          <div className="flex justify-center items-center">
+                            <QuestionMarkCircleIcon className="h-10 w-10 text-purple-600 stroke-2 mr-1" />
+                            <div className="font-semibold text-base">
+                              Reset
+                              <br />
+                              Progress
+                            </div>
                           </div>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Total Amount Available
+                              <br />
+                              in Budget
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-green-500 text-2xl"}
+                        />
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Amount
+                              <br />
+                              Used
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-2xl"}
+                        />
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Amount
+                              <br />
+                              Remaining
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-green-500 text-2xl"}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="block sm:hidden w-full">
+                  <div className="text-center font-bold text-3xl">Details</div>
+                  <div className="flex w-full items-center">
+                    {!resetProgress ? (
+                      <div className="flex flex-col w-full">
+                        <div className="flex justify-around items-center">
+                          <LabelAndValue
+                            label={
+                              <div className="leading-5">
+                                Total Saved for
+                                <br />
+                                Future Months
+                              </div>
+                            }
+                            value={"$160"}
+                            classNameLabel={"line"}
+                            classNameValue={"text-green-500 text-2xl"}
+                          />
+                          <LabelAndValue
+                            label={"Total Saved by Month"}
+                            value={
+                              <PostingMonthBreakdown
+                                months={months}
+                                showPercent={false}
+                                showTotal={false}
+                              />
+                            }
+                            classNameValue={"-space-y-1 sm:space-y-0"}
+                          />
                         </div>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <LabelAndValue
-                        label={
-                          <div className="leading-6">
-                            Total Amount Available
-                            <br />
-                            in Budget
+
+                        <button
+                          onClick={showModal}
+                          className={`px-2 py-1 mt-1 h-fit bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                        >
+                          <div className="flex justify-center items-center">
+                            <QuestionMarkCircleIcon className="h-10 w-10 text-purple-600 stroke-2 mr-1" />
+                            <div className="font-semibold text-base">
+                              Reset Progress
+                            </div>
                           </div>
-                        }
-                        value={"$160"}
-                        classNameValue={"text-green-500 text-2xl"}
-                      />
-                      <LabelAndValue
-                        label={
-                          <div className="leading-6">
-                            Amount
-                            <br />
-                            Used
-                          </div>
-                        }
-                        value={"$160"}
-                        classNameValue={"text-2xl"}
-                      />
-                      <LabelAndValue
-                        label={
-                          <div className="leading-6">
-                            Amount
-                            <br />
-                            Remaining
-                          </div>
-                        }
-                        value={"$160"}
-                        classNameValue={"text-green-500 text-2xl"}
-                      />
-                    </>
-                  )}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex justify-around w-full">
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Total Amount
+                              <br />
+                              Available in Budget
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-green-500 text-2xl"}
+                        />
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Amount
+                              <br />
+                              Used
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-2xl"}
+                        />
+                        <LabelAndValue
+                          label={
+                            <div className="leading-6">
+                              Amount
+                              <br />
+                              Remaining
+                            </div>
+                          }
+                          value={"$160"}
+                          classNameValue={"text-green-500 text-2xl"}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* NOTE: 
@@ -753,14 +850,16 @@ function RegularExpensesFull({}: Props) {
                 {/* TABLE STARTS HERE */}
                 <div className="flex flex-col h-0 flex-grow ">
                   <div className="flex items-center border-t border-b border-black py-1">
-                    <div className={`w-[50%] font-bold text-lg pl-6`}>
+                    <div
+                      className={`w-[50%] font-bold text-sm sm:text-lg pl-3 sm:pl-6`}
+                    >
                       Category
                     </div>
                     {resetProgress && (
                       <div
-                        className={`w-[17%] font-bold text-lg text-center pr-2 leading-5`}
+                        className={`w-[17%] font-bold text-sm sm:text-lg text-center pr-2 leading-5`}
                       >
-                        Add/
+                        Add
                         <br />
                         Remove
                       </div>
@@ -768,7 +867,7 @@ function RegularExpensesFull({}: Props) {
                     <div
                       className={`${
                         resetProgress ? "w-[17%]" : "w-[25%]"
-                      } font-bold text-lg text-center pr-2 leading-5`}
+                      } font-bold text-sm sm:text-lg text-center pr-2 leading-5`}
                     >
                       # of
                       <br />
@@ -777,7 +876,7 @@ function RegularExpensesFull({}: Props) {
                     <div
                       className={`${
                         resetProgress ? "w-[17%]" : "w-[25%]"
-                      } font-bold text-lg text-right pr-2 leading-5`}
+                      } font-bold text-sm sm:text-lg text-right pr-2 leading-5`}
                     >
                       Total
                       <br />
@@ -814,13 +913,15 @@ function RegularExpensesFull({}: Props) {
                       <div className="flex justify-center items-center">
                         <CheckIcon className="h-10 w-10 text-green-600 stroke-2 mr-1" />
                         <div className="font-semibold text-base">
-                          Post Amounts to Budget
+                          Post Amounts
+                          <br />
+                          to Budget
                         </div>
                       </div>
                     </button>
                     <button
                       onClick={() => setResetProgress(false)}
-                      className={`px-2 py-1 w-[45%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
+                      className={`px-2 py-1 w-[45%] h-full bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
                     >
                       <div className="flex justify-center items-center">
                         <MinusCircleIcon className="h-10 w-10 text-red-600 stroke-2 mr-1" />
