@@ -1,14 +1,14 @@
 import React from "react";
 
 type Props = {
-  label: string;
+  label: any;
   className?: string;
 };
 
 function Label({ label, className }: Props) {
   return (
     <div
-      className={`font-raleway text-black whitespace-nowrap sm:whitespace-normal font-bold underline ${
+      className={`font-raleway text-black sm:whitespace-normal font-bold underline ${
         className || ""
       }`}
     >

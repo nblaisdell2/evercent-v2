@@ -2,7 +2,7 @@ import React from "react";
 import Label from "./Label";
 
 type Props = {
-  label: string;
+  label: any;
   value: any;
   classNameLabel?: string;
   classNameValue?: string;

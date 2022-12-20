@@ -1,18 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { CheckIcon, MinusIcon } from "@heroicons/react/24/outline";
+import MyCheckbox from "./MyCheckbox";
 
 export type CheckboxItem = {
   parentId: string;
   id: string;
   name: string;
   selected?: boolean;
+  expanded?: boolean;
 };
 
 type Props = {
   items: CheckboxItem[];
   setItems: (newItems: CheckboxItem[]) => void;
-  getRowContent: (item: CheckboxItem, indent: number) => JSX.Element;
+  getRowContent: (
+    item: CheckboxItem,
+    indent: number,
+    isCollapsible: boolean,
+    showCheckboxes: boolean,
+    selected: boolean,
+    parentIsHovered: boolean,
+    isDet: boolean,
+    isAll: boolean
+  ) => JSX.Element;
+  isCollapsible: boolean;
   showCheckboxes: boolean;
+  hovered?: CheckboxItem | null;
   onSelect?: (selectedItem: CheckboxItem, selectedIndex: number) => void;
   selectedIndex?: number;
 };
@@ -21,18 +34,34 @@ function CheckBoxGroup({
   items,
   setItems,
   getRowContent,
+  isCollapsible,
   showCheckboxes,
+  hovered,
   onSelect,
   selectedIndex,
 }: Props) {
   const [hoveredItems, setHoveredItems] = useState<string[]>([]);
 
-  const getChildIDs = (item: CheckboxItem, includeSelf: boolean) => {
+  const getChildIDs = (
+    item: CheckboxItem,
+    includeSelf: boolean,
+    currLevel: number = 0,
+    maxLevel: number = -1
+  ) => {
     let ids: string[] = [];
 
     for (let i = 0; i < items.length; i++) {
       if (items[i].parentId == item?.id) {
-        ids = [...ids, items[i].id, ...getChildIDs(items[i], includeSelf)];
+        if (maxLevel == -1 || currLevel < maxLevel) {
+          ids = [
+            ...ids,
+            items[i].id,
+            ...getChildIDs(items[i], includeSelf, ++currLevel, maxLevel),
+          ];
+          --currLevel;
+        } else {
+          ids = [...ids, items[i].id];
+        }
       }
     }
 
@@ -60,8 +89,6 @@ function CheckBoxGroup({
     indent: number,
     isGroup: boolean
   ) => {
-    const LEFT_MARGIN_PIXELS = 25;
-
     const isDet =
       isGroup &&
       items
@@ -83,66 +110,65 @@ function CheckBoxGroup({
           return itm.selected;
         });
 
-    // console.log("checkbox", { item: item.name, isDet, isAll });
-
     let parentIsHovered = hoveredItems.includes(item.id);
     const itemIdx = items.findIndex((itm) => itm.id == item.id);
     return (
       <div
-        style={{
-          paddingLeft: (LEFT_MARGIN_PIXELS * indent + 2).toString() + "px",
-        }}
         className={`${
           showCheckboxes ? "cursor-pointer" : "cursor-default"
         } flex items-center group ${
-          !showCheckboxes && indent == 1 && "hover:cursor-pointer rounded-md"
-        } ${
           !showCheckboxes &&
           indent == 1 &&
+          selectedIndex != undefined &&
           selectedIndex != itemIdx &&
-          "hover:bg-gray-200"
+          "hover:bg-gray-200 hover:cursor-pointer rounded-md"
         }
         } ${
           !showCheckboxes &&
           indent == 1 &&
+          selectedIndex != undefined &&
           selectedIndex == itemIdx &&
           "bg-blue-900 text-white font-bold"
         }`}
         onClick={() => {
-          let newItems = [...items];
-          let toggle = !item.selected;
+          if (showCheckboxes) {
+            let newItems = [...items];
+            let toggle = !item.selected;
 
-          // toggle ALL children AND parent if parent is toggled
-          newItems
-            .filter((itm) => {
-              return (
-                itm.id == item.id || getChildIDs(item, false).includes(itm.id)
-              );
-            })
-            .map((itm) => {
-              itm.selected = toggle;
-            });
+            // toggle ALL children AND parent if parent is toggled
+            newItems
+              .filter((itm) => {
+                return (
+                  itm.id == item.id || getChildIDs(item, false).includes(itm.id)
+                );
+              })
+              .map((itm) => {
+                itm.selected = toggle;
+              });
 
-          // toggle parent if ALL children are selected
-          newItems
-            .filter((itm) => {
-              return itm.id == item.parentId;
-            })
-            .map((itm) => {
-              itm.selected = toggle;
-            });
+            // toggle parent if ALL children are selected
+            newItems
+              .filter((itm) => {
+                return itm.id == item.parentId;
+              })
+              .map((itm) => {
+                itm.selected = toggle;
+              });
 
-          //   onSave(
-          //     newItems.filter((itm) => {
-          //       return itm.parentId !== "";
-          //     })
-          //   );
-          setItems(newItems);
-
-          if (indent == 1) {
-            console.log({ selectedIndex, itemIdx, item });
-            // setCategoryMonthListIndex(itemIdx);
+            setItems(newItems);
           }
+          if (isCollapsible && !hovered) {
+            if (indent < 2) {
+              let newItems = [...items];
+
+              newItems
+                .filter((itm) => itm.id == item.id)
+                .map((itm) => (itm.expanded = !item.expanded));
+
+              setItems(newItems);
+            }
+          }
+
           if (onSelect && indent == 1) onSelect(item, itemIdx);
         }}
         onMouseEnter={() => {
@@ -152,28 +178,24 @@ function CheckBoxGroup({
           setHoveredItems([]);
         }}
       >
-        {showCheckboxes && (
-          <div
-            className={`flex justify-center items-center bg-blue-900 h-4 w-4 border border-gray-400 rounded-[4px] mr-1 ${
-              item.selected || isDet
-                ? "bg-opacity-100 text-white"
-                : parentIsHovered
-                ? "bg-opacity-50"
-                : "bg-opacity-0"
-            } ${
-              item.selected
-                ? "group-hover:bg-opacity-100"
-                : "group-hover:bg-opacity-50"
-            }`}
-          >
-            {isDet && !isAll && !parentIsHovered ? (
-              <MinusIcon className={`h-4 w-4 text-white stroke-2`} />
-            ) : (
-              <CheckIcon className={`h-4 w-4 text-white stroke-2`} />
-            )}
-          </div>
+        {/* {showCheckboxes && (
+          <MyCheckbox
+            selected={item.selected || false}
+            parentIsHovered={parentIsHovered}
+            isDet={isDet}
+            isAll={isAll}
+          />
+        )} */}
+        {getRowContent(
+          item,
+          indent,
+          isCollapsible,
+          showCheckboxes,
+          item.selected || false,
+          isDet,
+          isAll,
+          parentIsHovered
         )}
-        {getRowContent(item, indent)}
       </div>
     );
   };

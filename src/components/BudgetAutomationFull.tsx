@@ -1,6 +1,8 @@
 import {
   ArrowLeftIcon,
   CheckIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
   MinusCircleIcon,
   MinusIcon,
   PencilSquareIcon,
@@ -13,6 +15,7 @@ import Card from "./elements/Card";
 import CheckBoxGroup, { CheckboxItem } from "./elements/CheckBoxGroup";
 import Label from "./elements/Label";
 import LabelAndValue from "./elements/LabelAndValue";
+import MyCheckbox from "./elements/MyCheckbox";
 import MyToggleButton from "./elements/MyToggleButton";
 import useModal from "./hooks/useModal";
 import AutomationScheduleModal from "./modal/AutomationScheduleModal";
@@ -63,43 +66,123 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
   const runTimes: any[] = [1, 2, 3, 4, 2, 3, 4, 2, 3, 4];
 
   const categoryMonthList: CheckboxItem[] = [
-    { parentId: "", id: "1", name: "Immediate Obligations", selected: true },
-    { parentId: "1", id: "2", name: "Rent/Mortgage", selected: true },
+    {
+      parentId: "",
+      id: "1",
+      name: "Immediate Obligations",
+      selected: true,
+      expanded: true,
+    },
+    {
+      parentId: "1",
+      id: "2",
+      name: "Rent/Mortgage",
+      selected: true,
+      expanded: true,
+    },
     { parentId: "2", id: "3", name: "AUG 2022", selected: true },
     { parentId: "2", id: "4", name: "SEP 2022", selected: true },
     { parentId: "2", id: "5", name: "OCT 2022", selected: true },
-    { parentId: "1", id: "12", name: "Electric", selected: true },
+    {
+      parentId: "1",
+      id: "12",
+      name: "Electric",
+      selected: true,
+      expanded: true,
+    },
     { parentId: "12", id: "13", name: "AUG 2022", selected: true },
-    { parentId: "", id: "6", name: "Subscriptions", selected: true },
-    { parentId: "6", id: "7", name: "AWS", selected: true },
+    {
+      parentId: "",
+      id: "6",
+      name: "Subscriptions",
+      selected: true,
+      expanded: true,
+    },
+    { parentId: "6", id: "7", name: "AWS", selected: true, expanded: true },
     { parentId: "7", id: "8", name: "AUG 2022", selected: true },
-    { parentId: "", id: "9", name: "True Expenses", selected: true },
-    { parentId: "9", id: "10", name: "Car Insurance", selected: true },
+    {
+      parentId: "",
+      id: "9",
+      name: "True Expenses",
+      selected: true,
+      expanded: true,
+    },
+    {
+      parentId: "9",
+      id: "10",
+      name: "Car Insurance",
+      selected: true,
+      expanded: true,
+    },
     { parentId: "10", id: "11", name: "AUG 2022", selected: true },
   ];
 
   const [monthList, setMonthList] = useState(categoryMonthList);
 
-  const getRowContent = (item: CheckboxItem, indent: number) => {
+  const getRowContent = (
+    item: CheckboxItem,
+    indent: number,
+    isCollapsible: boolean,
+    showCheckboxes: boolean,
+    selected: boolean,
+    parentIsHovered: boolean,
+    isDet: boolean,
+    isAll: boolean
+  ) => {
+    const LEFT_MARGIN_PIXELS = 25;
+    const indentStyle = {
+      paddingLeft: (LEFT_MARGIN_PIXELS * indent + 2).toString() + "px",
+    };
+
     switch (indent) {
       case 0:
         return (
           <div className="flex flex-grow justify-between font-mplus font-extrabold py-[1px]">
-            <div>{item.name}</div>
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
             <div className="pr-1">{getMoneyString(100)}</div>
           </div>
         );
       case 1:
         return (
           <div className={`flex flex-grow justify-between font-mplus py-[1px]`}>
-            <div>{item.name}</div>
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
             <div className="pr-1">{getMoneyString(100)}</div>
           </div>
         );
       case 2:
         return (
           <div className="flex flex-grow justify-between font-mplus text-gray-400 text-sm py-[1px]">
-            <div>{item.name}</div>
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
             <div className="pr-1">{getMoneyString(100)}</div>
           </div>
         );
@@ -280,6 +363,7 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                 setItems={setMonthList}
                 getRowContent={getRowContent}
                 showCheckboxes={showUpcoming}
+                isCollapsible={false}
                 onSelect={(
                   selectedItem: CheckboxItem,
                   selectedIndex: number
@@ -304,7 +388,12 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                   <div className="flex-grow flex flex-col justify-center text-3xl">
                     <LabelAndValue
                       label={"Posting Month Breakdown"}
-                      value={<PostingMonthBreakdown months={months} />}
+                      value={
+                        <PostingMonthBreakdown
+                          months={months}
+                          showPercent={true}
+                        />
+                      }
                       classNameValue={"mt-2 w-[60%]"}
                     />
                   </div>
@@ -321,7 +410,7 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                     <ArrowLeftIcon className="h-8 w-8 stroke-2 mr-1" />
                     <Label label={"Back to Overview"} className="text-lg" />
                   </div>
-                  <div className="flex justify-around items-center ">
+                  <div className="flex justify-around items-center">
                     <div className="flex-grow text-center text-3xl font-bold">
                       Rent/Mortage
                     </div>
@@ -559,6 +648,7 @@ function BudgetAutomationFull({ months, closeModal }: Props) {
                   setItems={setMonthList}
                   getRowContent={getRowContent}
                   showCheckboxes={showUpcoming}
+                  isCollapsible={false}
                   onSelect={(
                     selectedItem: CheckboxItem,
                     selectedIndex: number

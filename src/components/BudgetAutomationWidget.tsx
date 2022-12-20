@@ -50,7 +50,7 @@ function BudgetAutomationWidget({ months }: Props) {
                 label={"Posting Month Breakdown"}
                 className="text-sm sm:text-xl whitespace-pre-wrap text-center"
               />
-              <PostingMonthBreakdown months={months} />
+              <PostingMonthBreakdown months={months} showPercent={true} />
             </div>
           </div>
         </div>

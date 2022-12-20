@@ -44,7 +44,7 @@ function ModalContent({
       <div
         className={`fixed ${
           getModalBigMode(modalContentID)
-            ? "overflow-y-auto top-0 sm:top-12 left-0 sm:left-5 sm:right-5 right-0 bottom-0 sm:bottom-5 rounded-none sm:rounded-md"
+            ? "top-0 sm:top-12 left-0 sm:left-5 sm:right-5 right-0 bottom-0 sm:bottom-5 rounded-none sm:rounded-md"
             : "top-24 left-2 right-2 bottom-24 sm:top-40 sm:left-[35%] sm:right-[35%]"
         } bg-[#F6F9FA] rounded-lg p-2 z-20`}
       >

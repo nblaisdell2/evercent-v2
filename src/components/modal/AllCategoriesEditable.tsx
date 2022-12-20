@@ -5,6 +5,7 @@ import { GET_CATEGORY_GROUPS } from "../../graphql/queries";
 import { CategoryListGroup, UserData } from "../../utils/evercent";
 import Card from "../elements/Card";
 import CheckBoxGroup, { CheckboxItem } from "../elements/CheckBoxGroup";
+import MyCheckbox from "../elements/MyCheckbox";
 
 function AllCategoriesEditable({
   userData,
@@ -49,6 +50,74 @@ function AllCategoriesEditable({
     }
 
     return editableList;
+  };
+
+  const getRowContent = (
+    item: CheckboxItem,
+    indent: number,
+    showCheckboxes: boolean,
+    selected: boolean,
+    parentIsHovered: boolean,
+    isDet: boolean,
+    isAll: boolean
+  ) => {
+    const LEFT_MARGIN_PIXELS = 25;
+    const indentStyle = {
+      paddingLeft: (LEFT_MARGIN_PIXELS * indent + 2).toString() + "px",
+    };
+
+    switch (indent) {
+      case 0:
+        return (
+          <div className="flex flex-grow justify-between font-mplus font-extrabold py-[1px]">
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
+          </div>
+        );
+      case 1:
+        return (
+          <div className={`flex flex-grow justify-between font-mplus py-[1px]`}>
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="flex flex-grow justify-between font-mplus text-gray-400 text-sm py-[1px]">
+            <div className="flex items-center" style={indentStyle}>
+              {showCheckboxes && (
+                <MyCheckbox
+                  selected={selected}
+                  parentIsHovered={parentIsHovered}
+                  isDet={isDet}
+                  isAll={isAll}
+                />
+              )}
+              <div>{item.name}</div>
+            </div>
+          </div>
+        );
+      default:
+        return <div></div>;
+    }
   };
 
   const [items, setItems] = useState<CheckboxItem[]>();
@@ -105,8 +174,9 @@ function AllCategoriesEditable({
             <CheckBoxGroup
               items={items}
               setItems={setItems}
-              getRowContent={(item: CheckboxItem) => <span>{item.name}</span>}
+              getRowContent={getRowContent}
               showCheckboxes={true}
+              isCollapsible={false}
             />
           </div>
         )}
