@@ -52,7 +52,7 @@ function UpcomingPastList({
               <div className="hidden sm:block w-full text-center">
                 Total Amount Posted
               </div>
-              <div className="block sm:hidden w-full text-center">
+              <div className="block sm:hidden w-full text-center whitespace-nowrap">
                 Amount Posted
               </div>
             </>

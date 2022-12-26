@@ -9,11 +9,14 @@ import LabelAndValue from "../../elements/LabelAndValue";
 import MyButton from "../../elements/MyButton";
 import RadioButtonGroup from "../../elements/RadioButtonGroup";
 
-type Props = {};
-
-function RegularExpenseOverview({}: Props) {
+function RegularExpenseOverview({
+  currentTarget,
+  setCurrentTarget,
+}: {
+  currentTarget: number;
+  setCurrentTarget: (newVal: number) => void;
+}) {
   const [editingTarget, setEditingTarget] = useState(false);
-  const [currentTarget, setCurrentTarget] = useState(6);
 
   const getMonthsAheadComponent = () => {
     return !editingTarget ? (

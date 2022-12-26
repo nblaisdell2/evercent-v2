@@ -305,9 +305,12 @@ export const getPostingMonthAmounts = (): PostingMonth[] => {
   ];
 };
 
-export const getMonthsAhead = (category: CategoryListItem): number => {
+export const getMonthsAhead = (
+  category: CategoryListItem,
+  target: number
+): number => {
   // TODO: This needs to
-  return Math.floor(Math.random() * 7);
+  return Math.floor(Math.random() * (target + 4));
 };
 
 export const getRegularExpenses = (

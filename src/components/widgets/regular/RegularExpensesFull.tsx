@@ -14,6 +14,7 @@ function RegularExpensesFull({ categories }: Props) {
   const { isOpen, showModal, closeModal } = useModal();
 
   const [resetProgress, setResetProgress] = useState(false);
+  const [currentTarget, setCurrentTarget] = useState(6);
 
   const regularExpenses = getRegularExpenses(categories);
 
@@ -21,12 +22,16 @@ function RegularExpensesFull({ categories }: Props) {
     <>
       <div className="h-full flex font-mplus p-2 space-x-0 sm:space-x-2">
         <RegularExpenseChart
+          target={currentTarget}
           regularExpenses={regularExpenses}
           resetProgress={resetProgress}
         />
 
         <div className="flex flex-col flex-grow space-y-2">
-          <RegularExpenseOverview />
+          <RegularExpenseOverview
+            currentTarget={currentTarget}
+            setCurrentTarget={setCurrentTarget}
+          />
 
           <RegularExpenseDetails
             resetProgress={resetProgress}
