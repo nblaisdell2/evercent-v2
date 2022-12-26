@@ -131,7 +131,7 @@ function AllCategoriesEditable({
             <HierarchyTable
               tableData={hierarchyTableProps}
               getRowContent={getRowContent}
-              indentPixels={"10px"}
+              indentPixels={"20px"}
               showCheckboxes={true}
             />
           </div>

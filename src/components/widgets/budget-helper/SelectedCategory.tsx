@@ -101,7 +101,7 @@ function SelectedCategory({
   );
 
   return (
-    <div className="flex flex-col flex-grow mt-4 overflow-y-auto">
+    <div className="flex flex-col flex-grow mt-4 overflow-y-auto sm:overflow-y-visible">
       <div className="inline-flex items-center">
         <div
           onClick={() => {
@@ -117,12 +117,12 @@ function SelectedCategory({
         </div>
       </div>
 
-      <div className="flex-grow overflow-y-auto no-scrollbar">
+      <div className="flex-grow overflow-y-auto sm:overflow-y-visible sm:no-scrollbar">
         {/* Web Version */}
         <div className="hidden sm:flex h-full m-2">
           {/* left side */}
           <div className="w-[25%] mr-2">
-            <Card className="bg-blue-300 h-full flex flex-col space-y-12 items-center p-2">
+            <Card className="h-full flex flex-col space-y-12 items-center p-2">
               <div className="font-bold text-center text-3xl">
                 {initialCategory.name}
               </div>

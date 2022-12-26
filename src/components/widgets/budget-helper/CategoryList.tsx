@@ -77,7 +77,7 @@ function CategoryList({
     return (
       <div
         key={grp.groupName}
-        className="flex w-full font-bold text-right hover:bg-gray-300 hover:cursor-pointer hover:rounded-md"
+        className="flex py-[2px] sm:py-0 w-full font-bold text-right hover:bg-gray-300 hover:cursor-pointer hover:rounded-md"
       >
         <div className="flex w-[50%] sm:w-[26%] text-left">{grp.groupName}</div>
         <div className="hidden sm:block sm:w-[10%] justify-center"></div>
@@ -105,7 +105,7 @@ function CategoryList({
     return (
       <div
         key={category.name}
-        className="flex w-full font-normal text-right text-sm hover:bg-gray-200 hover:cursor-pointer hover:rounded-md"
+        className="flex py-[2px] sm:py-0 w-full font-normal text-right text-sm hover:bg-gray-200 hover:cursor-pointer hover:rounded-md"
         onClick={() => {
           selectCategory(category);
         }}
