@@ -35,6 +35,8 @@ function AllCategoriesEditable({
     },
   });
 
+  console.log("error with all categories?", error);
+
   const getRowContent = (item: CheckboxItem, indent: number) => {
     switch (indent) {
       case 0:
@@ -89,7 +91,8 @@ function AllCategoriesEditable({
 
     return editableList;
   };
-  const hierarchyTableProps = useHierarchyTable([]);
+  const items = createList(data);
+  const hierarchyTableProps = useHierarchyTable(items);
 
   const onSave = async (items: CheckboxItem[]) => {
     if (items) {

@@ -74,7 +74,9 @@ function CategoryList({
   };
 
   const createGroupRow = (grp: CategoryListGroup) => {
-    return (
+    return !grp ? (
+      <></>
+    ) : (
       <div
         key={grp.groupName}
         className="flex py-[2px] sm:py-0 w-full font-bold text-right hover:bg-gray-300 hover:cursor-pointer hover:rounded-md"

@@ -338,20 +338,30 @@ export const resolvers = {
       };
     },
     getCategoryGroups: async (_, args) => {
+      console.log("============================");
+      console.log(" START RESOLVER - GetCategoryGroups");
+      console.log("============================");
+
       const catGroups = await GetCategoryGroups(args);
+      console.log("got category groups");
 
       const queryData = await getAPIData(
         Queries.QUERY_EXCLUDED_CATEGORIES,
         { userID: args.userID, budgetID: args.budgetID },
         false
       );
+      console.log("got query data");
       const details = queryData[0];
-
+      console.log("got details");
       for (let i = 0; i < catGroups.length; i++) {
         catGroups[i].included = !details.some((d) => {
           return d.CategoryID.toLowerCase() == catGroups[i].categoryID;
         });
       }
+
+      console.log("============================");
+      console.log(" END RESOLVER - GetCategoryGroups");
+      console.log("============================");
 
       return catGroups;
     },

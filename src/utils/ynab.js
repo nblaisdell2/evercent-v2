@@ -282,19 +282,28 @@ export async function GetBudgetName(params) {
 }
 
 export async function GetCategoryGroups(params) {
-  // let response = await SendYNABRequest(
-  //   "GetCategoryGroups",
-  //   get,
-  //   API_BASE_URL + "/budgets/" + params.budgetID,
-  //   params
-  // );
+  let categories;
+  let categoryGroups;
+  let latestMonth;
 
-  // const budgetData = response.data.data.budget;
-  // const categories = budgetData.categories; //budgetData.months[0].categories; //
-  // let categoryGroups = budgetData.category_groups;
+  if (CACHE[CacheValue.Categories]) {
+    categories = CACHE[CacheValue.Categories]; //budgetData.months[0].categories; //
+    categoryGroups = CACHE[CacheValue.CategoryGroups];
+    latestMonth = CACHE[CacheValue.BudgetMonths][0];
+  } else {
+    let response = await SendYNABRequest(
+      "GetCategoryGroups",
+      get,
+      API_BASE_URL + "/budgets/" + params.budgetID,
+      params
+    );
 
-  const categories = CACHE[CacheValue.Categories]; //budgetData.months[0].categories; //
-  let categoryGroups = CACHE[CacheValue.CategoryGroups];
+    const budgetData = response.data.data.budget;
+    categories = budgetData.categories; //budgetData.months[0].categories; //
+    categoryGroups = budgetData.category_groups;
+    latestMonth = budgetData.months[0];
+  }
+
   categoryGroups = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
@@ -306,14 +315,12 @@ export async function GetCategoryGroups(params) {
       return grp.id == categories[i].category_group_id;
     });
     if (currGroup && !categories[i].hidden && !categories[i].deleted) {
-      let latestMonthData = CACHE[CacheValue.BudgetMonths][0].categories.filter(
-        (cat) => {
-          return (
-            cat.category_group_id == categories[i].category_group_id &&
-            cat.id == categories[i].id
-          );
-        }
-      )[0];
+      let latestMonthData = latestMonth.categories.filter((cat) => {
+        return (
+          cat.category_group_id == categories[i].category_group_id &&
+          cat.id == categories[i].id
+        );
+      })[0];
       categoryDetails.push({
         categoryGroupID: categories[i].category_group_id,
         categoryID: categories[i].id,
