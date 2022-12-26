@@ -1,6 +1,7 @@
 import { addDays, addMonths, addWeeks, differenceInMonths } from "date-fns";
 import { getSQLDate, parseDate } from "./utils";
 import { today, getLocalTimeZone } from "@internationalized/date";
+import { randomInt } from "crypto";
 
 export type UserData = {
   userID: string;
@@ -302,6 +303,29 @@ export const getPostingMonthAmounts = (): PostingMonth[] => {
     { month: "Oct 2022", amount: 10, percentAmount: 10 },
     { month: "Nov 2022", amount: 10, percentAmount: 10 },
   ];
+};
+
+export const getMonthsAhead = (category: CategoryListItem): number => {
+  // TODO: This needs to
+  return Math.floor(Math.random() * 7);
+};
+
+export const getRegularExpenses = (
+  categories: CategoryListGroup[]
+): CategoryListGroup[] => {
+  // First, get the groups which have at least one regular expense within them
+  const groupsWithReg = categories.filter((grp) =>
+    grp.categories.some((cat) => cat.isRegularExpense)
+  );
+
+  // Then, for each of those groups, only return the categories within that group
+  // that actually are a "Regular Expense"
+  return groupsWithReg.map((grp) => {
+    return {
+      ...grp,
+      categories: grp.categories.filter((cat) => cat.isRegularExpense),
+    };
+  });
 };
 
 export const getInput_UpdateCategories = (

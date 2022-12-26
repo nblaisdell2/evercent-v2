@@ -1,6 +1,6 @@
 import React from "react";
-import { CategoryListGroup } from "../utils/evercent";
-import { getPercentString } from "../utils/utils";
+import { CategoryListGroup } from "../../../utils/evercent";
+import { getPercentString } from "../../../utils/utils";
 import Amounts from "./Amounts";
 import BudgetHelperCharts from "./BudgetHelperCharts";
 

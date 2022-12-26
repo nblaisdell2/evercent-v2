@@ -4,8 +4,9 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { GET_CATEGORY_GROUPS } from "../../graphql/queries";
 import { CategoryListGroup, UserData } from "../../utils/evercent";
 import Card from "../elements/Card";
-import CheckBoxGroup, { CheckboxItem } from "../elements/CheckBoxGroup";
+import HierarchyTable, { CheckboxItem } from "../elements/HierarchyTable";
 import MyCheckbox from "../elements/MyCheckbox";
+import useHierarchyTable from "../hooks/useHierarchyTable";
 
 function AllCategoriesEditable({
   userData,
@@ -22,6 +23,43 @@ function AllCategoriesEditable({
     itemsToUpdate: CheckboxItem[]
   ) => Promise<CategoryListGroup[]>;
 }) {
+  const { loading, error, data, refetch } = useQuery(GET_CATEGORY_GROUPS, {
+    variables: {
+      userID: userData.userID,
+      accessToken: userData.tokenDetails.accessToken,
+      refreshToken: userData.tokenDetails.refreshToken,
+      budgetID: userData.budgetID,
+    },
+    onCompleted(data) {
+      hierarchyTableProps?.setListData(createList(data));
+    },
+  });
+
+  const getRowContent = (item: CheckboxItem, indent: number) => {
+    switch (indent) {
+      case 0:
+        return (
+          <div className="flex flex-grow justify-between font-mplus font-extrabold py-[1px] hover:cursor-pointer ">
+            <div className="flex items-center">
+              <div>{item.name}</div>
+            </div>
+          </div>
+        );
+      case 1:
+        return (
+          <div
+            className={`flex flex-grow justify-between font-mplus py-[1px] hover:cursor-pointer text-sm`}
+          >
+            <div className="flex items-center">
+              <div>{item.name}</div>
+            </div>
+          </div>
+        );
+      default:
+        return <div></div>;
+    }
+  };
+
   const createList = (data: any) => {
     if (!data) return [];
 
@@ -51,90 +89,9 @@ function AllCategoriesEditable({
 
     return editableList;
   };
+  const hierarchyTableProps = useHierarchyTable([]);
 
-  const getRowContent = (
-    item: CheckboxItem,
-    indent: number,
-    showCheckboxes: boolean,
-    selected: boolean,
-    parentIsHovered: boolean,
-    isDet: boolean,
-    isAll: boolean
-  ) => {
-    const LEFT_MARGIN_PIXELS = 25;
-    const indentStyle = {
-      paddingLeft: (LEFT_MARGIN_PIXELS * indent + 2).toString() + "px",
-    };
-
-    switch (indent) {
-      case 0:
-        return (
-          <div className="flex flex-grow justify-between font-mplus font-extrabold py-[1px]">
-            <div className="flex items-center" style={indentStyle}>
-              {showCheckboxes && (
-                <MyCheckbox
-                  selected={selected}
-                  parentIsHovered={parentIsHovered}
-                  isDet={isDet}
-                  isAll={isAll}
-                />
-              )}
-              <div>{item.name}</div>
-            </div>
-          </div>
-        );
-      case 1:
-        return (
-          <div className={`flex flex-grow justify-between font-mplus py-[1px]`}>
-            <div className="flex items-center" style={indentStyle}>
-              {showCheckboxes && (
-                <MyCheckbox
-                  selected={selected}
-                  parentIsHovered={parentIsHovered}
-                  isDet={isDet}
-                  isAll={isAll}
-                />
-              )}
-              <div>{item.name}</div>
-            </div>
-          </div>
-        );
-      case 2:
-        return (
-          <div className="flex flex-grow justify-between font-mplus text-gray-400 text-sm py-[1px]">
-            <div className="flex items-center" style={indentStyle}>
-              {showCheckboxes && (
-                <MyCheckbox
-                  selected={selected}
-                  parentIsHovered={parentIsHovered}
-                  isDet={isDet}
-                  isAll={isAll}
-                />
-              )}
-              <div>{item.name}</div>
-            </div>
-          </div>
-        );
-      default:
-        return <div></div>;
-    }
-  };
-
-  const [items, setItems] = useState<CheckboxItem[]>();
-
-  const { loading, error, data, refetch } = useQuery(GET_CATEGORY_GROUPS, {
-    variables: {
-      userID: userData.userID,
-      accessToken: userData.tokenDetails.accessToken,
-      refreshToken: userData.tokenDetails.refreshToken,
-      budgetID: userData.budgetID,
-    },
-    onCompleted(data) {
-      setItems(createList(data));
-    },
-  });
-
-  const onSave = async () => {
+  const onSave = async (items: CheckboxItem[]) => {
     if (items) {
       // Get the individual items, not the parent/group items
       const itemsToUpdate = items?.filter((itm) => {
@@ -169,14 +126,13 @@ function AllCategoriesEditable({
       </div>
 
       <Card className="relative w-full my-2 h-full">
-        {!loading && items && (
+        {!loading && hierarchyTableProps.listData && (
           <div className="absolute p-1 top-1 bottom-1 right-0 left-0 overflow-y-auto">
-            <CheckBoxGroup
-              items={items}
-              setItems={setItems}
+            <HierarchyTable
+              tableData={hierarchyTableProps}
               getRowContent={getRowContent}
+              indentPixels={"10px"}
               showCheckboxes={true}
-              isCollapsible={false}
             />
           </div>
         )}
@@ -184,7 +140,7 @@ function AllCategoriesEditable({
 
       {!loading && (
         <button
-          onClick={onSave}
+          onClick={() => onSave(hierarchyTableProps.listData)}
           className={`w-full h-12 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
         >
           <div className="flex justify-center items-center">

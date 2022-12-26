@@ -1,7 +1,7 @@
 import React from "react";
-import { CategoryListGroup, getTotalAmountUsed } from "../utils/evercent";
-import { calculatePercentString, getMoneyString } from "../utils/utils";
-import LabelAndValue from "./elements/LabelAndValue";
+import { CategoryListGroup, getTotalAmountUsed } from "../../../utils/evercent";
+import { calculatePercentString, getMoneyString } from "../../../utils/utils";
+import LabelAndValue from "../../elements/LabelAndValue";
 
 function Amounts({
   monthlyIncome,

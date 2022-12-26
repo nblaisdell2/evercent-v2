@@ -10,8 +10,8 @@ import {
   CategoryListItem,
   getGroupAmounts,
   UserData,
-} from "../utils/evercent";
-import { CheckboxItem } from "./elements/CheckBoxGroup";
+} from "../../../utils/evercent";
+import { CheckboxItem } from "../../elements/HierarchyTable";
 
 function BudgetHelperFull({
   userData,
@@ -34,7 +34,6 @@ function BudgetHelperFull({
     itemsToUpdate: CheckboxItem[]
   ) => Promise<CategoryListGroup[]>;
 }) {
-  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryListItem | null>();
 
@@ -86,8 +85,6 @@ function BudgetHelperFull({
           userData={userData}
           categoryList={categoryList}
           setCategoryList={setCategoryList}
-          expandedGroups={expandedGroups}
-          setExpandedGroups={setExpandedGroups}
           onSave={onSave}
           saveNewExcludedCategories={saveNewExcludedCategories}
           selectCategory={setSelectedCategory}

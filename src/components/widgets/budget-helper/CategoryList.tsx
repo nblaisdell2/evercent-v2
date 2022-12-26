@@ -1,31 +1,29 @@
 import React from "react";
+import { CheckIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/24/outline";
-import { getMoneyString, getPercentString, ModalType } from "../utils/utils";
+  getMoneyString,
+  getPercentString,
+  ModalType,
+} from "../../../utils/utils";
 import {
   getCategoriesCount,
   CategoryListGroup,
   CategoryListItem,
   UserData,
-} from "../utils/evercent";
-import Card from "./elements/Card";
-import Label from "./elements/Label";
+} from "../../../utils/evercent";
+import Card from "../../elements/Card";
+import Label from "../../elements/Label";
 
-import useModal from "./hooks/useModal";
-import ModalContent from "./modal/ModalContent";
-import AllCategoriesEditable from "./modal/AllCategoriesEditable";
-import { CheckboxItem } from "./elements/CheckBoxGroup";
+import useModal from "../../hooks/useModal";
+import ModalContent from "../../modal/ModalContent";
+import AllCategoriesEditable from "../../modal/AllCategoriesEditable";
+import HierarchyTable, { CheckboxItem } from "../../elements/HierarchyTable";
+import useHierarchyTable from "../../hooks/useHierarchyTable";
 
 type Props = {
   userData: UserData;
   categoryList: CategoryListGroup[];
   setCategoryList: (newList: CategoryListGroup[]) => void;
-  expandedGroups: string[];
-  setExpandedGroups: (newGroups: string[]) => void;
   onSave: (newCategories: CategoryListGroup[]) => Promise<void>;
   saveNewExcludedCategories: (
     userID: string,
@@ -39,28 +37,40 @@ function CategoryList({
   userData,
   categoryList,
   setCategoryList,
-  expandedGroups,
-  setExpandedGroups,
   onSave,
   saveNewExcludedCategories,
   selectCategory,
 }: Props) {
   const { isOpen, showModal, closeModal } = useModal();
 
-  const groupIsExpanded = (grp: CategoryListGroup): boolean => {
-    return expandedGroups.includes(grp.groupName);
-  };
+  const createList = (data: CategoryListGroup[]) => {
+    if (!data) return [];
 
-  const toggleExpanded = (grp: CategoryListGroup) => {
-    let newGroups = [...expandedGroups];
+    let itemList: CheckboxItem[] = [];
+    let currItemGroup;
+    let currItemCat;
+    for (let i = 0; i < data.length; i++) {
+      currItemGroup = data[i];
 
-    if (newGroups.includes(grp.groupName)) {
-      newGroups = newGroups.filter((g) => g != grp.groupName);
-    } else {
-      newGroups.push(grp.groupName);
+      itemList.push({
+        parentId: "",
+        id: currItemGroup.groupID,
+        name: currItemGroup.groupName,
+        expanded: false,
+      });
+
+      for (let j = 0; j < currItemGroup.categories.length; j++) {
+        currItemCat = currItemGroup.categories[j];
+
+        itemList.push({
+          parentId: currItemGroup.groupID,
+          id: currItemCat.categoryID,
+          name: currItemCat.name,
+        });
+      }
     }
 
-    setExpandedGroups(newGroups);
+    return itemList;
   };
 
   const createGroupRow = (grp: CategoryListGroup) => {
@@ -68,16 +78,8 @@ function CategoryList({
       <div
         key={grp.groupName}
         className="flex w-full font-bold text-right hover:bg-gray-300 hover:cursor-pointer hover:rounded-md"
-        onClick={() => toggleExpanded(grp)}
       >
-        <div className="w-[5%] sm:w-[2%] flex justify-center items-center">
-          {groupIsExpanded(grp) ? (
-            <ChevronDownIcon className="h-4 sm:h-6 w-4 sm:w-6" />
-          ) : (
-            <ChevronRightIcon className="h-4 sm:h-6 w-4 sm:w-6" />
-          )}
-        </div>
-        <div className="w-[50%] sm:w-[26%] text-left">{grp.groupName}</div>
+        <div className="flex w-[50%] sm:w-[26%] text-left">{grp.groupName}</div>
         <div className="hidden sm:block sm:w-[10%] justify-center"></div>
         <div className="hidden sm:block sm:w-[10%] justify-center"></div>
         <div className="hidden sm:block text-right w-[14%]">
@@ -103,15 +105,12 @@ function CategoryList({
     return (
       <div
         key={category.name}
-        className="flex w-full font-normal text-right hover:bg-gray-200 hover:cursor-pointer hover:rounded-md"
+        className="flex w-full font-normal text-right text-sm hover:bg-gray-200 hover:cursor-pointer hover:rounded-md"
         onClick={() => {
           selectCategory(category);
         }}
       >
-        <div className="w-[5%] sm:w-[2%]"></div>
-        <div className="w-[50%] sm:w-[26%] text-left pl-4 sm:pl-6">
-          {category.name}
-        </div>
+        <div className="w-[50%] sm:w-[26%] text-left">{category.name}</div>
         <div className="hidden sm:flex sm:w-[10%] justify-center">
           {category.isRegularExpense && (
             <CheckIcon className="h-6 w-6 text-green-600 stroke-2" />
@@ -141,8 +140,26 @@ function CategoryList({
     );
   };
 
+  const hierarchyTableProps = useHierarchyTable(createList(categoryList));
+
+  const getRowContent = (item: CheckboxItem, indent: number) => {
+    const itemID = indent == 0 ? item.id : item.parentId;
+    const grp = categoryList.filter((cGrp) => cGrp.groupID == itemID)[0];
+    switch (indent) {
+      case 0:
+        return createGroupRow(grp);
+      case 1:
+        const category = grp.categories.filter(
+          (cat) => cat.categoryID == item.id
+        )[0];
+        return createCategoryRow(category);
+      default:
+        return <></>;
+    }
+  };
+
   return (
-    <div className="flex-grow mt-4 text-sm sm:text-base">
+    <div className="flex-grow mt-4  font-mplus text-sm sm:text-base flex flex-col">
       <div className="flex justify-between">
         <div className="flex items-center">
           <Label label="Category List" className="text-xl" />
@@ -166,11 +183,10 @@ function CategoryList({
           </button>
         </div>
       </div>
-      <div className="flex my-2">
-        <Card className="h-full flex-grow mr-0 sm:mr-2 p-1">
-          <div className="flex w-full font-bold text-right whitespace-nowrap">
-            <div className="w-[5%] sm:w-[2%]"></div>
-            <div className="w-[50%] sm:w-[26%] text-left">Category</div>
+      <div className="flex mt-2 h-full">
+        <Card className="flex flex-col flex-grow mr-0 sm:mr-2 p-1">
+          <div className="flex w-full font-bold text-right whitespace-nowrap border-b-2 border-black">
+            <div className="w-[50%] sm:w-[26%] text-left pl-2">Category</div>
             <div className="hidden sm:block w-[10%] text-center">Regular?</div>
             <div className="hidden sm:block w-[10%] text-center">Upcoming?</div>
             <div className="hidden sm:block w-[14%]">Amount</div>
@@ -179,23 +195,13 @@ function CategoryList({
             <div className="w-[25%] sm:w-[14%]">Adj. + Extra</div>
             <div className="w-[25%] sm:w-[14%]">% Income</div>
           </div>
-          <div className="w-full h-[2px] bg-black"></div>
-          <div className="h-[375px] overflow-y-auto no-scrollbar">
-            {categoryList.map((category) => {
-              const gRow = createGroupRow(category);
-              let cRows;
-              if (category.categories.length > 0 && groupIsExpanded(category)) {
-                cRows = category.categories.map((indCat) => {
-                  return createCategoryRow(indCat);
-                });
-              }
-              return (
-                <div key={category.groupName}>
-                  {gRow}
-                  {cRows}
-                </div>
-              );
-            })}
+          <div className="flex-grow h-0 overflow-y-scroll no-scrollbar">
+            <HierarchyTable
+              tableData={hierarchyTableProps}
+              getRowContent={getRowContent}
+              indentPixels={"20px"}
+              isCollapsible={true}
+            />
           </div>
         </Card>
         <div className="hidden sm:flex flex-col justify-evenly items-center p-1">

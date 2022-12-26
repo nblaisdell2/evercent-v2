@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 
-import BudgetHelperFull from "./BudgetHelperFull";
-import BudgetHelperWidget from "./BudgetHelperWidget";
-import BudgetAutomationFull from "./BudgetAutomationFull";
-import BudgetAutomationWidget from "./BudgetAutomationWidget";
-import RegularExpensesFull from "./RegularExpensesFull";
-import RegularExpensesWidget from "./RegularExpensesWidget";
-import UpcomingExpensesFull from "./UpcomingExpensesFull";
-import UpcomingExpensesWidget from "./UpcomingExpensesWidget";
+import BudgetHelperFull from "./widgets/budget-helper/BudgetHelperFull";
+import BudgetHelperWidget from "./widgets/budget-helper/BudgetHelperWidget";
+import BudgetAutomationFull from "./widgets/budget-automation/BudgetAutomationFull";
+import BudgetAutomationWidget from "./widgets/budget-automation/BudgetAutomationWidget";
+import RegularExpensesFull from "./widgets/regular/RegularExpensesFull";
+import RegularExpensesWidget from "./widgets/regular/RegularExpensesWidget";
+import UpcomingExpensesFull from "./widgets/upcoming/UpcomingExpensesFull";
+import UpcomingExpensesWidget from "./widgets/upcoming/UpcomingExpensesWidget";
 
 import useModal from "./hooks/useModal";
 import { ModalType } from "../utils/utils";
@@ -20,7 +20,7 @@ import {
   UserData,
   PostingMonth,
 } from "../utils/evercent";
-import { CheckboxItem } from "./elements/CheckBoxGroup";
+import { CheckboxItem } from "./elements/HierarchyTable";
 
 function MainContent({
   userData,
@@ -104,7 +104,7 @@ function MainContent({
     return (
       <>
         <div
-          className="flex flex-col items-center basis-0 sm:basis-[49%] bg-[#F6F9FA] border border-[#ACACAC] rounded-lg shadow-md m-1 p-1 hover:cursor-pointer hover:blur-[2px] h-[250px] sm:h-[49%]"
+          className="flex flex-col items-center basis-0 sm:basis-[49%] bg-[#F6F9FA] border-2 border-opacity-50 border-[#ACACAC] rounded-lg shadow-md m-1 p-1 hover:cursor-pointer hover:border-opacity-100 h-[250px] sm:h-[49%]"
           onClick={() => showModalFn()}
         >
           <div className="font-cinzel text-3xl">{title}</div>
@@ -175,7 +175,7 @@ function MainContent({
 
   return (
     <div className="w-full h-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
-      <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full h-full sm:w-[80%]">
+      <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full sm:w-[80%]">
         {categoryList && (
           <>
             {/* Box 1 - Budget Helper */}
@@ -219,7 +219,7 @@ function MainContent({
               "Regular Expenses",
               <RegularExpensesWidget />,
               ModalType.REGULAR_EXPENSES,
-              <RegularExpensesFull />,
+              <RegularExpensesFull categories={categoryList} />,
               isOpenRE,
               showModalRE,
               closeModalRE

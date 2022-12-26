@@ -3,12 +3,12 @@ import Chart, {
   GoogleDataTable,
   ReactGoogleChartEvent,
 } from "react-google-charts";
-import { merge } from "../utils/utils";
+import { merge } from "../../../utils/utils";
 import {
   CategoryListGroup,
   CategoryListItem,
   getTotalAmountUsed,
-} from "../utils/evercent";
+} from "../../../utils/evercent";
 
 const CHART_COLORS = [
   "#3366cc",

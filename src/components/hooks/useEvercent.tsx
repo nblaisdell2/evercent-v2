@@ -20,7 +20,7 @@ import {
 } from "../../utils/evercent";
 import { parseDate } from "../../utils/utils";
 import { clearYNABCache } from "../../utils/ynab";
-import { CheckboxItem } from "../elements/CheckBoxGroup";
+import { CheckboxItem } from "../elements/HierarchyTable";
 
 function useEvercent(userEmail: string | null | undefined) {
   const router = useRouter();

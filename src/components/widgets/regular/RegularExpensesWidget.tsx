@@ -1,5 +1,5 @@
 import React from "react";
-import LabelAndValue from "./elements/LabelAndValue";
+import LabelAndValue from "../../elements/LabelAndValue";
 
 type Props = {};
 
@@ -14,7 +14,7 @@ function RegularExpensesWidget({}: Props) {
       <LabelAndValue
         label={"Categories with Target Met"}
         value={
-          <div className="flex items-center -mt-1">
+          <div className="flex items-center">
             <div className="text-4xl sm:text-6xl">18</div>
             <div className="text-xl sm:text-2xl ml-1 sm:ml-2">(67%)</div>
           </div>

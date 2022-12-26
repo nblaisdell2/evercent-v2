@@ -1,6 +1,6 @@
 import React from "react";
-import { PostingMonth } from "../utils/evercent";
-import { getMoneyString, getPercentString } from "../utils/utils";
+import { PostingMonth } from "../../../utils/evercent";
+import { getMoneyString, getPercentString } from "../../../utils/utils";
 
 type Props = {
   months: PostingMonth[];

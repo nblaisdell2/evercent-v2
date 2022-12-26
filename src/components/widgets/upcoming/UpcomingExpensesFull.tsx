@@ -1,9 +1,9 @@
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import React, { useState } from "react";
-import { getMoneyString } from "../utils/utils";
-import Card from "./elements/Card";
-import Label from "./elements/Label";
-import LabelAndValue from "./elements/LabelAndValue";
+import { getMoneyString } from "../../../utils/utils";
+import Card from "../../elements/Card";
+import Label from "../../elements/Label";
+import LabelAndValue from "../../elements/LabelAndValue";
 
 type Props = {};
 

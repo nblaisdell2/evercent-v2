@@ -1,5 +1,5 @@
 import React from "react";
-import LabelAndValue from "./elements/LabelAndValue";
+import LabelAndValue from "../../elements/LabelAndValue";
 
 type Props = {};
 
