@@ -286,7 +286,7 @@ export async function GetCategoryGroups(params) {
   let categoryGroups;
   let latestMonth;
 
-  if (CACHE[CacheValue.Categories]) {
+  if (CacheValue.Categories in CACHE) {
     categories = CACHE[CacheValue.Categories]; //budgetData.months[0].categories; //
     categoryGroups = CACHE[CacheValue.CategoryGroups];
     latestMonth = CACHE[CacheValue.BudgetMonths][0];
@@ -299,6 +299,7 @@ export async function GetCategoryGroups(params) {
     );
 
     const budgetData = response.data.data.budget;
+
     categories = budgetData.categories; //budgetData.months[0].categories; //
     categoryGroups = budgetData.category_groups;
     latestMonth = budgetData.months[0];
