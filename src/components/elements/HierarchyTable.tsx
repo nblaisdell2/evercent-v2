@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import MyCheckbox from "./MyCheckbox";
 
@@ -14,6 +14,7 @@ export type HierarchyTableProps = {
   tableData: {
     listData: CheckboxItem[];
     setListData: React.Dispatch<React.SetStateAction<CheckboxItem[]>>;
+    setExpandedItems: React.Dispatch<React.SetStateAction<string[]>>;
   };
   getRowContent: (item: CheckboxItem, indent: number) => JSX.Element;
   indentPixels: string;
@@ -31,7 +32,7 @@ function HierarchyTable({
   disableOnClick,
 }: HierarchyTableProps) {
   const [hoveredItems, setHoveredItems] = useState<string[]>([]);
-  const { listData, setListData } = tableData;
+  const { listData, setListData, setExpandedItems } = tableData;
 
   const getChildIDs = (
     item: CheckboxItem,
@@ -209,6 +210,26 @@ function HierarchyTable({
           }
 
           if (isCollapsible && !isLeaf) {
+            setExpandedItems((items) => {
+              if (item.parentId == "") {
+                if (items.find((itm) => itm == item.id)) {
+                  console.log(
+                    "setting expanded items to ",
+                    items.filter((itm) => itm !== item.id)
+                  );
+                  return items.filter((itm) => itm !== item.id);
+                } else {
+                  console.log("setting expanded items to ", [
+                    ...items,
+                    item.id,
+                  ]);
+                  return [...items, item.id];
+                }
+              }
+              console.log("setting expanded items to ", items);
+              return items;
+            });
+
             let newItems = [...listData];
 
             newItems.filter((itm) => itm.id == item.id)[0].expanded =
@@ -276,7 +297,6 @@ function HierarchyTable({
   };
 
   const startItems = listData.filter((item) => item.parentId == "");
-
   return (
     <>
       {startItems?.map((item) => {

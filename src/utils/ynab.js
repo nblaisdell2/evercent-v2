@@ -35,7 +35,7 @@ function cacheYNABData(budgetData) {
   CACHE[CacheValue.BudgetName] = budgetData.name;
 }
 
-export function clearYNABCache() {
+function clearYNABCache() {
   CACHE = {};
 }
 
@@ -94,10 +94,11 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
     console.log("checking expiration date");
 
     let now = new Date();
-    let dtExpirationDateEarly = addMinutes(
-      parseDate(params.expirationDate),
-      -10
-    );
+    let dtExpirationDateEarly = parseDate(params.expirationDate);
+    // let dtExpirationDateEarly = addMinutes(
+    //   parseDate(params.expirationDate),
+    //   -10
+    // );
     if (now >= dtExpirationDateEarly) {
       console.log("Attempting to refresh access tokens");
       let newTokenDetails = await GetNewAccessTokenRefresh(params);
@@ -230,7 +231,6 @@ export async function GetDefaultBudgetID(params) {
     API_BASE_URL + "/budgets/default",
     params
   );
-  // console.log("ynab response", response);
 
   let budgetData = response.data.data.budget;
   cacheYNABData(budgetData);
@@ -259,60 +259,38 @@ export async function GetBudgets(params) {
   return GetResponseWithTokenDetails(myBudgetData, response);
 }
 
-export async function GetBudgetName(params) {
+export async function GetBudgetName(params, clearCache) {
   if (!params.accessToken) {
     return GetResponseWithTokenDetails(null, { newTokenDetails: null });
   }
 
-  // if (CacheValue.BudgetName in CACHE) {
-  //   return GetResponseWithTokenDetails(CACHE[CacheValue.BudgetName], {
-  //     newTokenDetails: null,
-  //   });
-  // }
+  if (clearCache) {
+    clearYNABCache();
+  }
 
-  let response = await SendYNABRequest(
-    "GetBudgetName",
-    get,
-    API_BASE_URL + "/budgets/" + params.budgetID,
-    params
-  );
-
-  cacheYNABData(response.data.data.budget);
-  return GetResponseWithTokenDetails(response.data.data.budget.name, response);
+  const budgetName = await GetBudgetValue(CacheValue.BudgetName, params);
+  return GetResponseWithTokenDetails(budgetName, { newTokenDetails: null });
 }
 
 export async function GetCategoryGroups(params) {
-  let categories;
-  let categoryGroups;
-  let latestMonth;
+  const categories = await GetBudgetValue(CacheValue.Categories, params);
 
-  if (CacheValue.Categories in CACHE) {
-    categories = CACHE[CacheValue.Categories]; //budgetData.months[0].categories; //
-    categoryGroups = CACHE[CacheValue.CategoryGroups];
-    latestMonth = CACHE[CacheValue.BudgetMonths][0];
-  } else {
-    let response = await SendYNABRequest(
-      "GetCategoryGroups",
-      get,
-      API_BASE_URL + "/budgets/" + params.budgetID,
-      params
-    );
+  const categoryGroups = await GetBudgetValue(
+    CacheValue.CategoryGroups,
+    params
+  );
+  const latestMonth = (
+    await GetBudgetValue(CacheValue.BudgetMonths, params)
+  )[0];
 
-    const budgetData = response.data.data.budget;
-
-    categories = budgetData.categories; //budgetData.months[0].categories; //
-    categoryGroups = budgetData.category_groups;
-    latestMonth = budgetData.months[0];
-  }
-
-  categoryGroups = categoryGroups.filter(
+  const categoryGroupsFiltered = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
   );
 
   let categoryDetails = [];
   for (let i = 0; i < categories.length; i++) {
-    let currGroup = categoryGroups.find((grp) => {
+    let currGroup = categoryGroupsFiltered.find((grp) => {
       return grp.id == categories[i].category_group_id;
     });
     if (currGroup && !categories[i].hidden && !categories[i].deleted) {
@@ -347,8 +325,8 @@ export async function GetBudget(params) {
   // );
 
   // const budgetData = response.data.data.budget;
-  const categories = CACHE[CacheValue.Categories]; //budgetData.categories;
-  let categoryGroups = CACHE[CacheValue.CategoryGroups]; //budgetData.category_groups;
+  const categories = await GetBudgetValue(CacheValue.Categories, params); //budgetData.categories;
+  let categoryGroups = await GetBudgetValue(CacheValue.CategoryGroups, params); //budgetData.category_groups;
   categoryGroups = categoryGroups.filter(
     (cat) =>
       !IGNORED_CATEGORY_GROUPS.includes(cat.name) && !cat.hidden && !cat.deleted
@@ -376,18 +354,23 @@ export async function GetBudget(params) {
   });
 }
 
+async function GetBudgetValue(val, params) {
+  if (!(val in CACHE)) {
+    let response = await SendYNABRequest(
+      "GetBudgetValue",
+      get,
+      API_BASE_URL + "/budgets/" + params.budgetID,
+      params
+    );
+
+    cacheYNABData(response.data.data.budget);
+  }
+
+  return CACHE[val];
+}
+
 export async function GetBudgetMonths(params) {
-  // let response = await SendYNABRequest(
-  //   "GetBudgetMonths",
-  //   get,
-  //   API_BASE_URL + "/budgets/" + params.budgetID,
-  //   params
-  // );
-
-  // let budgetMonthData = response.data.data.budget;
-
-  let budgetCatGroups = CACHE[CacheValue.CategoryGroups]; //budgetMonthData.category_groups;
-
+  let budgetCatGroups = await GetBudgetValue(CacheValue.CategoryGroups, params);
   let categoryGroups = budgetCatGroups.filter((catGroup) => {
     if (
       !catGroup.hidden &&
@@ -411,7 +394,7 @@ export async function GetBudgetMonths(params) {
   let myBudgetMonths = [];
   let myCategories = [];
   let currCategory = {};
-  let budgetMonths = CACHE[CacheValue.BudgetMonths]; //budgetMonthData.months;
+  let budgetMonths = await GetBudgetValue(CacheValue.BudgetMonths, params); //budgetMonthData.months;
   for (let i = budgetMonths.length - 1; i >= 0; i--) {
     let ynMonth = parseISO(budgetMonths[i].month);
     if (

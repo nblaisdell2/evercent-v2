@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@auth0/nextjs-auth0";
 
-function Header() {
+function MainHeader() {
   const { user, error, isLoading } = useUser();
 
   return (
@@ -35,4 +35,4 @@ function Header() {
   );
 }
 
-export default Header;
+export default MainHeader;

@@ -9,7 +9,6 @@ import {
   getCategoriesCount,
   CategoryListGroup,
   CategoryListItem,
-  UserData,
 } from "../../../utils/evercent";
 import Card from "../../elements/Card";
 import Label from "../../elements/Label";
@@ -18,60 +17,27 @@ import useModal from "../../hooks/useModal";
 import ModalContent from "../../modal/ModalContent";
 import AllCategoriesEditable from "../../modal/AllCategoriesEditable";
 import HierarchyTable, { CheckboxItem } from "../../elements/HierarchyTable";
-import useHierarchyTable from "../../hooks/useHierarchyTable";
-
-type Props = {
-  userData: UserData;
-  categoryList: CategoryListGroup[];
-  setCategoryList: (newList: CategoryListGroup[]) => void;
-  onSave: (newCategories: CategoryListGroup[]) => Promise<void>;
-  saveNewExcludedCategories: (
-    userID: string,
-    budgetID: string,
-    itemsToUpdate: CheckboxItem[]
-  ) => Promise<CategoryListGroup[]>;
-  selectCategory: (item: CategoryListItem) => void;
-};
 
 function CategoryList({
-  userData,
   categoryList,
-  setCategoryList,
+  editableCategoryList,
+  hierarchyProps,
   onSave,
-  saveNewExcludedCategories,
+  saveExcludedCategories,
   selectCategory,
-}: Props) {
-  const { isOpen, showModal, closeModal } = useModal();
-
-  const createList = (data: CategoryListGroup[]) => {
-    if (!data) return [];
-
-    let itemList: CheckboxItem[] = [];
-    let currItemGroup;
-    let currItemCat;
-    for (let i = 0; i < data.length; i++) {
-      currItemGroup = data[i];
-
-      itemList.push({
-        parentId: "",
-        id: currItemGroup.groupID,
-        name: currItemGroup.groupName,
-        expanded: false,
-      });
-
-      for (let j = 0; j < currItemGroup.categories.length; j++) {
-        currItemCat = currItemGroup.categories[j];
-
-        itemList.push({
-          parentId: currItemGroup.groupID,
-          id: currItemCat.categoryID,
-          name: currItemCat.name,
-        });
-      }
-    }
-
-    return itemList;
+}: {
+  categoryList: CategoryListGroup[];
+  editableCategoryList: any;
+  hierarchyProps: {
+    listData: CheckboxItem[];
+    setListData: React.Dispatch<React.SetStateAction<CheckboxItem[]>>;
+    setExpandedItems: React.Dispatch<React.SetStateAction<string[]>>;
   };
+  onSave: () => Promise<void>;
+  saveExcludedCategories: (itemsToUpdate: CheckboxItem[]) => Promise<void>;
+  selectCategory: (item: CategoryListItem) => void;
+}) {
+  const { isOpen, showModal, closeModal } = useModal();
 
   const createGroupRow = (grp: CategoryListGroup) => {
     return !grp ? (
@@ -142,8 +108,6 @@ function CategoryList({
     );
   };
 
-  const hierarchyTableProps = useHierarchyTable(createList(categoryList));
-
   const getRowContent = (item: CheckboxItem, indent: number) => {
     const itemID = indent == 0 ? item.id : item.parentId;
     const grp = categoryList.filter((cGrp) => cGrp.groupID == itemID)[0];
@@ -152,8 +116,12 @@ function CategoryList({
         return createGroupRow(grp);
       case 1:
         const category = grp.categories.filter(
-          (cat) => cat.categoryID == item.id
+          (cat) => cat.categoryID.toLowerCase() == item.id.toLowerCase()
         )[0];
+
+        if (!category) {
+          return <></>;
+        }
         return createCategoryRow(category);
       default:
         return <></>;
@@ -161,7 +129,7 @@ function CategoryList({
   };
 
   return (
-    <div className="flex-grow mt-4  font-mplus text-sm sm:text-base flex flex-col">
+    <div className="flex-grow mt-4 font-mplus text-sm sm:text-base flex flex-col">
       <div className="flex justify-between">
         <div className="flex items-center">
           <Label label="Category List" className="text-xl" />
@@ -175,7 +143,7 @@ function CategoryList({
         </div>
         <div className="block sm:hidden">
           <button
-            onClick={() => onSave(categoryList)}
+            onClick={onSave}
             className={`h-8 w-[120px] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div className="flex justify-center items-center">
@@ -199,7 +167,7 @@ function CategoryList({
           </div>
           <div className="flex-grow h-0 overflow-y-scroll no-scrollbar">
             <HierarchyTable
-              tableData={hierarchyTableProps}
+              tableData={hierarchyProps}
               getRowContent={getRowContent}
               indentPixels={"20px"}
               isCollapsible={true}
@@ -224,7 +192,7 @@ function CategoryList({
           </div>
 
           <button
-            onClick={() => onSave(categoryList)}
+            onClick={onSave}
             className={`h-8 w-[95%] bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
           >
             <div className="flex justify-center items-center">
@@ -241,9 +209,8 @@ function CategoryList({
           onClose={closeModal}
         >
           <AllCategoriesEditable
-            userData={userData}
-            saveNewExcludedCategories={saveNewExcludedCategories}
-            setCategoryList={setCategoryList}
+            editableCategoryList={editableCategoryList}
+            saveExcludedCategories={saveExcludedCategories}
             closeModal={closeModal}
           />
         </ModalContent>

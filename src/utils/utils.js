@@ -1,6 +1,11 @@
 import Axios from "axios";
-import { addDays, differenceInMonths } from "date-fns";
 import Queries from "../pages/api/resolvers/resolverMapping.json";
+
+import { v4 as uuidv4 } from "uuid";
+
+export function generateUUID() {
+  return uuidv4();
+}
 
 const INPUTS_TO_STRING = [
   "refreshCategoriesInput",

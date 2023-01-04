@@ -3,18 +3,17 @@ import React from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import { differenceInDays, startOfToday } from "date-fns";
+import { UserData } from "../../../utils/evercent";
+import useModal from "../../hooks/useModal";
 import {
-  parseDate,
   formatDate,
-  ModalType,
   getMoneyString,
-} from "../utils/utils";
-
-import UpdateUserDetailsModal from "./modal/UpdateUserDetailsModal";
-import useModal from "./hooks/useModal";
-import ModalContent from "./modal/ModalContent";
-import { UserData } from "../utils/evercent";
-import LabelAndValue from "./elements/LabelAndValue";
+  ModalType,
+  parseDate,
+} from "../../../utils/utils";
+import ModalContent from "../../modal/ModalContent";
+import UpdateUserDetailsModal from "../../modal/UpdateUserDetailsModal";
+import LabelAndValue from "../../elements/LabelAndValue";
 
 function UserDetails({
   userData,
@@ -33,18 +32,6 @@ function UserDetails({
 
   return (
     <>
-      {isOpen && (
-        <ModalContent
-          modalContentID={ModalType.USER_DETAILS}
-          onClose={closeModal}
-        >
-          <UpdateUserDetailsModal
-            userData={userData}
-            updateUserData={updateUserData}
-            closeModal={closeModal}
-          />
-        </ModalContent>
-      )}
       <div className="flex items-center justify-evenly w-full sm:w-auto sm:space-x-4 text-center">
         {/* Monthly Income */}
         <div className="flex flex-col items-center justify-start sm:justify-center h-full">
@@ -120,6 +107,19 @@ function UserDetails({
           onClick={showModal}
         />
       </div>
+
+      {isOpen && (
+        <ModalContent
+          modalContentID={ModalType.USER_DETAILS}
+          onClose={closeModal}
+        >
+          <UpdateUserDetailsModal
+            userData={userData}
+            updateUserData={updateUserData}
+            closeModal={closeModal}
+          />
+        </ModalContent>
+      )}
     </>
   );
 }

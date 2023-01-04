@@ -117,6 +117,10 @@ function RegularExpenseDetails({
     },
   ];
 
+  const createList = (data: any) => {
+    return categoryMonthList;
+  };
+
   const months: PostingMonth[] = [
     { month: "August 2022", amount: 160, percentAmount: 17 },
     { month: "September 2022", amount: 160, percentAmount: 17 },
@@ -250,7 +254,7 @@ function RegularExpenseDetails({
     }
   };
 
-  const hierarchyTableData = useHierarchyTable(categoryMonthList);
+  const hierarchyTableData = useHierarchyTable(null, createList);
 
   return (
     <Card className="flex flex-col flex-grow h-0 p-2 space-y-2">

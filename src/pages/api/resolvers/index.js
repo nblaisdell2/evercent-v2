@@ -12,53 +12,23 @@ import {
 } from "../../../utils/ynab";
 import {
   calculatePercentage,
+  generateUUID,
   getAPIData,
   saveNewYNABTokens,
 } from "../../../utils/utils";
 import {
+  createCategoryList,
   getAdjustedAmount,
   getAdjustedAmountPlusExtra,
+  getAllBudgetCategories,
+  getAllCategoryData,
+  getCategoryDataDB,
   getGroupAmounts,
+  getInput_RefreshCategories,
+  getUserData,
+  isSameCategory,
+  refreshCategories,
 } from "../../../utils/evercent";
-import { v4 as uuidv4 } from "uuid";
-
-function generateUUID() {
-  return uuidv4();
-}
-
-function createCategory(categoryData) {
-  return {
-    guid: catDB.CategoryGUID,
-    budgetID: catDB.BudgetID,
-    categoryGroupID: catDB.CategoryGroupID,
-    categoryID: catDB.CategoryID,
-    categoryGroupName: catDB.CategoryGroupName,
-    categoryName: catDB.CategoryName,
-    amount: catDB.CategoryAmount,
-    extraAmount: catDB.ExtraAmount,
-    isRegularExpense: catDB.IsRegularExpense,
-    isUpcomingExpense: catDB.IsUpcomingExpense,
-    regularExpenseDetails: {
-      guid: catDB.CategoryGUID,
-      isMonthly: catDB.IsMonthly,
-      nextDueDate: catDB.NextDueDate,
-      monthsDivisor: catDB.ExpenseMonthsDivisor,
-      repeatFreqNum: catDB.RepeatFreqNum,
-      repeatFreqType: catDB.RepeatFreqType,
-      includeOnChart: catDB.IncludeOnChart,
-      multipleTransactions: catDB.MultipleTransactions,
-    },
-    upcomingDetails: {
-      guid: catDB.CategoryGUID,
-      totalExpenseAmount: catDB.TotalExpenseAmount,
-    },
-    budgetAmounts: {
-      budgeted: catDB.BudgetAmountBudgeted,
-      activity: catDB.BudgetAmountActivity,
-      available: catDB.BudgetAmountAvailable,
-    },
-  };
-}
 
 function createAutoRuns(autoRunData) {
   let autoRuns = [];
@@ -155,149 +125,26 @@ function createRunsToLock(runsData) {
 
 export const resolvers = {
   Query: {
-    userData: async (_, args) => {
+    getAllData: async (_, args) => {
       console.log("============================");
       console.log(" START RESOLVER - UserData");
       console.log("============================");
 
-      const strRightNow = new Date().toISOString();
-
-      if (!args.userEmail) {
-        return {
-          userID: "",
-          budgetID: "",
-          budgetName: "",
-          monthlyIncome: 0,
-          monthsAheadTarget: 6,
-          payFrequency: "Weekly",
-          nextPaydate: strRightNow,
-          tokenDetails: {
-            accessToken: "",
-            refreshToken: "",
-            expirationDate: strRightNow,
-          },
-        };
-      }
-
-      // 1. Get the UserID/BudgetID for the given email
-      const queryDataID = await getAPIData(
-        Queries.QUERY_USER_ID,
-        { userEmail: args.userEmail },
-        false
-      );
-      const { UserID, DefaultBudgetID } = queryDataID[0][0];
-
-      // 2. If we're connecting to YNAB for the first time, we'll...
-      let newDefaultBudgetID = DefaultBudgetID;
-      if (args.authCode) {
-        // Get a new set of accessToken/refreshTokens for this user
-        // connecting to YNAB for the first time
-        const tokenDetails = await GetNewAccessToken({
-          userID: UserID,
-          authCode: args.authCode,
-        });
-        saveNewYNABTokens(UserID, tokenDetails);
-
-        // Then, get the user's default BudgetID for the
-        // budget they selected.
-        const budgetID = await GetDefaultBudgetID({
-          // ...args,
-          accessToken: tokenDetails.accessToken,
-          refreshToken: tokenDetails.refreshToken,
-        });
-        newDefaultBudgetID = budgetID.data;
-
-        // Then, get the user's budget categories, and save them to the
-        // database, as well. That way, when the page re-loads, we can pull
-        // them in.
-        const budgetData = await GetBudget({
-          // ...args,
-          accessToken: tokenDetails.accessToken,
-          refreshToken: tokenDetails.refreshToken,
-          budgetID: newDefaultBudgetID,
-        });
-
-        // Format the data properly so that it can be accepted by the stored procedure
-        let budgetDetails = budgetData.data.map((bd) => {
-          return {
-            guid: generateUUID(),
-            categoryGroupID: bd.categoryGroupID,
-            categoryID: bd.categoryID,
-            amount: 0,
-            extraAmount: 0,
-            isRegularExpense: false,
-            isUpcomingExpense: false,
-          };
-        });
-        budgetDetails = {
-          details: budgetDetails,
-        };
-
-        await getAPIData(
-          Queries.MUTATION_UPDATE_INITIAL_YNAB_DATA,
-          {
-            userID: UserID,
-            budgetID: newDefaultBudgetID,
-            updateCategoriesInput: budgetDetails,
-          },
-          true
-        );
-      }
-
-      // 3. Query the user's details using those IDs above
-      //      - User Data (monthly income, pay freq, etc)
-      //      - Categories
-      const queryDataUser = await getAPIData(
-        Queries.QUERY_USER,
-        { userID: UserID, budgetID: newDefaultBudgetID },
-        false
-      );
-      const userDetailsData = queryDataUser[0][0];
-
-      // 4. Get the budget name from YNAB, so we can
-      //    already have it by the time the page loads
-      let budgetName = "";
-      if (newDefaultBudgetID) {
-        const budgetNameData = await GetBudgetName({
-          budgetID: newDefaultBudgetID,
-          accessToken: userDetailsData.AccessToken || "",
-          refreshToken: userDetailsData.RefreshToken || "",
-          expirationDate: userDetailsData.ExpirationDate || strRightNow,
-        });
-        saveNewYNABTokens(UserID, budgetNameData.connDetails);
-        if (budgetNameData.connDetails?.accessToken) {
-          userDetailsData.AccessToken = budgetNameData.connDetails.accessToken;
-          userDetailsData.RefreshToken =
-            budgetNameData.connDetails.refreshToken;
-          userDetailsData.ExpirationDate =
-            budgetNameData.connDetails.expirationDate;
-        }
-        budgetName = budgetNameData.data;
-      }
-
-      // 5. Lastly, format the "userData" appropriately and return it
-      //    to the client
-      const userData = {
-        userID: userDetailsData.UserID,
-        budgetID: userDetailsData.DefaultBudgetID,
-        budgetName: budgetName,
-        monthlyIncome: userDetailsData.MonthlyIncome || 0,
-        monthsAheadTarget: userDetailsData.MonthsAheadTarget || 6,
-        payFrequency: userDetailsData.PayFrequency || "Weekly",
-        nextPaydate: userDetailsData.NextPaydate || strRightNow,
-        tokenDetails: {
-          accessToken: userDetailsData.AccessToken || "",
-          refreshToken: userDetailsData.RefreshToken || "",
-          expirationDate: userDetailsData.ExpirationDate || strRightNow,
-        },
-      };
-      console.log("USER DATA", userData);
+      const userData = await getUserData(args.userEmail, args.authCode);
+      const { budgetNames, budgetMonths, categories, editableCategoryList } =
+        await getAllCategoryData(userData);
 
       console.log("============================");
       console.log(" END RESOLVER - UserData");
       console.log("============================");
 
-      return userData;
+      return {
+        userData,
+        budgetNames,
+        budgetMonths,
+        categories,
+        editableCategoryList,
+      };
     },
     userID: async (_, args) => {
       const queryData = await getAPIData(Queries.QUERY_USER_ID, args, false);
@@ -342,12 +189,15 @@ export const resolvers = {
       console.log(" START RESOLVER - GetCategoryGroups");
       console.log("============================");
 
-      const catGroups = await GetCategoryGroups(args);
+      console.log(args);
+      let { userID, budgetID } = args.userBudgetInput;
+
+      const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
       console.log("got category groups");
 
       const queryData = await getAPIData(
         Queries.QUERY_EXCLUDED_CATEGORIES,
-        { userID: args.userID, budgetID: args.budgetID },
+        { userID, budgetID },
         false
       );
       console.log("got query data");
@@ -364,6 +214,240 @@ export const resolvers = {
       console.log("============================");
 
       return catGroups;
+    },
+    getBudgetHelperDetails: async (_, args) => {
+      const queryData = await getAPIData(
+        Queries.QUERY_CATEGORIES_INITIAL,
+        { userBudgetInput: args.userBudgetInput },
+        false
+      );
+
+      const categoryData = queryData[0];
+      const user = queryData[1][0];
+      const excludedCategories = queryData[2];
+
+      let { userID, budgetID } = args.userBudgetInput;
+
+      const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
+      for (let i = 0; i < catGroups.length; i++) {
+        catGroups[i].included = !excludedCategories.some((d) => {
+          return d.CategoryID.toLowerCase() == catGroups[i].categoryID;
+        });
+      }
+
+      const bm = await GetBudgetMonths({ ...args, userID, budgetID });
+      const budgetMonths = bm.data;
+
+      const bd = await GetBudgets({ ...args, userID });
+      const budgetNames = bd.data;
+
+      console.log("budgetNames", budgetNames);
+
+      // ======================================
+      // If we have any in catGroups (YNAB) that aren't in categoryData (database),
+      // then we need to adjust the database accordingly.
+      //   If there's data in catGroups but not categoryData, run a query
+      //   to add that data to the database, but don't "await" it, and just
+      //   manually add the data to "categories" below.
+
+      //   If there's data in categoryData, but not catGroups, that means it's
+      //   been deleted from YNAB, so we should delete it from categoryData, as well,
+      //   and run a query to remove it from the database at the same time, similar
+      //   to the steps above.
+
+      let newResults = [];
+      for (let i = 0; i < catGroups.length; i++) {
+        if (
+          !categoryData.some((cat) => {
+            return (
+              cat.CategoryGroupID.toLowerCase() ==
+                catGroups[i].categoryGroupID &&
+              cat.CategoryID.toLowerCase() == catGroups[i].categoryID
+            );
+          }) &&
+          !excludedCategories.some((cat) => {
+            return (
+              cat.CategoryGroupID.toLowerCase() ==
+                catGroups[i].categoryGroupID &&
+              cat.CategoryID.toLowerCase() == catGroups[i].categoryID
+            );
+          })
+        ) {
+          newResults.push({
+            categoryGroupID: catGroups[i].categoryGroupID.toUpperCase(),
+            categoryID: catGroups[i].categoryID.toUpperCase(),
+            guid: generateUUID().toUpperCase(),
+            doThis: "add",
+          });
+
+          const indexToInsert = categoryData.lastIndexOf(
+            categoryData.find((cat) => {
+              return (
+                cat.CategoryGroupID ==
+                catGroups[i].categoryGroupID.toUpperCase()
+              );
+            })
+          );
+          categoryData.splice(indexToInsert, 0, {
+            CategoryGUID: generateUUID().toUpperCase(),
+            BudgetID: budgetID,
+            CategoryGroupID: catGroups[i].categoryGroupID.toUpperCase(),
+            CategoryID: catGroups[i].categoryID.toUpperCase(),
+            CategoryAmount: 0,
+            ExtraAmount: 0,
+            IsRegularExpense: false,
+            IsUpcomingExpense: false,
+            IsMonthly: null,
+            NextDueDate: null,
+            ExpenseMonthsDivisor: null,
+            RepeatFreqNum: null,
+            RepeatFreqType: null,
+            IncludeOnChart: null,
+            MultipleTransactions: null,
+            TotalExpenseAmount: null,
+          });
+        }
+      }
+
+      for (let i = 0; i < categoryData.length; i++) {
+        if (
+          !catGroups.some((grp) => {
+            return (
+              grp.categoryGroupID ==
+                categoryData[i].CategoryGroupID.toLowerCase() &&
+              grp.categoryID == categoryData[i].CategoryID.toLowerCase()
+            );
+          })
+        ) {
+          newResults.push({
+            categoryGroupID: categoryData[i].CategoryGroupID,
+            categoryID: categoryData[i].CategoryID,
+            guid: categoryData[i].CategoryGUID,
+            doThis: "remove",
+          });
+          categoryData.splice(i, 1);
+        }
+      }
+
+      newResults = {
+        details: newResults,
+      };
+
+      if (newResults.details.length > 0) {
+        getAPIData(
+          Queries.MUTATION_REFRESH_CATEGORIES,
+          {
+            userID: userID,
+            budgetID: budgetID,
+            refreshCategoriesInput: newResults,
+          },
+          true
+        );
+      }
+      // ======================================
+
+      // By mapping over the "catGroups" returned by the YNAB API
+      // for each object in the database, we can ensure that the
+      // data returned to the client will match the same order that the
+      // YNAB data is shown in their actual budget.
+      let categoryListTemp = [];
+      let cats = [];
+      let currGroup = "";
+      for (let i = 0; i < catGroups.length; i++) {
+        let catDB = categoryData.find((data) => {
+          return (
+            data.CategoryGroupID.toLowerCase() ==
+              catGroups[i].categoryGroupID &&
+            data.CategoryID.toLowerCase() == catGroups[i].categoryID
+          );
+        });
+
+        if (currGroup !== catGroups[i].categoryGroupName) {
+          if (currGroup !== "" && cats.length > 0) {
+            categoryListTemp.push({
+              __typename: "CategoryGroup",
+              groupID: catGroups[i - 1].categoryGroupID,
+              groupName: currGroup,
+              categories: cats,
+              ...getGroupAmounts(cats),
+            });
+
+            cats = [];
+          }
+          currGroup = catGroups[i].categoryGroupName;
+        }
+
+        if (
+          catDB &&
+          !excludedCategories.find(
+            (exc) =>
+              exc.CategoryGroupID == catDB.CategoryGroupID &&
+              exc.CategoryID == catDB.CategoryID
+          )
+        ) {
+          let currCat = {
+            __typename: "Category",
+            guid: catDB.CategoryGUID,
+            categoryGroupID: catGroups[i].categoryGroupID,
+            categoryID: catGroups[i].categoryID,
+            groupName: currGroup,
+            name: catGroups[i].categoryName,
+            amount: catDB.CategoryAmount,
+            extraAmount: catDB.ExtraAmount,
+            isRegularExpense: catDB.IsRegularExpense,
+            isUpcomingExpense: catDB.IsUpcomingExpense,
+            regularExpenseDetails: {
+              __typename: "RegularExpenseDetails",
+              guid: catDB.CategoryGUID,
+              isMonthly: catDB.IsMonthly,
+              nextDueDate: catDB.NextDueDate,
+              monthsDivisor: catDB.ExpenseMonthsDivisor,
+              repeatFreqNum: catDB.RepeatFreqNum,
+              repeatFreqType: catDB.RepeatFreqType,
+              includeOnChart: catDB.IncludeOnChart,
+              multipleTransactions: catDB.MultipleTransactions,
+            },
+            upcomingDetails: {
+              __typename: "UpcomingDetails",
+              guid: catDB.CategoryGUID,
+              expenseAmount: catDB.TotalExpenseAmount,
+            },
+            budgetAmounts: {
+              __typename: "BudgetAmounts",
+              budgeted: catGroups[i].budgeted,
+              activity: catGroups[i].activity,
+              available: catGroups[i].available,
+            },
+          };
+          currCat.adjustedAmt = getAdjustedAmount(
+            currCat,
+            budgetMonths,
+            user.NextPaydate
+          );
+          currCat.adjustedAmtPlusExtra = getAdjustedAmountPlusExtra(currCat);
+          currCat.percentIncome = calculatePercentage(
+            currCat.adjustedAmtPlusExtra,
+            user.MonthlyIncome
+          );
+          cats.push(currCat);
+        }
+      }
+      if (cats.length > 0) {
+        categoryListTemp.push({
+          __typename: "CategoryGroup",
+          groupID: catGroups[catGroups.length - 1].categoryGroupID,
+          groupName: currGroup,
+          categories: cats,
+          ...getGroupAmounts(cats),
+        });
+      }
+
+      return {
+        budgetNames: budgetNames,
+        categories: categoryListTemp,
+        budgetMonths: budgetMonths,
+        editableCategoryList: catGroups,
+      };
     },
     getNewAccessToken: async (_, args) => {
       const tokenDetails = await GetNewAccessToken(args);
@@ -396,19 +480,23 @@ export const resolvers = {
       return budgetData.data;
     },
     budgetName: async (_, args) => {
-      const budgetName = await GetBudgetName(args);
-      saveNewYNABTokens(args.userID, budgetName.connDetails);
+      let { userID, budgetID } = args.userBudgetInput;
+
+      const budgetName = await GetBudgetName(
+        { ...args, userID, budgetID },
+        false
+      );
+      saveNewYNABTokens(userID, budgetName.connDetails);
 
       return budgetName.data;
     },
     budgetMonths: async (_, args) => {
       let { userID, budgetID } = args.userBudgetInput;
-      delete args.userBudgetInput;
-      args.userID = userID;
-      args.budgetID = budgetID;
 
-      const budgetMonths = await GetBudgetMonths(args);
-      saveNewYNABTokens(args.userID, budgetMonths.connDetails);
+      console.log("getting budget months");
+      const budgetMonths = await GetBudgetMonths({ ...args, userID, budgetID });
+      console.log("got budget months");
+      saveNewYNABTokens(userID, budgetMonths.connDetails);
 
       return budgetMonths.data;
     },
@@ -428,7 +516,6 @@ export const resolvers = {
       const excludedCategories = queryData[2];
 
       let { userID, budgetID } = args.userBudgetInput;
-      delete args.userBudgetInput;
 
       const catGroups = await GetCategoryGroups({ ...args, userID, budgetID });
       const budgetMonths = await GetBudgetMonths({ ...args, userID, budgetID });

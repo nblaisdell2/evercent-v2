@@ -1,4 +1,4 @@
-import React from "react";
+import React, { SetStateAction } from "react";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 import { today, getLocalTimeZone, parseDate } from "@internationalized/date";
@@ -10,7 +10,6 @@ import MySelect from "../../elements/MySelect";
 import MyToggle from "../../elements/MyToggle";
 
 import {
-  calculatePercentage,
   getDateFromCalendarDate,
   getMoneyString,
   parseDate as parseDateUtil,
@@ -19,79 +18,53 @@ import { format, differenceInDays } from "date-fns";
 import {
   getPostingMonthAmounts,
   getUpcomingPaydate,
-  getAdjustedAmount,
   CategoryListItem,
-  getAdjustedAmountPlusExtra,
 } from "../../../utils/evercent";
 import MyToggleButton from "../../elements/MyToggleButton";
-
-type Props = {
-  initialCategory: CategoryListItem;
-  monthlyIncome: number;
-  payFrequency: string;
-  nextPaydate: string;
-  budgetMonths: any[];
-  updateSelectedCategory: (newCategory: CategoryListItem | null) => void;
-};
+import MyInput from "../../elements/MyInput";
 
 function SelectedCategory({
   initialCategory,
-  monthlyIncome,
   payFrequency,
   nextPaydate,
-  budgetMonths,
-  updateSelectedCategory,
-}: Props) {
-  const toggleOptions = (checked: boolean, option: string) => {
-    let newCategory = { ...initialCategory };
-
-    newCategory.isRegularExpense =
-      option == "Regular Expense" ? checked : false;
-    if (
-      newCategory.isRegularExpense &&
-      !newCategory.regularExpenseDetails.repeatFreqType
-    ) {
-      // // Set regular expense defaults here
-      newCategory.regularExpenseDetails = {
-        ...newCategory.regularExpenseDetails,
-        isMonthly: true,
-        nextDueDate: nextPaydate,
-        monthsDivisor: 1,
-        repeatFreqNum: 1,
-        repeatFreqType: "Months",
-        includeOnChart: true,
-        multipleTransactions: false,
-      };
-    }
-    newCategory.isUpcomingExpense =
-      option == "Upcoming Expense" ? checked : false;
-
-    updateSelectedCategory(newCategory);
-  };
-
-  const updateCategory = (newFields: any) => {
-    let newCat: any = { ...initialCategory };
-    let keys = Object.keys(newFields);
-    // console.log(newFields);
-    for (let i = 0; i < keys.length; i++) {
-      newCat[keys[i]] = newFields[keys[i]];
-    }
-
-    if (newCat.regularExpenseDetails.isMonthly) {
-      newCat.regularExpenseDetails.repeatFreqNum = 1;
-      newCat.regularExpenseDetails.repeatFreqType = "Months";
-    }
-
-    newCat.adjustedAmt = getAdjustedAmount(newCat, budgetMonths, nextPaydate);
-    newCat.adjustedAmtPlusExtra = getAdjustedAmountPlusExtra(newCat);
-    newCat.percentIncome = calculatePercentage(
-      newCat.adjustedAmtPlusExtra,
-      monthlyIncome
-    );
-
-    updateSelectedCategory(newCat);
-  };
-
+  setSelectedCategory,
+  updateSelectedCategoryAmount,
+  toggleSelectedCategoryOptions,
+  updateSelectedCategoryExpense,
+  updateSelectedCategoryUpcomingAmount,
+}: {
+  initialCategory: CategoryListItem;
+  payFrequency: string;
+  nextPaydate: string;
+  setSelectedCategory: (
+    action: SetStateAction<CategoryListItem | null>
+  ) => void;
+  updateSelectedCategoryAmount: (
+    category: CategoryListItem,
+    key: "amount" | "extraAmount",
+    newAmount: number
+  ) => void;
+  toggleSelectedCategoryOptions: (
+    category: CategoryListItem,
+    checked: boolean,
+    option: string
+  ) => void;
+  updateSelectedCategoryExpense: (
+    category: CategoryListItem,
+    key:
+      | "nextDueDate"
+      | "isMonthly"
+      | "repeatFreqNum"
+      | "repeatFreqType"
+      | "includeOnChart"
+      | "multipleTransactions",
+    value: any
+  ) => void;
+  updateSelectedCategoryUpcomingAmount: (
+    category: CategoryListItem,
+    newAmount: number
+  ) => void;
+}) {
   const postingMonths = getPostingMonthAmounts();
   const upcomingPaydate = getUpcomingPaydate(
     initialCategory.upcomingDetails.expenseAmount,
@@ -105,7 +78,7 @@ function SelectedCategory({
       <div className="inline-flex items-center">
         <div
           onClick={() => {
-            updateSelectedCategory(null);
+            setSelectedCategory(null);
           }}
           className="inline-flex border-b border-transparent hover:border-black hover:cursor-pointer"
         >
@@ -129,49 +102,30 @@ function SelectedCategory({
               <div className="flex w-full text-center justify-around">
                 <div>
                   <div className="font-semibold">Amount</div>
-                  <input
-                    type="number"
-                    className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
-                    value={initialCategory.amount.toString()}
-                    onChange={(e: any) => {
-                      let { data, inputType } = e.nativeEvent;
-                      if (
-                        (data >= "0" && data <= "9") ||
-                        [
-                          "deleteContentForward",
-                          "deleteContentBackward",
-                        ].includes(inputType)
-                      ) {
-                        updateCategory({
-                          amount: parseInt(e.target.value) || 0,
-                          // adjustedAmt: parseInt(e.target.value) || 0,
-                        });
-                      }
+                  <MyInput
+                    value={initialCategory.amount}
+                    onChange={(newVal: number) => {
+                      updateSelectedCategoryAmount(
+                        initialCategory,
+                        "amount",
+                        newVal
+                      );
                     }}
-                    onFocus={(e) => e.target.select()}
+                    className={"h-8 w-32"}
                   />
                 </div>
                 <div>
                   <div className="font-semibold">Extra Amount</div>
-                  <input
-                    type="number"
-                    className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
-                    value={initialCategory.extraAmount.toString()}
-                    onChange={(e: any) => {
-                      let { data, inputType } = e.nativeEvent;
-                      if (
-                        (data >= "0" && data <= "9") ||
-                        [
-                          "deleteContentForward",
-                          "deleteContentBackward",
-                        ].includes(inputType)
-                      ) {
-                        updateCategory({
-                          extraAmount: parseInt(e.target.value) || 0,
-                        });
-                      }
+                  <MyInput
+                    value={initialCategory.extraAmount}
+                    onChange={(newVal: number) => {
+                      updateSelectedCategoryAmount(
+                        initialCategory,
+                        "extraAmount",
+                        newVal
+                      );
                     }}
-                    onFocus={(e) => e.target.select()}
+                    className={"h-8 w-32"}
                   />
                 </div>
               </div>
@@ -182,7 +136,11 @@ function SelectedCategory({
                     <MyToggle
                       checked={initialCategory.isRegularExpense}
                       onToggle={(checked) => {
-                        toggleOptions(checked, "Regular Expense");
+                        toggleSelectedCategoryOptions(
+                          initialCategory,
+                          checked,
+                          "Regular Expense"
+                        );
                       }}
                       className="mr-2"
                     />
@@ -192,7 +150,11 @@ function SelectedCategory({
                     <MyToggle
                       checked={initialCategory.isUpcomingExpense}
                       onToggle={(checked) => {
-                        toggleOptions(checked, "Upcoming Expense");
+                        toggleSelectedCategoryOptions(
+                          initialCategory,
+                          checked,
+                          "Upcoming Expense"
+                        );
                       }}
                       className="mr-2"
                     />
@@ -278,13 +240,11 @@ function SelectedCategory({
                           ).substring(0, 10)
                         )}
                         onChange={(newDate: any) => {
-                          updateCategory({
-                            regularExpenseDetails: {
-                              ...initialCategory.regularExpenseDetails,
-                              nextDueDate:
-                                getDateFromCalendarDate(newDate).toISOString(),
-                            },
-                          });
+                          updateSelectedCategoryExpense(
+                            initialCategory,
+                            "nextDueDate",
+                            getDateFromCalendarDate(newDate).toISOString()
+                          );
                         }}
                       />
                     </div>
@@ -297,12 +257,11 @@ function SelectedCategory({
                         leftValue={"Monthly"}
                         rightValue={"By Date"}
                         onToggle={(toggleValue: boolean) => {
-                          updateCategory({
-                            regularExpenseDetails: {
-                              ...initialCategory.regularExpenseDetails,
-                              isMonthly: toggleValue,
-                            },
-                          });
+                          updateSelectedCategoryExpense(
+                            initialCategory,
+                            "isMonthly",
+                            toggleValue
+                          );
                         }}
                       />
                     </div>
@@ -326,12 +285,11 @@ function SelectedCategory({
                               "12",
                             ]}
                             onSelectionChange={(sel) => {
-                              updateCategory({
-                                regularExpenseDetails: {
-                                  ...initialCategory.regularExpenseDetails,
-                                  repeatFreqNum: parseInt(sel.toString()),
-                                },
-                              });
+                              updateSelectedCategoryExpense(
+                                initialCategory,
+                                "repeatFreqNum",
+                                parseInt(sel.toString())
+                              );
                             }}
                             selectedValue={initialCategory.regularExpenseDetails.repeatFreqNum.toString()}
                             isDisabled={
@@ -343,12 +301,11 @@ function SelectedCategory({
                           <MySelect
                             values={["Months", "Years"]}
                             onSelectionChange={(sel) => {
-                              updateCategory({
-                                regularExpenseDetails: {
-                                  ...initialCategory.regularExpenseDetails,
-                                  repeatFreqType: sel.toString(),
-                                },
-                              });
+                              updateSelectedCategoryExpense(
+                                initialCategory,
+                                "repeatFreqType",
+                                sel.toString()
+                              );
                             }}
                             selectedValue={
                               initialCategory.regularExpenseDetails
@@ -370,12 +327,11 @@ function SelectedCategory({
                           initialCategory.regularExpenseDetails.includeOnChart
                         }
                         onToggle={(checked) => {
-                          updateCategory({
-                            regularExpenseDetails: {
-                              ...initialCategory.regularExpenseDetails,
-                              includeOnChart: checked,
-                            },
-                          });
+                          updateSelectedCategoryExpense(
+                            initialCategory,
+                            "includeOnChart",
+                            checked
+                          );
                         }}
                       />
                     </div>
@@ -389,12 +345,11 @@ function SelectedCategory({
                             .multipleTransactions
                         }
                         onToggle={(checked) => {
-                          updateCategory({
-                            regularExpenseDetails: {
-                              ...initialCategory.regularExpenseDetails,
-                              multipleTransactions: checked,
-                            },
-                          });
+                          updateSelectedCategoryExpense(
+                            initialCategory,
+                            "multipleTransactions",
+                            checked
+                          );
                         }}
                       />
                     </div>
@@ -411,30 +366,15 @@ function SelectedCategory({
                 <div className="flex justify-around items-center h-full">
                   <div className="flex flex-col items-center">
                     <div className="font-semibold">Total Purchase Amount</div>
-                    <input
-                      type="number"
-                      className="border border-black rounded-md outline-none text-center h-8 w-56 appearance-none"
-                      value={(
-                        initialCategory.upcomingDetails.expenseAmount || 0
-                      ).toString()}
-                      onChange={(e: any) => {
-                        let { data, inputType } = e.nativeEvent;
-                        if (
-                          (data >= "0" && data <= "9") ||
-                          [
-                            "deleteContentForward",
-                            "deleteContentBackward",
-                          ].includes(inputType)
-                        ) {
-                          updateCategory({
-                            upcomingDetails: {
-                              ...initialCategory.upcomingDetails,
-                              expenseAmount: parseInt(e.target.value) || null,
-                            },
-                          });
-                        }
+                    <MyInput
+                      value={initialCategory.upcomingDetails.expenseAmount || 0}
+                      onChange={(newVal: number) => {
+                        updateSelectedCategoryUpcomingAmount(
+                          initialCategory,
+                          newVal
+                        );
                       }}
-                      onFocus={(e) => e.target.select()}
+                      className={"h-8 w-56"}
                     />
                   </div>
                   <div className="flex flex-col items-center">
@@ -472,49 +412,30 @@ function SelectedCategory({
             <div className="flex justify-around">
               <div className="mb-2">
                 <div className="font-semibold">Amount</div>
-                <input
-                  type="number"
-                  className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
-                  value={initialCategory.amount.toString()}
-                  onChange={(e: any) => {
-                    let { data, inputType } = e.nativeEvent;
-                    if (
-                      (data >= "0" && data <= "9") ||
-                      [
-                        "deleteContentForward",
-                        "deleteContentBackward",
-                      ].includes(inputType)
-                    ) {
-                      updateCategory({
-                        amount: parseInt(e.target.value) || 0,
-                        adjustedAmt: parseInt(e.target.value) || 0,
-                      });
-                    }
+                <MyInput
+                  value={initialCategory.amount}
+                  onChange={(newVal: number) => {
+                    updateSelectedCategoryAmount(
+                      initialCategory,
+                      "amount",
+                      newVal
+                    );
                   }}
-                  onFocus={(e) => e.target.select()}
+                  className={"h-8 w-32"}
                 />
               </div>
               <div>
                 <div className="font-semibold">Extra Amount</div>
-                <input
-                  type="number"
-                  className="border border-black rounded-md outline-none text-center h-8 w-32 appearance-none"
-                  value={initialCategory.extraAmount.toString()}
-                  onChange={(e: any) => {
-                    let { data, inputType } = e.nativeEvent;
-                    if (
-                      (data >= "0" && data <= "9") ||
-                      [
-                        "deleteContentForward",
-                        "deleteContentBackward",
-                      ].includes(inputType)
-                    ) {
-                      updateCategory({
-                        extraAmount: parseInt(e.target.value) || 0,
-                      });
-                    }
+                <MyInput
+                  value={initialCategory.extraAmount}
+                  onChange={(newVal: number) => {
+                    updateSelectedCategoryAmount(
+                      initialCategory,
+                      "extraAmount",
+                      newVal
+                    );
                   }}
-                  onFocus={(e) => e.target.select()}
+                  className={"h-8 w-32"}
                 />
               </div>
             </div>
@@ -544,7 +465,11 @@ function SelectedCategory({
                 <MyToggle
                   checked={initialCategory.isRegularExpense}
                   onToggle={(checked) => {
-                    toggleOptions(checked, "Regular Expense");
+                    toggleSelectedCategoryOptions(
+                      initialCategory,
+                      checked,
+                      "Regular Expense"
+                    );
                   }}
                   className="mr-2"
                 />
@@ -554,7 +479,11 @@ function SelectedCategory({
                 <MyToggle
                   checked={initialCategory.isUpcomingExpense}
                   onToggle={(checked) => {
-                    toggleOptions(checked, "Upcoming Expense");
+                    toggleSelectedCategoryOptions(
+                      initialCategory,
+                      checked,
+                      "Upcoming Expense"
+                    );
                   }}
                   className="mr-2"
                 />
@@ -581,13 +510,11 @@ function SelectedCategory({
                     ).substring(0, 10)
                   )}
                   onChange={(newDate: any) => {
-                    updateCategory({
-                      regularExpenseDetails: {
-                        ...initialCategory.regularExpenseDetails,
-                        nextDueDate:
-                          getDateFromCalendarDate(newDate).toISOString(),
-                      },
-                    });
+                    updateSelectedCategoryExpense(
+                      initialCategory,
+                      "nextDueDate",
+                      getDateFromCalendarDate(newDate).toISOString()
+                    );
                   }}
                 />
               </div>
@@ -601,12 +528,11 @@ function SelectedCategory({
                         : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
                     }`}
                     onClick={() => {
-                      updateCategory({
-                        regularExpenseDetails: {
-                          ...initialCategory.regularExpenseDetails,
-                          isMonthly: true,
-                        },
-                      });
+                      updateSelectedCategoryExpense(
+                        initialCategory,
+                        "isMonthly",
+                        true
+                      );
                     }}
                   >
                     Monthly
@@ -618,12 +544,11 @@ function SelectedCategory({
                         : "hover:bg-blue-900 hover:opacity-70 hover:text-white hover:font-bold"
                     }`}
                     onClick={() => {
-                      updateCategory({
-                        regularExpenseDetails: {
-                          ...initialCategory.regularExpenseDetails,
-                          isMonthly: false,
-                        },
-                      });
+                      updateSelectedCategoryExpense(
+                        initialCategory,
+                        "isMonthly",
+                        false
+                      );
                     }}
                   >
                     By Date
@@ -651,12 +576,11 @@ function SelectedCategory({
                       ]}
                       selectedValue={initialCategory.regularExpenseDetails.repeatFreqNum.toString()}
                       onSelectionChange={(sel) => {
-                        updateCategory({
-                          regularExpenseDetails: {
-                            ...initialCategory.regularExpenseDetails,
-                            repeatFreqNum: parseInt(sel.toString()),
-                          },
-                        });
+                        updateSelectedCategoryExpense(
+                          initialCategory,
+                          "repeatFreqNum",
+                          parseInt(sel.toString())
+                        );
                       }}
                       isDisabled={
                         initialCategory.regularExpenseDetails.isMonthly
@@ -670,12 +594,11 @@ function SelectedCategory({
                         initialCategory.regularExpenseDetails.repeatFreqType
                       }
                       onSelectionChange={(sel) => {
-                        updateCategory({
-                          regularExpenseDetails: {
-                            ...initialCategory.regularExpenseDetails,
-                            repeatFreqType: sel.toString(),
-                          },
-                        });
+                        updateSelectedCategoryExpense(
+                          initialCategory,
+                          "repeatFreqType",
+                          sel.toString()
+                        );
                       }}
                       isDisabled={
                         initialCategory.regularExpenseDetails.isMonthly
@@ -689,12 +612,11 @@ function SelectedCategory({
                 <MyToggle
                   checked={initialCategory.regularExpenseDetails.includeOnChart}
                   onToggle={(checked) => {
-                    updateCategory({
-                      regularExpenseDetails: {
-                        ...initialCategory.regularExpenseDetails,
-                        includeOnChart: checked,
-                      },
-                    });
+                    updateSelectedCategoryExpense(
+                      initialCategory,
+                      "includeOnChart",
+                      checked
+                    );
                   }}
                 />
               </div>
@@ -707,12 +629,11 @@ function SelectedCategory({
                     initialCategory.regularExpenseDetails.multipleTransactions
                   }
                   onToggle={(checked) => {
-                    updateCategory({
-                      regularExpenseDetails: {
-                        ...initialCategory.regularExpenseDetails,
-                        multipleTransactions: checked,
-                      },
-                    });
+                    updateSelectedCategoryExpense(
+                      initialCategory,
+                      "multipleTransactions",
+                      checked
+                    );
                   }}
                 />
               </div>
@@ -726,30 +647,15 @@ function SelectedCategory({
               </div>
               <div className="flex flex-col items-center">
                 <div className="font-semibold">Total Purchase Amount</div>
-                <input
-                  type="number"
-                  className="border border-black rounded-md outline-none text-center h-8 w-56 appearance-none"
-                  value={(
-                    initialCategory.upcomingDetails.expenseAmount || 0
-                  ).toString()}
-                  onChange={(e: any) => {
-                    let { data, inputType } = e.nativeEvent;
-                    if (
-                      (data >= "0" && data <= "9") ||
-                      [
-                        "deleteContentForward",
-                        "deleteContentBackward",
-                      ].includes(inputType)
-                    ) {
-                      updateCategory({
-                        upcomingDetails: {
-                          ...initialCategory.upcomingDetails,
-                          expenseAmount: parseInt(e.target.value) || null,
-                        },
-                      });
-                    }
+                <MyInput
+                  value={initialCategory.upcomingDetails.expenseAmount || 0}
+                  onChange={(newVal: number) => {
+                    updateSelectedCategoryUpcomingAmount(
+                      initialCategory,
+                      newVal
+                    );
                   }}
-                  onFocus={(e) => e.target.select()}
+                  className={"h-8 w-56"}
                 />
               </div>
               <div className="flex justify-around items-center h-full">

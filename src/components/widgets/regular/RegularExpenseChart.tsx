@@ -45,7 +45,7 @@ function RegularExpenseChart({
       barVal = 7;
     }
 
-    console.log({ barVal, barWidth, target });
+    // console.log({ barVal, barWidth, target });
     return (
       <div className="flex items-center">
         <div className="w-[23.5%] text-right pr-[2px]">{category.name}</div>

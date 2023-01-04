@@ -19,13 +19,16 @@ import {
   CategoryListGroup,
   UserData,
   PostingMonth,
+  YNABCategoryGroup,
 } from "../utils/evercent";
 import { CheckboxItem } from "./elements/HierarchyTable";
+import useBudgetHelper from "./hooks/useBudgetHelper";
 
 function MainContent({
   userData,
   categories,
   budgetMonths,
+  editableCategoryList,
   updateCategories,
   saveNewExcludedCategories,
   setModalIsShowing,
@@ -33,11 +36,12 @@ function MainContent({
   userData: UserData;
   categories: CategoryListGroup[];
   budgetMonths: YNABBugdetMonth[];
+  editableCategoryList: YNABCategoryGroup[];
   updateCategories: (
     userID: string,
     budgetID: string,
     categories: CategoryListGroup[]
-  ) => Promise<CategoryListGroup[]>;
+  ) => Promise<void>;
   saveNewExcludedCategories: (
     userID: string,
     budgetID: string,
@@ -45,81 +49,103 @@ function MainContent({
   ) => Promise<CategoryListGroup[]>;
   setModalIsShowing: (newShow: boolean) => void;
 }) {
-  const {
-    isOpen: isOpenBH,
-    showModal: showModalBH,
-    closeModal: closeModalBH,
-  } = useModal(setModalIsShowing);
-  const {
-    isOpen: isOpenBHWarning,
-    showModal: showModalBHWarning,
-    closeModal: closeModalBHWarning,
-  } = useModal(setModalIsShowing);
-  const {
-    isOpen: isOpenBA,
-    showModal: showModalBA,
-    closeModal: closeModalBA,
-  } = useModal(setModalIsShowing);
-  const {
-    isOpen: isOpenRE,
-    showModal: showModalRE,
-    closeModal: closeModalRE,
-  } = useModal(setModalIsShowing);
-  const {
-    isOpen: isOpenUE,
-    showModal: showModalUE,
-    closeModal: closeModalUE,
-  } = useModal(setModalIsShowing);
+  // Lets me know which widget is currently selected
+  const [currentWidget, setCurrentWidget] = useState(-1);
 
-  const [categoryList, setCategoryList] =
-    useState<CategoryListGroup[]>(categories);
+  const { isOpen, showModal, closeModal } = useModal();
+  const {
+    isOpen: isOpenWarning,
+    showModal: showModalWarning,
+    closeModal: closeModalWarning,
+  } = useModal();
 
-  const [changesMade, setChangesMade] = useState(false);
+  const {
+    categoryList,
+    selectedCategory,
+    changesMade,
+    setSelectedCategory,
+    updateSelectedCategoryAmount,
+    toggleSelectedCategoryOptions,
+    updateSelectedCategoryExpense,
+    updateSelectedCategoryUpcomingAmount,
+    saveCategoryList,
+    saveExcludedCategories,
+    discardChanges,
+  } = useBudgetHelper(
+    userData,
+    categories,
+    budgetMonths,
+    updateCategories,
+    saveNewExcludedCategories
+  );
 
-  const onSave = async (newCategories: CategoryListGroup[]) => {
-    if (!changesMade) {
-      console.log("NO CHANGES!");
-      return;
+  const onSaveAutomation = async () => {};
+
+  const onExit = async (exitType: "back" | "discard" | "save") => {
+    switch (exitType) {
+      case "back":
+        closeModalWarning();
+        break;
+
+      case "discard":
+        // reset the category list to before we entered the widget, using the existing data
+        discardChanges();
+
+        closeModalWarning();
+        closeModal();
+        setCurrentWidget(-1);
+        break;
+
+      case "save":
+        if (currentWidget == ModalType.BUDGET_HELPER) {
+          await saveCategoryList();
+        } else if (currentWidget == ModalType.BUDGET_AUTOMATION) {
+          await onSaveAutomation();
+        }
+
+        closeModalWarning();
+        closeModal();
+        setCurrentWidget(-1);
+        break;
+
+      default:
+        break;
     }
-
-    const newList = await updateCategories(
-      userData.userID,
-      userData.budgetID,
-      newCategories
-    );
-    setCategoryList(newList);
-
-    setChangesMade(false);
   };
 
   const widgetBox = (
     title: string,
     widgetComponent: JSX.Element,
     modalContentID: number,
-    modalComponent: JSX.Element,
-    modalIsOpen: boolean,
-    showModalFn: () => void,
-    closeModalFn: () => void
+    modalComponent: JSX.Element
   ) => {
     return (
       <>
         <div
           className="flex flex-col items-center basis-0 sm:basis-[49%] bg-[#F6F9FA] border-2 border-opacity-50 border-[#ACACAC] rounded-lg shadow-md m-1 p-1 hover:cursor-pointer hover:border-opacity-100 h-[250px] sm:h-[49%]"
-          onClick={() => showModalFn()}
+          onClick={() => {
+            setCurrentWidget(modalContentID);
+            showModal();
+          }}
         >
           <div className="font-cinzel text-3xl">{title}</div>
           <div className="w-full h-full flex justify-center items-center">
             {widgetComponent}
           </div>
         </div>
-        {modalIsOpen && (
+
+        {isOpen && currentWidget == modalContentID && (
           <ModalContent
             modalContentID={modalContentID}
             onClose={() => {
-              if (modalContentID == ModalType.BUDGET_HELPER && changesMade) {
-                showModalBHWarning();
+              if (
+                (modalContentID == ModalType.BUDGET_HELPER ||
+                  modalContentID == ModalType.BUDGET_AUTOMATION) &&
+                changesMade
+              ) {
+                showModalWarning();
               } else {
-                closeModalFn();
+                closeModal();
               }
             }}
           >
@@ -128,31 +154,6 @@ function MainContent({
         )}
       </>
     );
-  };
-
-  const onExit = (exitType: "back" | "discard" | "save") => {
-    switch (exitType) {
-      case "back":
-        closeModalBHWarning();
-        break;
-
-      case "discard":
-        setChangesMade(false);
-        // reset the category list to before we entered the widget, using the existing data
-        setCategoryList(categories);
-        closeModalBHWarning();
-        closeModalBH();
-        break;
-
-      case "save":
-        onSave(categoryList);
-        closeModalBHWarning();
-        closeModalBH();
-        break;
-
-      default:
-        break;
-    }
   };
 
   const months: PostingMonth[] = [
@@ -169,14 +170,14 @@ function MainContent({
     percentAmount: months.reduce((prev, curr) => prev + curr.percentAmount, 0),
   });
 
-  if (!categoryList) {
+  if (!categories) {
     return <div className="hidden sm:block bg-[#D1F5FF] h-full w-full"></div>;
   }
 
   return (
     <div className="w-full h-full bg-[#D1F5FF] flex flex-col sm:flex-row flex-nowrap sm:flex-wrap justify-center">
       <div className="block sm:flex flex-nowrap sm:flex-wrap flex-col sm:flex-row justify-start sm:justify-center w-full sm:w-[80%]">
-        {categoryList && (
+        {categories && (
           <>
             {/* Box 1 - Budget Helper */}
             {widgetBox(
@@ -189,57 +190,45 @@ function MainContent({
               <BudgetHelperFull
                 userData={userData}
                 categoryList={categoryList}
-                setCategoryList={setCategoryList}
-                budgetMonths={budgetMonths}
-                saveNewExcludedCategories={saveNewExcludedCategories}
-                onSave={onSave}
-                setChangesMade={setChangesMade}
-              />,
-              isOpenBH,
-              showModalBH,
-              closeModalBH
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                updateSelectedCategoryAmount={updateSelectedCategoryAmount}
+                toggleSelectedCategoryOptions={toggleSelectedCategoryOptions}
+                updateSelectedCategoryExpense={updateSelectedCategoryExpense}
+                updateSelectedCategoryUpcomingAmount={
+                  updateSelectedCategoryUpcomingAmount
+                }
+                editableCategoryList={editableCategoryList}
+                saveExcludedCategories={saveExcludedCategories}
+                onSave={saveCategoryList}
+              />
             )}
 
-            {/* Box 2 - Budget Automation */}
             {widgetBox(
               "Budget Automation",
               <BudgetAutomationWidget months={months} />,
               ModalType.BUDGET_AUTOMATION,
-              <BudgetAutomationFull
-                months={months}
-                closeModal={closeModalBA}
-              />,
-              isOpenBA,
-              showModalBA,
-              closeModalBA
+              <BudgetAutomationFull months={months} closeModal={closeModal} />
             )}
 
-            {/* Box 3 - Regular Expenses */}
             {widgetBox(
               "Regular Expenses",
               <RegularExpensesWidget />,
               ModalType.REGULAR_EXPENSES,
-              <RegularExpensesFull categories={categoryList} />,
-              isOpenRE,
-              showModalRE,
-              closeModalRE
+              <RegularExpensesFull categories={categories} />
             )}
 
-            {/* Box 4 - Upcoming Expenses */}
             {widgetBox(
               "Upcoming Expenses",
               <UpcomingExpensesWidget />,
               ModalType.UPCOMING_EXPENSES,
-              <UpcomingExpensesFull />,
-              isOpenUE,
-              showModalUE,
-              closeModalUE
+              <UpcomingExpensesFull />
             )}
 
-            {isOpenBHWarning && (
+            {isOpenWarning && (
               <ModalContent
                 modalContentID={ModalType.BUDGET_HELPER_CHECK}
-                onClose={closeModalBHWarning}
+                onClose={closeModalWarning}
               >
                 <UnsavedChangesModal onExit={onExit} />
               </ModalContent>

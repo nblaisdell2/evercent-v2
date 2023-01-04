@@ -1,7 +1,4 @@
 import React, { useState } from "react";
-import { useQuery } from "@apollo/client";
-import { GET_BUDGETS } from "../../graphql/queries";
-
 import { CheckIcon } from "@heroicons/react/24/outline";
 
 import Label from "../elements/Label";
@@ -10,30 +7,22 @@ import Card from "../elements/Card";
 import { UserData, YNABBudget } from "../../utils/evercent";
 
 function ChangeBudgetModal({
+  budgetNames,
   userData,
   updateDefaultBudgetID,
 }: {
+  budgetNames: YNABBudget[];
   userData: UserData;
   updateDefaultBudgetID?: (
-    newBudget: YNABBudget,
-    userID: string
+    userID: string,
+    newBudgetID: string
   ) => Promise<void>;
 }) {
   const [newBudget, setNewBudget] = useState<YNABBudget>();
 
-  const { loading, error, data } = useQuery(GET_BUDGETS, {
-    variables: {
-      userID: userData.userID,
-      accessToken: userData.tokenDetails.accessToken,
-      refreshToken: userData.tokenDetails.refreshToken,
-    },
-  });
-
-  if (loading) return null;
-
-  const currBudgetName: string = data.budgets.find(
+  const currBudgetName: string = budgetNames.filter(
     (x: YNABBudget) => x.id == userData.budgetID.toLowerCase()
-  )?.name;
+  )[0].name;
 
   return (
     <div className="text-center h-full">
@@ -49,7 +38,7 @@ function ChangeBudgetModal({
         }`}
       >
         <Card className="text-left flex-grow overflow-y-auto">
-          {data.budgets.map((budget: YNABBudget) => {
+          {budgetNames.map((budget: YNABBudget) => {
             return (
               <div
                 key={budget.id}
@@ -77,7 +66,7 @@ function ChangeBudgetModal({
               newBudget &&
               newBudget.name !== currBudgetName
             ) {
-              await updateDefaultBudgetID(newBudget, userData.userID);
+              await updateDefaultBudgetID(userData.userID, newBudget.id);
             }
           }}
           className={`absolute bottom-0 inset-x-0 h-8 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white ${

@@ -6,21 +6,27 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
-import { ModalType } from "../utils/utils";
-import { GetURL_YNABAuthorizationPage, GetURL_YNABBudget } from "../utils/ynab";
+import { ModalType } from "../../../utils/utils";
+import { UserData, YNABBudget } from "../../../utils/evercent";
+import {
+  GetURL_YNABAuthorizationPage,
+  GetURL_YNABBudget,
+} from "../../../utils/ynab";
 
-import Label from "./elements/Label";
-import useModal from "./hooks/useModal";
-import ModalContent from "./modal/ModalContent";
-import ChangeBudgetModal from "./modal/ChangeBudgetModal";
-import { UserData, YNABBudget } from "../utils/evercent";
-import LabelAndValue from "./elements/LabelAndValue";
+import LabelAndValue from "../../elements/LabelAndValue";
+import Label from "../../elements/Label";
+
+import useModal from "../../hooks/useModal";
+import ModalContent from "../../modal/ModalContent";
+import ChangeBudgetModal from "../../modal/ChangeBudgetModal";
 
 function YNABConnection({
+  budgetNames,
   userData,
   refreshYNABTokens,
   updateDefaultBudgetID,
 }: {
+  budgetNames: YNABBudget[];
   userData: UserData;
   refreshYNABTokens?: (
     userID: string,
@@ -28,33 +34,30 @@ function YNABConnection({
     expirationDate: string
   ) => Promise<void>;
   updateDefaultBudgetID?: (
-    newBudget: YNABBudget,
-    userID: string
+    userID: string,
+    newBudgetID: string
   ) => Promise<void>;
 }) {
   const { isOpen, showModal, closeModal } = useModal();
 
-  useEffect(() => {
+  const refreshTokens = () => {
     if (refreshYNABTokens)
       refreshYNABTokens(
         userData.userID,
         userData.tokenDetails.refreshToken,
         userData.tokenDetails.expirationDate
       );
+  };
+
+  useEffect(() => {
+    refreshTokens();
   }, []);
 
   useInterval(() => {
-    if (refreshYNABTokens)
-      refreshYNABTokens(
-        userData.userID,
-        userData.tokenDetails.refreshToken,
-        userData.tokenDetails.expirationDate
-      );
+    refreshTokens();
   }, 60000);
 
   const budgetIDFound = !!userData.budgetName;
-  const ynabAuthURL = GetURL_YNABAuthorizationPage();
-  const ynabBudgetURL = GetURL_YNABBudget(userData.budgetID);
 
   return (
     <>
@@ -64,6 +67,7 @@ function YNABConnection({
           onClose={closeModal}
         >
           <ChangeBudgetModal
+            budgetNames={budgetNames}
             userData={userData}
             updateDefaultBudgetID={updateDefaultBudgetID}
           />
@@ -100,7 +104,7 @@ function YNABConnection({
                 <div>
                   <a
                     target="_blank"
-                    href={ynabBudgetURL}
+                    href={GetURL_YNABBudget(userData.budgetID)}
                     rel="noopener noreferrer"
                   >
                     <ArrowTopRightOnSquareIcon className="h-6 w-6 stroke-2 hover:cursor-pointer" />
@@ -122,7 +126,7 @@ function YNABConnection({
               </div>
             </div>
 
-            <a href={ynabAuthURL}>
+            <a href={GetURL_YNABAuthorizationPage()}>
               <div className="ml-0 sm:ml-2 flex items-center space-x-1 underline sm:no-underline hover:underline hover:cursor-pointer hover:text-blue-400">
                 <div className="font-bold text-3xl sm:text-base">
                   Connect to YNAB

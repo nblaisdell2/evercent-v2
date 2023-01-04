@@ -7,7 +7,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import React from "react";
 
 type Props = {
-  onExit: (exitType: "back" | "discard" | "save") => void;
+  onExit: (exitType: "back" | "discard" | "save") => Promise<void>;
 };
 
 function UnsavedChangesModal({ onExit }: Props) {
@@ -24,7 +24,7 @@ function UnsavedChangesModal({ onExit }: Props) {
       <div className="w-full absolute bottom-0 space-y-2 sm:space-y-12 flex flex-col pb-2">
         <button
           className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-          onClick={() => onExit("back")}
+          onClick={async () => await onExit("back")}
         >
           <div className="flex justify-center items-center">
             <ArrowLeftIcon className="h-10 w-10 text-black stroke-2 mr-2" />
@@ -33,7 +33,7 @@ function UnsavedChangesModal({ onExit }: Props) {
         </button>
         <button
           className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-          onClick={() => onExit("discard")}
+          onClick={async () => await onExit("discard")}
         >
           <div className="flex justify-center items-center">
             <XMarkIcon className="h-10 w-10 text-red-600 stroke-2" />
@@ -44,7 +44,7 @@ function UnsavedChangesModal({ onExit }: Props) {
         </button>
         <button
           className={`w-full h-16 bg-gray-300 rounded-md shadow-slate-400 shadow-sm hover:bg-blue-400 hover:text-white`}
-          onClick={() => onExit("save")}
+          onClick={async () => await onExit("save")}
         >
           <div className="flex justify-center items-center">
             <CheckIcon className="h-10 w-10 text-green-600 stroke-2" />

@@ -19,9 +19,9 @@ function PostingMonthBreakdown({ months, showPercent, showTotal }: Props) {
     <>
       {newMonths.map((m) => {
         return (
-          <>
+          <div key={m.month}>
             {m.month == "Total" && <div className="h-[1px] bg-black" />}
-            <div className="flex justify-between" key={m.month}>
+            <div className="flex justify-between">
               <div className="w-[60%] font-semibold flex-grow text-right mr-4">
                 {m.month}
               </div>
@@ -34,7 +34,7 @@ function PostingMonthBreakdown({ months, showPercent, showTotal }: Props) {
                 </div>
               )}
             </div>
-          </>
+          </div>
         );
       })}
     </>

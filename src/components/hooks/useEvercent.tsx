@@ -1,5 +1,9 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useState } from "react";
+import { useUser } from "@auth0/nextjs-auth0";
 import { useRouter } from "next/router";
+
+import { useMutation, useQuery } from "@apollo/client";
+import { GET_ALL_DATA } from "../../graphql/queries";
 import {
   REFRESH_YNAB_TOKENS,
   UPDATE_CATEGORIES,
@@ -7,32 +11,51 @@ import {
   UPDATE_DEFAULT_BUDGET_ID,
   UPDATE_USER_DETAILS,
 } from "../../graphql/mutations";
-import {
-  GET_BUDGET_HELPER_DETAILS,
-  GET_USER_DATA,
-} from "../../graphql/queries";
+
 import {
   CategoryListGroup,
   CategoryListItem,
   getInput_UpdateCategories,
+  isSameCategory,
   UserData,
-  YNABBudget,
 } from "../../utils/evercent";
-import { parseDate } from "../../utils/utils";
-import { clearYNABCache } from "../../utils/ynab";
+import { generateUUID, parseDate } from "../../utils/utils";
 import { CheckboxItem } from "../elements/HierarchyTable";
 
-function useEvercent(userEmail: string | null | undefined) {
+function useEvercent() {
   const router = useRouter();
+
+  const { user, isLoading, error } = useUser();
+  const userEmail = user ? user.email : "";
+
+  const [userData, setUserData] = useState<UserData>({
+    userID: "",
+    budgetID: "",
+    budgetName: "",
+    monthlyIncome: 0,
+    payFrequency: "",
+    nextPaydate: "",
+    monthsAheadTarget: 0,
+    tokenDetails: {
+      accessToken: "",
+      refreshToken: "",
+      expirationDate: "",
+    },
+  });
+  const [categories, setCategories] = useState<CategoryListGroup[]>([]);
+  const [editableCategoryList, setEditableCategoryList] = useState<any[]>([]);
 
   const {
     loading,
     error: errorID,
     data,
-    refetch,
-  } = useQuery(GET_USER_DATA, {
+  } = useQuery(GET_ALL_DATA, {
     variables: { userEmail: userEmail, authCode: router?.query?.code },
-    onCompleted: () => {
+    onCompleted: (data) => {
+      setUserData(data?.getAllData?.userData);
+      setCategories(data?.getAllData?.categories);
+      setEditableCategoryList(data?.getAllData?.editableCategoryList);
+
       if (router.query?.code) {
         delete router.query.code;
         router.push(router, undefined, {
@@ -42,48 +65,13 @@ function useEvercent(userEmail: string | null | undefined) {
     },
   });
 
-  const {
-    loading: loadingCategories,
-    error: errorCategories,
-    data: dataCategories,
-    // refetch: refetchCats,
-  } = useQuery(GET_BUDGET_HELPER_DETAILS, {
-    variables: {
-      userBudgetInput: {
-        userID: data?.userData.userID,
-        budgetID: data?.userData.budgetID,
-      },
-      accessToken: data?.userData.tokenDetails.accessToken,
-      refreshToken: data?.userData.tokenDetails.refreshToken,
-    },
-    skip: loading || !userEmail || !data?.userData.tokenDetails.accessToken,
-  });
-
-  const refetchUser = async () => {
-    await refetch({ userEmail });
-  };
-
-  // const refetchCategories = async () => {
-  //   await refetchCats({
-  //     userBudgetInput: {
-  //       userID: data.userData.userID,
-  //       budgetID: data.userData.budgetID,
-  //     },
-  //     accessToken: data.userData.tokenDetails.accessToken,
-  //     refreshToken: data.userData.tokenDetails.refreshToken,
-  //   });
-  // };
-
   const [updateBudgetID] = useMutation(UPDATE_DEFAULT_BUDGET_ID);
-  const updateDefaultBudgetID = async (
-    newBudget: YNABBudget,
-    userID: string
-  ) => {
+  const updateDefaultBudgetID = async (userID: string, newBudgetID: string) => {
     // Run the "UpdateBudgetID" query/mutation
     await updateBudgetID({
       variables: {
         userID: userID,
-        newBudgetID: newBudget.id,
+        newBudgetID: newBudgetID,
       },
     });
 
@@ -104,7 +92,7 @@ function useEvercent(userEmail: string | null | undefined) {
         nextPaydate: newUserData.nextPaydate,
       },
     });
-    await refetchUser();
+    setUserData(newUserData);
   };
 
   const [refreshTokens] = useMutation(REFRESH_YNAB_TOKENS);
@@ -116,15 +104,19 @@ function useEvercent(userEmail: string | null | undefined) {
     if (refreshToken && new Date() > parseDate(expirationDate)) {
       console.log("Refreshing Tokens");
 
-      await refreshTokens({
+      const mutationData = await refreshTokens({
         variables: {
-          userID: userID,
-          refreshToken: refreshToken,
-          expirationDate: expirationDate,
+          userID,
+          refreshToken,
+          expirationDate,
         },
       });
 
-      await refetchUser();
+      const newUserData = {
+        ...userData,
+        tokenDetails: mutationData.data.refreshYNABTokens,
+      };
+      setUserData(newUserData);
     }
   };
 
@@ -133,7 +125,7 @@ function useEvercent(userEmail: string | null | undefined) {
     userID: string,
     budgetID: string,
     categories: CategoryListGroup[]
-  ): Promise<CategoryListGroup[]> => {
+  ): Promise<void> => {
     const input = getInput_UpdateCategories(categories);
 
     // Then, run the query/mutation to update the database.
@@ -147,7 +139,7 @@ function useEvercent(userEmail: string | null | undefined) {
       },
     });
 
-    return categories;
+    setCategories(categories);
   };
 
   const [saveExcludedCategories] = useMutation(UPDATE_CATEGORY_INCLUSION);
@@ -155,7 +147,7 @@ function useEvercent(userEmail: string | null | undefined) {
     userID: string,
     budgetID: string,
     itemsToUpdate: CheckboxItem[]
-  ): Promise<CategoryListGroup[]> => {
+  ) => {
     // Collect the unselected items, format the data appropriately,
     // and add them to an array
     const toUpdate = itemsToUpdate.reduce((curr: any[], item) => {
@@ -173,9 +165,9 @@ function useEvercent(userEmail: string | null | undefined) {
     let newCategories: CategoryListGroup[] = [];
     let newGroup = "";
     for (let i = 0; i < includedItems.length; i++) {
-      let grp = dataCategories?.categories.find(
+      let grp = categories.filter(
         (group: CategoryListGroup) => group.groupID == includedItems[i].parentId
-      );
+      )[0];
       if (grp && grp.groupName !== newGroup) {
         const includedGroup = includedItems.filter(
           (item) => item.parentId == grp.groupID
@@ -193,7 +185,7 @@ function useEvercent(userEmail: string | null | undefined) {
                 null,
                 includedGroup[j].parentId,
                 includedGroup[j].id,
-                newGroup,
+                grp.groupName,
                 includedGroup[j].name
               )
             );
@@ -203,9 +195,7 @@ function useEvercent(userEmail: string | null | undefined) {
           ...grp,
           categories: newCats,
         };
-
         newCategories.push(grp);
-
         newGroup = grp.groupName;
       }
     }
@@ -223,7 +213,15 @@ function useEvercent(userEmail: string | null | undefined) {
       },
     });
 
-    clearYNABCache();
+    const newList = editableCategoryList.map((catGroup) => {
+      return {
+        ...catGroup,
+        included: !toUpdate.some((t) => isSameCategory(t, catGroup)),
+      };
+    });
+
+    setCategories(newCategories);
+    setEditableCategoryList(newList);
 
     return newCategories;
   };
@@ -235,6 +233,7 @@ function useEvercent(userEmail: string | null | undefined) {
     categoryGroupName?: string,
     categoryName?: string
   ): CategoryListItem => {
+    const guid = generateUUID();
     return {
       __typename: cat?.__typename || "Category",
       amount: cat?.amount || 0,
@@ -246,13 +245,13 @@ function useEvercent(userEmail: string | null | undefined) {
       adjustedAmt: cat?.adjustedAmt || 0,
       adjustedAmtPlusExtra: cat?.adjustedAmtPlusExtra || 0,
       percentIncome: cat?.percentIncome || 0,
-      guid: cat?.guid || "",
+      guid: cat?.guid || guid || "",
       isRegularExpense: cat?.isRegularExpense || false,
       isUpcomingExpense: cat?.isUpcomingExpense || false,
       regularExpenseDetails: {
         __typename:
           cat?.regularExpenseDetails?.__typename || "RegularExpenseDetails",
-        guid: cat?.guid || "",
+        guid: cat?.guid || guid || "",
         includeOnChart: cat?.regularExpenseDetails?.includeOnChart || false,
         isMonthly: cat?.regularExpenseDetails?.isMonthly || true,
         monthsDivisor: cat?.regularExpenseDetails?.monthsDivisor || 1,
@@ -265,7 +264,7 @@ function useEvercent(userEmail: string | null | undefined) {
       },
       upcomingDetails: {
         __typename: cat?.upcomingDetails?.__typename || "UpcomingDetails",
-        guid: cat?.guid || "",
+        guid: cat?.guid || guid || "",
         expenseAmount: cat?.upcomingDetails?.expenseAmount || 0,
       },
       budgetAmounts: {
@@ -277,16 +276,27 @@ function useEvercent(userEmail: string | null | undefined) {
     };
   };
 
+  console.log("useEvercent!!!");
   return {
-    loading: loading || loadingCategories || !data?.userData,
-    userData: data?.userData,
-    categories: dataCategories?.categories,
-    budgetMonths: dataCategories?.budgetMonths,
+    loading: loading || isLoading || !userData,
+    userEmail,
+    userData,
+    categories,
+    budgetNames: data?.getAllData?.budgetNames,
+    budgetMonths: data?.getAllData?.budgetMonths,
+
+    // Header/UserData functions
     refreshYNABTokens,
     updateDefaultBudgetID,
     updateUserData,
+
+    // Budget Helper functions
+    editableCategoryList,
     updateCategories,
     saveNewExcludedCategories,
+
+    // Budget Automation functions
+    // Regular Expenses functions
   };
 }
 

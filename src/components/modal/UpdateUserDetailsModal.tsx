@@ -12,6 +12,7 @@ import MyDatePicker from "../elements/MyDatePicker";
 import RadioButtonGroup from "../elements/RadioButtonGroup";
 import { getMoneyString } from "../../utils/utils";
 import { UserData } from "../../utils/evercent";
+import MyInput from "../elements/MyInput";
 
 type Props = {
   userData: UserData;
@@ -60,16 +61,14 @@ function UpdateUserDetailsModal({
       <div className="absolute w-full h-[80%] flex flex-col items-center justify-around">
         <div>
           <Label label="Monthly Income" />
-          <input
-            type="text"
-            value={getMoneyString(newMonthlyIncome)}
-            onChange={(e) => {
-              setNewMonthlyIncome(
-                parseInt(e.target.value.replace("$", "") || "0")
-              );
+          <MyInput
+            isMoneyString={true}
+            value={newMonthlyIncome}
+            onChange={(newVal: number) => {
+              console.log("newVal", newVal);
+              setNewMonthlyIncome(newVal);
             }}
-            onFocus={(e) => e.target.select()}
-            className="border border-black rounded-md h-12 w-40 text-center text-3xl font-bold text-green-500"
+            className={"h-12 w-40 text-3xl font-bold text-green-500"}
           />
         </div>
 

@@ -4,6 +4,14 @@ export const typeDefs = gql`
   # ===========
   #   TYPES
   # ===========
+  type AllData {
+    userData: UserData!
+    budgetNames: [Budget!]
+    categories: [CategoryGroup!]
+    budgetMonths: [BudgetMonth!]
+    editableCategoryList: [BudgetCategoryGroup!]
+  }
+
   type UserData {
     userID: ID!
     budgetID: ID
@@ -15,10 +23,12 @@ export const typeDefs = gql`
     tokenDetails: YNABConnection
   }
 
-  # type UserID {
-  #   id: ID!
-  #   defaultBudgetID: ID
-  # }
+  type BudgetHelperDetails {
+    budgetNames: [Budget!]
+    categories: [CategoryGroup!]
+    budgetMonths: [BudgetMonth!]
+    editableCategoryList: [BudgetCategoryGroup!]
+  }
 
   type User {
     id: ID!
@@ -267,7 +277,7 @@ export const typeDefs = gql`
   #  QUERIES
   # ===========
   type Query {
-    userData(userEmail: String!, authCode: String): UserData!
+    getAllData(userEmail: String!, authCode: String): AllData!
     userID(userEmail: String!): ID!
     user(userBudgetInput: UserBudgetInput!): User!
     ynabConnDetails(userID: ID!): YNABConnection
@@ -278,11 +288,15 @@ export const typeDefs = gql`
       refreshToken: String!
     ): ID!
     getCategoryGroups(
-      userID: ID!
+      userBudgetInput: UserBudgetInput!
       accessToken: String!
       refreshToken: String!
-      budgetID: ID!
     ): [BudgetCategoryGroup!]
+    getBudgetHelperDetails(
+      userBudgetInput: UserBudgetInput!
+      accessToken: String!
+      refreshToken: String!
+    ): BudgetHelperDetails
     budget(
       userID: ID!
       accessToken: String!
@@ -291,10 +305,9 @@ export const typeDefs = gql`
     ): [BudgetCategory!]
     budgets(userID: ID!, accessToken: String!, refreshToken: String!): [Budget!]
     budgetName(
-      userID: ID!
+      userBudgetInput: UserBudgetInput!
       accessToken: String!
       refreshToken: String!
-      budgetID: ID!
     ): String!
     budgetMonths(
       userBudgetInput: UserBudgetInput!

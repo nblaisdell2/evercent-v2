@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { SetStateAction } from "react";
 
 import Amounts from "./Amounts";
 import BudgetHelperCharts from "./BudgetHelperCharts";
@@ -8,63 +8,89 @@ import SelectedCategory from "./SelectedCategory";
 import {
   CategoryListGroup,
   CategoryListItem,
-  getGroupAmounts,
   UserData,
 } from "../../../utils/evercent";
 import { CheckboxItem } from "../../elements/HierarchyTable";
+import useHierarchyTable from "../../hooks/useHierarchyTable";
 
 function BudgetHelperFull({
   userData,
-  budgetMonths,
   categoryList,
-  setCategoryList,
-  setChangesMade,
+  selectedCategory,
+  setSelectedCategory,
+  updateSelectedCategoryAmount,
+  toggleSelectedCategoryOptions,
+  updateSelectedCategoryExpense,
+  updateSelectedCategoryUpcomingAmount,
+  editableCategoryList,
   onSave,
-  saveNewExcludedCategories,
+  saveExcludedCategories,
 }: {
   userData: UserData;
-  budgetMonths: any[];
   categoryList: CategoryListGroup[];
-  setCategoryList: (newList: CategoryListGroup[]) => void;
-  setChangesMade: (newChanges: boolean) => void;
-  onSave: (newCategories: CategoryListGroup[]) => Promise<void>;
-  saveNewExcludedCategories: (
-    userID: string,
-    budgetID: string,
-    itemsToUpdate: CheckboxItem[]
-  ) => Promise<CategoryListGroup[]>;
+  selectedCategory: CategoryListItem | null;
+  setSelectedCategory: (
+    action: SetStateAction<CategoryListItem | null>
+  ) => void;
+  updateSelectedCategoryAmount: (
+    category: CategoryListItem,
+    key: "amount" | "extraAmount",
+    newAmount: number
+  ) => void;
+  toggleSelectedCategoryOptions: (
+    category: CategoryListItem,
+    checked: boolean,
+    option: string
+  ) => void;
+  updateSelectedCategoryExpense: (
+    category: CategoryListItem,
+    key:
+      | "nextDueDate"
+      | "isMonthly"
+      | "repeatFreqNum"
+      | "repeatFreqType"
+      | "includeOnChart"
+      | "multipleTransactions",
+    value: any
+  ) => void;
+  updateSelectedCategoryUpcomingAmount: (
+    category: CategoryListItem,
+    newAmount: number
+  ) => void;
+  editableCategoryList: any;
+  onSave: () => Promise<void>;
+  saveExcludedCategories: (itemsToUpdate: CheckboxItem[]) => Promise<void>;
 }) {
-  const [selectedCategory, setSelectedCategory] =
-    useState<CategoryListItem | null>();
+  const createList = (data: CategoryListGroup[]) => {
+    if (!data) return [];
 
-  const updateSelectedCategory = (newCategory: CategoryListItem | null) => {
-    if (newCategory) {
-      // REFACTOR
-      // ==========================================
-      let newCategoryList = [...categoryList];
-      const groupIdx = newCategoryList.findIndex((grp) => {
-        return grp.groupName == newCategory.groupName;
+    let itemList: CheckboxItem[] = [];
+    let currItemGroup;
+    let currItemCat;
+    for (let i = 0; i < data.length; i++) {
+      currItemGroup = data[i];
+
+      itemList.push({
+        parentId: "",
+        id: currItemGroup.groupID,
+        name: currItemGroup.groupName,
+        expanded: false,
       });
-      const newGroup = { ...newCategoryList[groupIdx] };
-      const catIdx = newGroup.categories.findIndex((cat) => {
-        return cat.name == newCategory.name;
-      });
-      let newCats = [...newGroup.categories];
 
-      newCats[catIdx] = { ...newCats[catIdx], ...newCategory };
-      newCategoryList[groupIdx] = {
-        ...newCategoryList[groupIdx],
-        categories: newCats,
-        ...getGroupAmounts(newCats),
-      };
-      // ==========================================
+      for (let j = 0; j < currItemGroup.categories.length; j++) {
+        currItemCat = currItemGroup.categories[j];
 
-      setCategoryList(newCategoryList);
-      setChangesMade(true);
+        itemList.push({
+          parentId: currItemGroup.groupID,
+          id: currItemCat.categoryID,
+          name: currItemCat.name,
+        });
+      }
     }
 
-    setSelectedCategory(newCategory);
+    return itemList;
   };
+  const hierarchyProps = useHierarchyTable(categoryList, createList);
 
   return (
     <div className="h-full mx-4 flex flex-col">
@@ -82,21 +108,25 @@ function BudgetHelperFull({
 
       {!selectedCategory ? (
         <CategoryList
-          userData={userData}
           categoryList={categoryList}
-          setCategoryList={setCategoryList}
+          editableCategoryList={editableCategoryList}
+          hierarchyProps={hierarchyProps}
           onSave={onSave}
-          saveNewExcludedCategories={saveNewExcludedCategories}
+          saveExcludedCategories={saveExcludedCategories}
           selectCategory={setSelectedCategory}
         />
       ) : (
         <SelectedCategory
           initialCategory={selectedCategory}
-          monthlyIncome={userData.monthlyIncome}
           payFrequency={userData.payFrequency}
           nextPaydate={userData.nextPaydate}
-          budgetMonths={budgetMonths}
-          updateSelectedCategory={updateSelectedCategory}
+          setSelectedCategory={setSelectedCategory}
+          updateSelectedCategoryAmount={updateSelectedCategoryAmount}
+          toggleSelectedCategoryOptions={toggleSelectedCategoryOptions}
+          updateSelectedCategoryExpense={updateSelectedCategoryExpense}
+          updateSelectedCategoryUpcomingAmount={
+            updateSelectedCategoryUpcomingAmount
+          }
         />
       )}
     </div>

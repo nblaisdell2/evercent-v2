@@ -1,43 +1,37 @@
 import { useState } from "react";
 import type { NextPage } from "next";
-import { useUser } from "@auth0/nextjs-auth0";
 
-import Header from "../components/Header";
-import UserHeader from "../components/UserHeader";
-import YNABConnection from "../components/YNABConnection";
+import MainHeader from "../components/widgets/header/MainHeader";
 import MainContent from "../components/MainContent";
 
 import useEvercent from "../components/hooks/useEvercent";
+import UserHeader from "../components/widgets/header/UserHeader";
+import YNABConnection from "../components/widgets/header/YNABConnection";
 
 const Home: NextPage = () => {
-  const { user, isLoading, error } = useUser();
-  const userEmail = user ? user.email : "";
-
   const {
     loading,
+    userEmail,
     userData,
     categories,
+    budgetNames,
     budgetMonths,
-    refreshYNABTokens,
+    editableCategoryList,
     updateDefaultBudgetID,
     updateUserData,
+    refreshYNABTokens,
     updateCategories,
     saveNewExcludedCategories,
-  } = useEvercent(userEmail);
+  } = useEvercent();
 
   const [modalIsShowing, setModalIsShowing] = useState(false);
 
-  if (loading || isLoading) {
+  if (loading) {
     return (
       <div className="bg-[#D1F5FF] h-screen w-screen flex justify-center items-center">
         <div className="text-3xl font-bold">Loading...</div>
       </div>
     );
-  }
-
-  if (error) {
-    console.log(error);
-    return <p>Error :(</p>;
   }
 
   console.log("user data", userData);
@@ -50,9 +44,11 @@ const Home: NextPage = () => {
       }`}
     >
       <div className="sticky top-0 left-0 z-10">
-        <Header />
+        <MainHeader />
+
         {userEmail && (
           <UserHeader
+            budgetNames={budgetNames}
             userData={userData}
             updateUserData={updateUserData}
             refreshYNABTokens={refreshYNABTokens}
@@ -61,19 +57,21 @@ const Home: NextPage = () => {
         )}
       </div>
 
-      {!userEmail || !userData ? (
+      {!userEmail ? (
         <div className="h-full w-full bg-[#D1F5FF]"></div>
       ) : (
         <div className="flex flex-grow justify-center items-center">
           <div className="sm:hidden bg-[#D1F5FF] h-full flex items-center">
             {!userData.tokenDetails.accessToken && (
-              <YNABConnection userData={userData} />
+              <YNABConnection budgetNames={budgetNames} userData={userData} />
             )}
           </div>
+
           <MainContent
             userData={userData}
             categories={categories}
             budgetMonths={budgetMonths}
+            editableCategoryList={editableCategoryList}
             updateCategories={updateCategories}
             saveNewExcludedCategories={saveNewExcludedCategories}
             setModalIsShowing={setModalIsShowing}

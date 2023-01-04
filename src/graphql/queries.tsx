@@ -1,19 +1,84 @@
 import { gql } from "@apollo/client";
 
-export const GET_USER_DATA = gql`
-  query GetUserData($userEmail: String!, $authCode: String) {
-    userData(userEmail: $userEmail, authCode: $authCode) {
-      userID
-      budgetID
-      budgetName
-      monthlyIncome
-      monthsAheadTarget
-      payFrequency
-      nextPaydate
-      tokenDetails {
-        accessToken
-        refreshToken
-        expirationDate
+export const GET_ALL_DATA = gql`
+  query GetAllData($userEmail: String!, $authCode: String) {
+    getAllData(userEmail: $userEmail, authCode: $authCode) {
+      userData {
+        userID
+        budgetID
+        budgetName
+        monthlyIncome
+        monthsAheadTarget
+        payFrequency
+        nextPaydate
+        tokenDetails {
+          accessToken
+          refreshToken
+          expirationDate
+        }
+      }
+      budgetNames {
+        id
+        name
+      }
+      categories {
+        groupID
+        groupName
+        amount
+        extraAmount
+        adjustedAmt
+        adjustedAmtPlusExtra
+        percentIncome
+        categories {
+          guid
+          categoryGroupID
+          categoryID
+          groupName
+          name
+          amount
+          extraAmount
+          adjustedAmt
+          adjustedAmtPlusExtra
+          percentIncome
+          isRegularExpense
+          isUpcomingExpense
+          regularExpenseDetails {
+            isMonthly
+            nextDueDate
+            monthsDivisor
+            repeatFreqNum
+            repeatFreqType
+            includeOnChart
+            multipleTransactions
+          }
+          upcomingDetails {
+            expenseAmount
+          }
+          budgetAmounts {
+            budgeted
+            activity
+            available
+          }
+        }
+      }
+      budgetMonths {
+        month
+        categories {
+          categoryGroupID
+          categoryGroupName
+          categoryID
+          name
+          budgeted
+          activity
+          available
+        }
+      }
+      editableCategoryList {
+        categoryGroupID
+        categoryID
+        categoryGroupName
+        categoryName
+        included
       }
     }
   }
@@ -123,16 +188,14 @@ export const GET_BUDGETS = gql`
 
 export const GET_BUDGET_NAME = gql`
   query GetBudgetName(
-    $userID: ID!
+    $userBudgetInput: UserBudgetInput!
     $accessToken: String!
     $refreshToken: String!
-    $budgetID: ID!
   ) {
     budgetName(
-      userID: $userID
+      userBudgetInput: $userBudgetInput
       accessToken: $accessToken
       refreshToken: $refreshToken
-      budgetID: $budgetID
     )
   }
 `;
@@ -208,69 +271,73 @@ export const GET_BUDGET_HELPER_DETAILS = gql`
     $accessToken: String!
     $refreshToken: String!
   ) {
-    # user(userBudgetInput: $userBudgetInput) {
-    #   monthlyIncome
-    #   payFrequency
-    #   nextPaydate
-    # }
-    categories(
+    getBudgetHelperDetails(
       userBudgetInput: $userBudgetInput
       accessToken: $accessToken
       refreshToken: $refreshToken
     ) {
-      groupID
-      groupName
-      amount
-      extraAmount
-      adjustedAmt
-      adjustedAmtPlusExtra
-      percentIncome
-      categories {
-        guid
-        categoryGroupID
-        categoryID
-        groupName
+      budgetNames {
+        id
         name
+      }
+      categories {
+        groupID
+        groupName
         amount
         extraAmount
         adjustedAmt
         adjustedAmtPlusExtra
         percentIncome
-        isRegularExpense
-        isUpcomingExpense
-        regularExpenseDetails {
-          isMonthly
-          nextDueDate
-          monthsDivisor
-          repeatFreqNum
-          repeatFreqType
-          includeOnChart
-          multipleTransactions
+        categories {
+          guid
+          categoryGroupID
+          categoryID
+          groupName
+          name
+          amount
+          extraAmount
+          adjustedAmt
+          adjustedAmtPlusExtra
+          percentIncome
+          isRegularExpense
+          isUpcomingExpense
+          regularExpenseDetails {
+            isMonthly
+            nextDueDate
+            monthsDivisor
+            repeatFreqNum
+            repeatFreqType
+            includeOnChart
+            multipleTransactions
+          }
+          upcomingDetails {
+            expenseAmount
+          }
+          budgetAmounts {
+            budgeted
+            activity
+            available
+          }
         }
-        upcomingDetails {
-          expenseAmount
-        }
-        budgetAmounts {
+      }
+      budgetMonths {
+        month
+        categories {
+          categoryGroupID
+          categoryGroupName
+          categoryID
+          name
           budgeted
           activity
           available
         }
       }
-    }
-    budgetMonths(
-      userBudgetInput: $userBudgetInput
-      accessToken: $accessToken
-      refreshToken: $refreshToken
-    ) {
-      month
-      categories {
+      editableCategoryList {
         categoryGroupID
-        categoryGroupName
         categoryID
-        name
-        budgeted
-        activity
-        available
+        categoryGroupName
+        categoryName
+        included
       }
     }
   }

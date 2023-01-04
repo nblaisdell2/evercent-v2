@@ -64,7 +64,11 @@ function AmountMonths({ showUpcoming, selectedItem, setSelectedItem }: Props) {
     { parentId: "10", id: "11", name: "AUG 2022", selected: true },
   ];
 
-  const hierarchyTableProps = useHierarchyTable(categoryMonthList);
+  const createList = (data: any) => {
+    return categoryMonthList;
+  };
+
+  const hierarchyTableProps = useHierarchyTable(null, createList);
 
   const getRowContent = (item: CheckboxItem, indent: number) => {
     switch (indent) {
