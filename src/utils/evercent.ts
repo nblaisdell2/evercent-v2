@@ -18,6 +18,7 @@ import {
   GetCategoryGroups,
   GetDefaultBudgetID,
   GetNewAccessToken,
+  GetNewAccessTokenRefresh,
 } from "./ynab";
 
 export type UserData = {
@@ -216,11 +217,13 @@ export const getAllBudgetCategories = async (
   userData: UserData,
   excludedCategories: ExcludedCategory[]
 ) => {
-  let catGroups: YNABCategoryGroup[] = await GetCategoryGroups({
+  const ynabData = await GetCategoryGroups({
     userID: userData.userID,
     budgetID: userData.budgetID,
     ...userData.tokenDetails,
   });
+  let catGroups: YNABCategoryGroup[] = ynabData.data;
+  saveNewYNABTokens(userData.userID, ynabData.connDetails);
 
   return catGroups.map((val) => {
     return {
@@ -273,7 +276,6 @@ export const getUserData = async (
     // Get a new set of accessToken/refreshTokens for this user
     // connecting to YNAB for the first time
     tokenDetails = await GetNewAccessToken({
-      userID: UserID,
       authCode,
     });
     saveNewYNABTokens(UserID, tokenDetails);
@@ -353,10 +355,13 @@ export const getUserData = async (
       },
       true
     );
+
     saveNewYNABTokens(UserID, budgetNameData.connDetails);
+
     if (budgetNameData.connDetails?.accessToken) {
       tokenDetails = { ...budgetNameData.connDetails };
     }
+
     budgetName = budgetNameData.data;
   }
 
@@ -408,12 +413,14 @@ export const getAllCategoryData = async (userData: UserData) => {
     budgetID: userData.budgetID,
     ...userData.tokenDetails,
   });
+  saveNewYNABTokens(userData.userID, budgetMonths.connDetails);
 
   // console.log("  GETTING GetBudgets");
   const bd = await GetBudgets({
     userID: userData.userID,
     ...userData.tokenDetails,
   });
+  saveNewYNABTokens(userData.userID, bd.connDetails);
 
   // Check to see if there were any changes made to the user's budget
   // as compared to what we already have in the database. (Were there

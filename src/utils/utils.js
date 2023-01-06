@@ -80,7 +80,7 @@ export async function getAPIData(storedProcName, params, isMutation) {
 }
 
 export async function saveNewYNABTokens(userID, newTokenDetails) {
-  if (newTokenDetails) {
+  if (newTokenDetails && Object.keys(newTokenDetails).length > 0) {
     await getAPIData(
       Queries.MUTATION_SAVE_YNAB_TOKENS,
       { userID: userID, ...newTokenDetails },

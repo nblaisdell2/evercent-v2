@@ -26,6 +26,8 @@ const CacheValue = {
 };
 let CACHE = {};
 
+let newDetails = { newTokenDetails: null };
+
 function cacheYNABData(budgetData) {
   console.log("CACHING DATA");
   CACHE[CacheValue.CategoryGroups] = budgetData.category_groups;
@@ -37,6 +39,21 @@ function cacheYNABData(budgetData) {
 
 function clearYNABCache() {
   CACHE = {};
+}
+
+async function GetBudgetValue(val, params) {
+  if (!(val in CACHE)) {
+    let response = await SendYNABRequest(
+      "GetBudgetValue",
+      get,
+      API_BASE_URL + "/budgets/" + params.budgetID,
+      params
+    );
+
+    cacheYNABData(response.data.budget);
+  }
+
+  return CACHE[val];
 }
 
 // ### PRIVATE FUNCTIONS ###
@@ -63,10 +80,10 @@ async function FormatAccessTokenDetails(response) {
   };
 }
 
-async function GetResponseWithTokenDetails(data, response) {
+async function GetResponseWithTokenDetails(data) {
   return {
     data: data,
-    connDetails: response?.newTokenDetails,
+    connDetails: { ...newDetails.newTokenDetails },
   };
 }
 
@@ -77,7 +94,6 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
   console.log("  uri", uri);
   // console.log("  params", params);
   // console.log("  postData", postData);
-  let details = {};
 
   // First, check to see if the user's access token has already expired,
   // BEFORE running the request. If it is expired, we'll request a new
@@ -94,18 +110,16 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
     console.log("checking expiration date");
 
     let now = new Date();
-    let dtExpirationDateEarly = parseDate(params.expirationDate);
-    // let dtExpirationDateEarly = addMinutes(
-    //   parseDate(params.expirationDate),
-    //   -10
-    // );
+    // let dtExpirationDateEarly = parseDate(params.expirationDate);
+    let dtExpirationDateEarly = addMinutes(
+      parseDate(params.expirationDate),
+      -10
+    );
     if (now >= dtExpirationDateEarly) {
       console.log("Attempting to refresh access tokens");
       let newTokenDetails = await GetNewAccessTokenRefresh(params);
-      console.log("newTokenDetails?", newTokenDetails);
 
-      details.newTokenDetails = newTokenDetails.data;
-      params.accessToken = newTokenDetails.data.accessToken;
+      params.accessToken = newTokenDetails.accessToken;
     }
   }
 
@@ -144,14 +158,11 @@ async function SendYNABRequest(origin, method, uri, params, postData) {
       if (foundAccessToken) {
         if (isOverRateLimitThreshold(response)) {
           console.log("Over threshold... Getting new access token");
-          let newTokenDetails = await GetNewAccessTokenRefresh(params); // Does this only pass the refreshToken properly?
-          console.log("newTokenDetails", newTokenDetails);
-          details.newTokenDetails = newTokenDetails;
+          await GetNewAccessTokenRefresh(params); // Does this only pass the refreshToken properly?
         }
       }
 
-      details.data = response.data;
-      return details;
+      return response.data;
     })
     .catch((e) => {
       console.log("ERROR FROM YNAB");
@@ -181,8 +192,8 @@ export function GetURL_YNABBudget(budgetID) {
   );
 }
 
-export async function GetNewAccessToken({ userID, authCode }) {
-  return await SendYNABRequest(
+export async function GetNewAccessToken({ authCode }) {
+  const response = await SendYNABRequest(
     "GetNewAccessToken",
     post,
     OAUTH_BASE_URL + "/token",
@@ -193,7 +204,9 @@ export async function GetNewAccessToken({ userID, authCode }) {
       grant_type: "authorization_code",
       code: authCode,
     }
-  ).then(async (response) => await FormatAccessTokenDetails(response.data));
+  );
+  console.log("about to format", response);
+  return await FormatAccessTokenDetails(response);
 }
 
 export async function GetNewAccessTokenRefresh({
@@ -214,13 +227,12 @@ export async function GetNewAccessTokenRefresh({
       refresh_token: refreshToken,
     }
   );
-  // console.log("token refresh response", response);
-  let formatted = await FormatAccessTokenDetails(response.data);
+  console.log("token refresh response", response);
 
-  return {
-    data: formatted,
-    connDetails: formatted,
-  };
+  const newTokenDetails = await FormatAccessTokenDetails(response);
+  console.log("newTokenDetails?", newTokenDetails);
+  newDetails.newTokenDetails = { ...newTokenDetails };
+  return newTokenDetails;
 }
 
 export async function GetDefaultBudgetID(params) {
@@ -232,11 +244,11 @@ export async function GetDefaultBudgetID(params) {
     params
   );
 
-  let budgetData = response.data.data.budget;
+  let budgetData = response.data.budget;
   cacheYNABData(budgetData);
 
-  let defaultBudgetID = budgetData.id;
-  return GetResponseWithTokenDetails(defaultBudgetID, response);
+  const budgetID = await GetBudgetValue(CacheValue.BudgetID, params);
+  return GetResponseWithTokenDetails(budgetID);
 }
 
 export async function GetBudgets(params) {
@@ -246,7 +258,7 @@ export async function GetBudgets(params) {
     API_BASE_URL + "/budgets",
     params
   );
-  let budgetData = response.data.data.budgets;
+  let budgetData = response.data.budgets;
 
   let myBudgetData = [];
   for (let i = 0; i < budgetData.length; i++) {
@@ -256,12 +268,12 @@ export async function GetBudgets(params) {
     });
   }
 
-  return GetResponseWithTokenDetails(myBudgetData, response);
+  return GetResponseWithTokenDetails(myBudgetData);
 }
 
 export async function GetBudgetName(params, clearCache) {
   if (!params.accessToken) {
-    return GetResponseWithTokenDetails(null, { newTokenDetails: null });
+    return GetResponseWithTokenDetails(null);
   }
 
   if (clearCache) {
@@ -269,7 +281,7 @@ export async function GetBudgetName(params, clearCache) {
   }
 
   const budgetName = await GetBudgetValue(CacheValue.BudgetName, params);
-  return GetResponseWithTokenDetails(budgetName, { newTokenDetails: null });
+  return GetResponseWithTokenDetails(budgetName);
 }
 
 export async function GetCategoryGroups(params) {
@@ -313,18 +325,10 @@ export async function GetCategoryGroups(params) {
     }
   }
 
-  return categoryDetails;
+  return GetResponseWithTokenDetails(categoryDetails);
 }
 
 export async function GetBudget(params) {
-  // let response = await SendYNABRequest(
-  //   "GetBudget",
-  //   get,
-  //   API_BASE_URL + "/budgets/" + params.budgetID,
-  //   params
-  // );
-
-  // const budgetData = response.data.data.budget;
   const categories = await GetBudgetValue(CacheValue.Categories, params); //budgetData.categories;
   let categoryGroups = await GetBudgetValue(CacheValue.CategoryGroups, params); //budgetData.category_groups;
   categoryGroups = categoryGroups.filter(
@@ -349,24 +353,7 @@ export async function GetBudget(params) {
       });
     }
   }
-  return GetResponseWithTokenDetails(categoryDetails, {
-    newTokenDetails: null,
-  });
-}
-
-async function GetBudgetValue(val, params) {
-  if (!(val in CACHE)) {
-    let response = await SendYNABRequest(
-      "GetBudgetValue",
-      get,
-      API_BASE_URL + "/budgets/" + params.budgetID,
-      params
-    );
-
-    cacheYNABData(response.data.data.budget);
-  }
-
-  return CACHE[val];
+  return GetResponseWithTokenDetails(categoryDetails);
 }
 
 export async function GetBudgetMonths(params) {
@@ -444,7 +431,7 @@ export async function GetBudgetMonths(params) {
     }
   }
 
-  return GetResponseWithTokenDetails(myBudgetMonths, { newTokenDetails: null });
+  return GetResponseWithTokenDetails(myBudgetMonths);
 }
 
 export async function PostCategoryMonth(params) {
@@ -470,10 +457,10 @@ export async function PostCategoryMonth(params) {
     params,
     postData
   );
-  console.log("Category Name: " + response.data.data.category.name);
+  console.log("Category Name: " + response.data.category.name);
 
   let postedDataDetails = {
-    newAvailableAmount: response.data.data.category.balance / 1000,
+    newAvailableAmount: response.data.category.balance / 1000,
   };
-  return GetResponseWithTokenDetails(postedDataDetails, response);
+  return GetResponseWithTokenDetails(postedDataDetails);
 }
