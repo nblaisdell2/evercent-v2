@@ -62,7 +62,7 @@ function AutomationSchedule({
               label={"Time Left"}
               value={
                 <div>
-                  <div className="-mb-2 sm:mb-0">13 days</div>
+                  <div className="-mb-2">13 days</div>
                   <div>13 hours</div>
                 </div>
               }

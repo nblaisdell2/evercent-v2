@@ -79,16 +79,6 @@ export async function getAPIData(storedProcName, params, isMutation) {
     });
 }
 
-export async function saveNewYNABTokens(userID, newTokenDetails) {
-  if (newTokenDetails && Object.keys(newTokenDetails).length > 0) {
-    await getAPIData(
-      Queries.MUTATION_SAVE_YNAB_TOKENS,
-      { userID: userID, ...newTokenDetails },
-      true
-    );
-  }
-}
-
 export function merge(obj, fieldName) {
   let subArrays = obj.map((x) => x[fieldName]);
   return subArrays.reduce((a, b) => {

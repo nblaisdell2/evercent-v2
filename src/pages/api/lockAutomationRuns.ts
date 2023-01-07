@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { setDate } from "date-fns";
 
-import { getAPIData, saveNewYNABTokens, parseDate } from "../../utils/utils";
+import { getAPIData, parseDate } from "../../utils/utils";
 import { GetBudgetMonths } from "../../utils/ynab";
 import Queries from "../api/resolvers/resolverMapping.json";
+import { saveNewYNABTokens } from "../../utils/evercent";
 
 type RunDetails = {
   RunID: string;

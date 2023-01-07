@@ -5,7 +5,6 @@ import {
   getAPIData,
   getSQLDate,
   parseDate,
-  saveNewYNABTokens,
 } from "./utils";
 import { today, getLocalTimeZone } from "@internationalized/date";
 
@@ -18,7 +17,6 @@ import {
   GetCategoryGroups,
   GetDefaultBudgetID,
   GetNewAccessToken,
-  GetNewAccessTokenRefresh,
 } from "./ynab";
 
 export type UserData = {
@@ -209,6 +207,19 @@ export const createRegularExpense = (
     multipleTransactions: false,
   };
 };
+
+export async function saveNewYNABTokens(
+  userID: string,
+  newTokenDetails: TokenDetails
+) {
+  if (newTokenDetails && Object.keys(newTokenDetails).length > 0) {
+    await getAPIData(
+      Queries.MUTATION_SAVE_YNAB_TOKENS,
+      { userID: userID, ...newTokenDetails },
+      true
+    );
+  }
+}
 
 // ==============
 //  Budget Stuff

@@ -25,7 +25,7 @@ export default function MyDatePicker(props: any) {
 
   return (
     <OverlayProvider>
-      <div className="relative inline-flex flex-col text-left">
+      <div className="inline-flex flex-col text-left">
         <div {...groupProps} ref={ref} className="flex group">
           <div className="bg-white border border-gray-300 group-hover:border-gray-400 transition-colors rounded-l-md pr-10 group-focus-within:border-blue-900 group-focus-within:group-hover:border-blue-900 p-1 relative flex items-center">
             <DateField {...fieldProps} />
@@ -42,6 +42,7 @@ export default function MyDatePicker(props: any) {
             {...dialogProps}
             isOpen={state.isOpen}
             onClose={() => state.setOpen(false)}
+            classNamePosition={props?.classNamePosition || ""}
           >
             <Calendar {...calendarProps} />
           </Popover>

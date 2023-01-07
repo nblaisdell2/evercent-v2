@@ -36,7 +36,7 @@ export function Popover(props: any) {
         <div
           {...mergeProps(overlayProps, modalProps, dialogProps)}
           ref={popoverRef}
-          className="absolute -top-48 sm:-top-12 -left-10 bg-white border border-gray-300 rounded-md shadow-lg mt-0 p-4 z-10 w-[300px] h-[315px]"
+          className={`absolute ${props?.classNamePosition} bg-white border border-gray-300 rounded-md shadow-lg mt-0 p-4 z-10 w-[300px] h-[315px]`}
         >
           {children}
           <DismissButton onDismiss={onClose} />

@@ -52,7 +52,7 @@ function MainContent({
   // Lets me know which widget is currently selected
   const [currentWidget, setCurrentWidget] = useState(-1);
 
-  const { isOpen, showModal, closeModal } = useModal();
+  const { isOpen, showModal, closeModal } = useModal(setModalIsShowing);
   const {
     isOpen: isOpenWarning,
     showModal: showModalWarning,

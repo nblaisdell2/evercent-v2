@@ -98,6 +98,7 @@ function UpdateUserDetailsModal({
                 ).toISOString()
               );
             }}
+            classNamePosition={"bottom-0 left-5 sm:left-20"}
           />
         </div>
       </div>

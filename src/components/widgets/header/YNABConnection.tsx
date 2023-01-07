@@ -94,7 +94,7 @@ function YNABConnection({
           <>
             <div className="text-center ml-4">
               <Label label={"Current Budget"} className={"text-lg"} />
-              <div className="flex justify-center space-x-1">
+              <div className="flex justify-center space-x-1 -mt-[1px]">
                 <div className=" font-bold">{userData.budgetName}</div>
                 <PencilSquareIcon
                   className="h-6 w-6 stroke-2 hover:cursor-pointer"

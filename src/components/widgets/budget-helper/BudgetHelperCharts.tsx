@@ -268,7 +268,6 @@ function BudgetHelperCharts({
       </div>
       <div className="block sm:hidden">
         <div>
-          <div className="p-1 font-bold">By Category Group</div>
           <Chart
             chartType="PieChart"
             width={"100%"}

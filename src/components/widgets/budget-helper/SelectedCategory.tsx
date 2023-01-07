@@ -246,6 +246,7 @@ function SelectedCategory({
                             getDateFromCalendarDate(newDate).toISOString()
                           );
                         }}
+                        classNamePosition={"bottom-0"}
                       />
                     </div>
                     <div className="flex flex-col items-center">
@@ -516,6 +517,7 @@ function SelectedCategory({
                       getDateFromCalendarDate(newDate).toISOString()
                     );
                   }}
+                  classNamePosition={"bottom-0 left-5"}
                 />
               </div>
               <div className="flex items-center justify-between pl-1">
