@@ -15,6 +15,7 @@ import {
 import {
   CategoryListGroup,
   CategoryListItem,
+  getGroupAmounts,
   getInput_UpdateCategories,
   isSameCategory,
   UserData,
@@ -172,6 +173,7 @@ function useEvercent() {
         const includedGroup = includedItems.filter(
           (item) => item.parentId == grp.groupID
         );
+        console.log("includedGroup", includedGroup);
         let newCats: CategoryListItem[] = [];
         for (let j = 0; j < includedGroup.length; j++) {
           let currCat = grp.categories.find(
@@ -194,6 +196,7 @@ function useEvercent() {
         grp = {
           ...grp,
           categories: newCats,
+          ...getGroupAmounts(newCats),
         };
         newCategories.push(grp);
         newGroup = grp.groupName;
@@ -233,7 +236,8 @@ function useEvercent() {
     categoryGroupName?: string,
     categoryName?: string
   ): CategoryListItem => {
-    const guid = generateUUID();
+    const guid = generateUUID().toUpperCase();
+
     return {
       __typename: cat?.__typename || "Category",
       amount: cat?.amount || 0,
